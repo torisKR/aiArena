@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:tokenfront/game/simulation.dart';
 
 import '../economy/cosmetic_catalog.dart';
 import '../economy/war_token_wallet.dart';
@@ -10,6 +11,8 @@ import '../services/analytics/analytics_event.dart';
 import '../services/analytics/analytics_service.dart';
 import '../services/privacy/privacy_state.dart';
 import '../settings/game_preferences.dart';
+import '../story/campaign_controller.dart';
+import '../story/story_models.dart';
 import 'tokenfront_state_store.dart';
 
 final class RewardedClaim {
@@ -44,7 +47,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
          analyticsAdapter: analyticsAdapter,
          preferences: preferences ?? GamePreferences(),
          wallet: wallet ?? WarTokenWallet(),
-         persistence: const _RuntimePersistence(),
+         persistence: _RuntimePersistence(),
          isOnline: isOnline,
        );
 
@@ -59,6 +62,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
   }) : _stateStore = persistence.stateStore,
        _analyticsSharingAllowed = persistence.analyticsSharingAllowed,
        _adRequestsAllowed = persistence.adRequestsAllowed,
+       _storyProgress = persistence.storyProgress,
+       _rewardLedger = persistence.rewardLedger,
        analytics = AnalyticsService(
          adapter: analyticsAdapter ?? const NoOpAnalyticsAdapter(),
        ) {
@@ -92,6 +97,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
         stateStore: load.canWrite ? resolvedStore : null,
         analyticsSharingAllowed: saved.analyticsSharingAllowed,
         adRequestsAllowed: saved.adRequestsAllowed,
+        storyProgress: saved.storyProgress,
+        rewardLedger: saved.rewardLedger,
       ),
       isOnline: isOnline,
     );
@@ -107,6 +114,9 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   bool _analyticsSharingAllowed;
   bool _adRequestsAllowed;
+  StoryProgress _storyProgress;
+  ProfileRewardLedger _rewardLedger;
+  final CampaignController _campaignController = const CampaignController();
   TrackingAuthorization _trackingAuthorization =
       TrackingAuthorization.notApplicable;
   final Set<String> _baseRewardClaims = <String>{};
@@ -114,6 +124,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   bool get analyticsSharingAllowed => _analyticsSharingAllowed;
   bool get adRequestsAllowed => _adRequestsAllowed;
+  StoryProgress get storyProgress => _storyProgress;
+  ProfileRewardLedger get rewardLedger => _rewardLedger;
   TrackingAuthorization get trackingAuthorization => _trackingAuthorization;
 
   PrivacyState get analyticsPrivacy => PrivacyState(
@@ -264,6 +276,49 @@ final class TokenfrontRuntime extends ChangeNotifier {
     notifyListeners();
   }
 
+  void lockChronicleCore(Faction faction) {
+    _storyProgress = _storyProgress.lockCore(faction);
+    _schedulePersist();
+    notifyListeners();
+  }
+
+  CampaignTransition concludeChronicle({
+    required StoryOperationId operationId,
+    required BattleReport report,
+    required bool replay,
+  }) {
+    final transition = _campaignController.conclude(
+      progress: _storyProgress,
+      ledger: _rewardLedger,
+      operationId: operationId,
+      report: report,
+      replay: replay,
+    );
+    _storyProgress = transition.nextProgress;
+    _rewardLedger = transition.nextLedger;
+    if (transition.directiveBonusCredit > 0) {
+      wallet.creditMatchReward(
+        baseAmount: transition.directiveBonusCredit,
+        rewardedAdCompleted: false,
+      );
+    }
+    _schedulePersist();
+    notifyListeners();
+    return transition;
+  }
+
+  void chooseChronicleEnding(EndingChoice choice) {
+    _storyProgress = _campaignController.chooseEnding(_storyProgress, choice);
+    _schedulePersist();
+    notifyListeners();
+  }
+
+  void restartChronicle() {
+    _storyProgress = _campaignController.restart(_storyProgress);
+    _schedulePersist();
+    notifyListeners();
+  }
+
   Future<void> flushLocalState() async {
     _schedulePersist();
     await _persistenceTail;
@@ -346,19 +401,24 @@ final class TokenfrontRuntime extends ChangeNotifier {
 }
 
 final class _RuntimePersistence {
-  const _RuntimePersistence({
+  _RuntimePersistence({
     this.stateStore,
     this.analyticsSharingAllowed = false,
     this.adRequestsAllowed = false,
-  });
+    StoryProgress? storyProgress,
+    ProfileRewardLedger? rewardLedger,
+  }) : storyProgress = storyProgress ?? StoryProgress.initial(),
+       rewardLedger = rewardLedger ?? ProfileRewardLedger.empty();
 
   final TokenfrontStateStore? stateStore;
   final bool analyticsSharingAllowed;
   final bool adRequestsAllowed;
+  final StoryProgress storyProgress;
+  final ProfileRewardLedger rewardLedger;
 }
 
 final class _TokenfrontLocalState {
-  const _TokenfrontLocalState({
+  _TokenfrontLocalState({
     required this.walletBalance,
     required this.unlockedIds,
     required this.equippedIds,
@@ -370,9 +430,11 @@ final class _TokenfrontLocalState {
     required this.languageCode,
     required this.analyticsSharingAllowed,
     required this.adRequestsAllowed,
+    required this.storyProgress,
+    required this.rewardLedger,
   });
 
-  factory _TokenfrontLocalState.defaults() => const _TokenfrontLocalState(
+  factory _TokenfrontLocalState.defaults() => _TokenfrontLocalState(
     walletBalance: 0,
     unlockedIds: <String>{},
     equippedIds: <CosmeticCategory, String>{},
@@ -384,6 +446,8 @@ final class _TokenfrontLocalState {
     languageCode: 'system',
     analyticsSharingAllowed: false,
     adRequestsAllowed: false,
+    storyProgress: StoryProgress.initial(),
+    rewardLedger: ProfileRewardLedger.empty(),
   );
 
   factory _TokenfrontLocalState.capture(TokenfrontRuntime runtime) =>
@@ -399,9 +463,11 @@ final class _TokenfrontLocalState {
         languageCode: runtime.preferences.languageCode,
         analyticsSharingAllowed: runtime.analyticsSharingAllowed,
         adRequestsAllowed: runtime.adRequestsAllowed,
+        storyProgress: runtime.storyProgress,
+        rewardLedger: runtime.rewardLedger,
       );
 
-  static const _version = 1;
+  static const _version = 2;
 
   final int walletBalance;
   final Set<String> unlockedIds;
@@ -414,6 +480,8 @@ final class _TokenfrontLocalState {
   final String languageCode;
   final bool analyticsSharingAllowed;
   final bool adRequestsAllowed;
+  final StoryProgress storyProgress;
+  final ProfileRewardLedger rewardLedger;
 
   static Future<_TokenfrontLocalStateLoad> load(
     TokenfrontStateStore store,
@@ -440,12 +508,46 @@ final class _TokenfrontLocalState {
     if (value == null) return _TokenfrontLocalState.defaults();
     try {
       final decoded = jsonDecode(value);
-      if (decoded is! Map<String, dynamic> || decoded['version'] != _version) {
+      if (decoded is! Map<String, dynamic>) {
         return _TokenfrontLocalState.defaults();
       }
-      final wallet = _map(decoded['wallet']);
-      final preferences = _map(decoded['preferences']);
-      final privacy = _map(decoded['privacy']);
+      final version = decoded['version'];
+      if (version is! int || (version != 1 && version != _version)) {
+        return _TokenfrontLocalState.defaults();
+      }
+      final wallet = _decodeWallet(decoded['wallet']);
+      final preferences = _decodePreferences(decoded['preferences']);
+      final privacy = _decodePrivacy(decoded['privacy']);
+      final story = version == 1
+          ? StoryProgress.initial()
+          : _decodeStory(decoded['story']);
+      final rewardLedger = version == 1
+          ? ProfileRewardLedger.empty()
+          : _decodeRewardLedger(decoded['rewardLedger']);
+      return _TokenfrontLocalState(
+        walletBalance: wallet.balance,
+        unlockedIds: wallet.unlockedIds,
+        equippedIds: wallet.equippedIds,
+        lowSpecMode: preferences.lowSpecMode,
+        forceReducedMotion: preferences.forceReducedMotion,
+        mouseCameraEnabled: preferences.mouseCameraEnabled,
+        hapticsEnabled: preferences.hapticsEnabled,
+        audioEnabled: preferences.audioEnabled,
+        languageCode: preferences.languageCode,
+        analyticsSharingAllowed: privacy.analyticsSharingAllowed,
+        adRequestsAllowed: privacy.adRequestsAllowed,
+        storyProgress: story,
+        rewardLedger: rewardLedger,
+      );
+    } catch (error) {
+      debugPrint('Tokenfront local state decode failed: $error');
+      return _TokenfrontLocalState.defaults();
+    }
+  }
+
+  static _DecodedWallet _decodeWallet(Object? value) {
+    try {
+      final wallet = _map(value);
       final definitions = <String, CosmeticDefinition>{
         for (final definition in CosmeticCatalog.items)
           definition.item.id: definition,
@@ -462,29 +564,64 @@ final class _TokenfrontLocalState {
         if (definition != null &&
             definition.item.category == category &&
             unlocked.contains(id)) {
-          equipped[category] = id!;
+          equipped[category] = id;
         }
       }
       final balance = wallet['balance'];
-      return _TokenfrontLocalState(
-        walletBalance: balance is int && balance >= 0 ? balance : 0,
+      return _DecodedWallet(
+        balance: balance is int && balance >= 0 ? balance : 0,
         unlockedIds: unlocked,
         equippedIds: equipped,
+      );
+    } catch (_) {
+      return _DecodedWallet.empty();
+    }
+  }
+
+  static _DecodedPreferences _decodePreferences(Object? value) {
+    try {
+      final preferences = _map(value);
+      return _DecodedPreferences(
         lowSpecMode: _boolean(preferences['lowSpecMode'], false),
         forceReducedMotion: _boolean(preferences['forceReducedMotion'], false),
         mouseCameraEnabled: _boolean(preferences['mouseCameraEnabled'], true),
         hapticsEnabled: _boolean(preferences['hapticsEnabled'], true),
         audioEnabled: _boolean(preferences['audioEnabled'], true),
         languageCode: _languageCode(preferences['languageCode']),
+      );
+    } catch (_) {
+      return _DecodedPreferences.defaults();
+    }
+  }
+
+  static _DecodedPrivacy _decodePrivacy(Object? value) {
+    try {
+      final privacy = _map(value);
+      return _DecodedPrivacy(
         analyticsSharingAllowed: _boolean(
           privacy['analyticsSharingAllowed'],
           false,
         ),
         adRequestsAllowed: _boolean(privacy['adRequestsAllowed'], false),
       );
-    } catch (error) {
-      debugPrint('Tokenfront local state decode failed: $error');
-      return _TokenfrontLocalState.defaults();
+    } catch (_) {
+      return _DecodedPrivacy.defaults();
+    }
+  }
+
+  static StoryProgress _decodeStory(Object? value) {
+    try {
+      return StoryProgress.fromJson(_map(value));
+    } catch (_) {
+      return StoryProgress.initial();
+    }
+  }
+
+  static ProfileRewardLedger _decodeRewardLedger(Object? value) {
+    try {
+      return ProfileRewardLedger.fromJson(_map(value));
+    } catch (_) {
+      return ProfileRewardLedger.empty();
     }
   }
 
@@ -526,11 +663,14 @@ final class _TokenfrontLocalState {
         'analyticsSharingAllowed': analyticsSharingAllowed,
         'adRequestsAllowed': adRequestsAllowed,
       },
+      'story': storyProgress.toJson(),
+      'rewardLedger': rewardLedger.toJson(),
     });
   }
 
-  static Map<String, dynamic> _map(Object? value) =>
-      value is Map<String, dynamic> ? value : const <String, dynamic>{};
+  static Map<String, dynamic> _map(Object? value) => value is Map
+      ? value.map((key, value) => MapEntry(key.toString(), value))
+      : <String, dynamic>{};
 
   static Iterable<String> _strings(Object? value) =>
       value is List ? value.whereType<String>() : const <String>[];
@@ -554,4 +694,64 @@ final class _TokenfrontLocalStateLoad {
 
   final _TokenfrontLocalState state;
   final bool canWrite;
+}
+
+final class _DecodedWallet {
+  const _DecodedWallet({
+    required this.balance,
+    required this.unlockedIds,
+    required this.equippedIds,
+  });
+
+  factory _DecodedWallet.empty() => const _DecodedWallet(
+    balance: 0,
+    unlockedIds: <String>{},
+    equippedIds: <CosmeticCategory, String>{},
+  );
+
+  final int balance;
+  final Set<String> unlockedIds;
+  final Map<CosmeticCategory, String> equippedIds;
+}
+
+final class _DecodedPreferences {
+  const _DecodedPreferences({
+    required this.lowSpecMode,
+    required this.forceReducedMotion,
+    required this.mouseCameraEnabled,
+    required this.hapticsEnabled,
+    required this.audioEnabled,
+    required this.languageCode,
+  });
+
+  factory _DecodedPreferences.defaults() => const _DecodedPreferences(
+    lowSpecMode: false,
+    forceReducedMotion: false,
+    mouseCameraEnabled: true,
+    hapticsEnabled: true,
+    audioEnabled: true,
+    languageCode: 'system',
+  );
+
+  final bool lowSpecMode;
+  final bool forceReducedMotion;
+  final bool mouseCameraEnabled;
+  final bool hapticsEnabled;
+  final bool audioEnabled;
+  final String languageCode;
+}
+
+final class _DecodedPrivacy {
+  const _DecodedPrivacy({
+    required this.analyticsSharingAllowed,
+    required this.adRequestsAllowed,
+  });
+
+  factory _DecodedPrivacy.defaults() => const _DecodedPrivacy(
+    analyticsSharingAllowed: false,
+    adRequestsAllowed: false,
+  );
+
+  final bool analyticsSharingAllowed;
+  final bool adRequestsAllowed;
 }

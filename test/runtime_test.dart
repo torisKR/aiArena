@@ -7,6 +7,8 @@ import 'package:tokenfront/services/ads/ad_service.dart';
 import 'package:tokenfront/services/analytics/analytics_event.dart';
 import 'package:tokenfront/services/analytics/analytics_service.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
+import 'package:tokenfront/game/simulation.dart';
+import 'package:tokenfront/story/story_models.dart';
 
 List<String> _adActions(TokenfrontRuntime runtime, AnalyticsAdFormat format) =>
     runtime.analytics.pendingEvents
@@ -19,6 +21,10 @@ List<String> _adActions(TokenfrontRuntime runtime, AnalyticsAdFormat format) =>
         .toList(growable: false);
 
 final class _MemoryStateStore implements TokenfrontStateStore {
+  _MemoryStateStore();
+
+  _MemoryStateStore.withValue(this.value);
+
   String? value;
 
   @override
@@ -98,6 +104,238 @@ final class _AlwaysFailReadStateStore implements TokenfrontStateStore {
 }
 
 void main() {
+  test(
+    'schema 1 migrates wallet preferences privacy and empty story',
+    () async {
+      final store = _MemoryStateStore()..value = schema1Fixture;
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.wallet.balance, 275);
+      expect(
+        runtime.wallet.unlockedIds,
+        containsAll(<String>[
+          'color_relay_ivory',
+          'trail_relay_tape',
+          'death_fracture',
+        ]),
+      );
+      expect(
+        runtime.wallet.equippedId(CosmeticCategory.factionColor),
+        'color_relay_ivory',
+      );
+      expect(
+        runtime.wallet.equippedId(CosmeticCategory.movementTrail),
+        'trail_relay_tape',
+      );
+      expect(
+        runtime.wallet.equippedId(CosmeticCategory.deathEffect),
+        'death_fracture',
+      );
+      expect(runtime.preferences.lowSpecMode, isTrue);
+      expect(runtime.preferences.forceReducedMotion, isTrue);
+      expect(runtime.preferences.mouseCameraEnabled, isFalse);
+      expect(runtime.preferences.hapticsEnabled, isFalse);
+      expect(runtime.preferences.audioEnabled, isFalse);
+      expect(runtime.preferences.languageCode, 'ko');
+      expect(runtime.analyticsSharingAllowed, isTrue);
+      expect(runtime.adRequestsAllowed, isTrue);
+      expect(runtime.storyProgress, StoryProgress.initial());
+      expect(runtime.rewardLedger.claimedDirectiveBonusIds, isEmpty);
+    },
+  );
+
+  test('conclusion atomically stores medal claim and WT once', () async {
+    final store = _MemoryStateStore();
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    addTearDown(runtime.dispose);
+    runtime.lockChronicleCore(Faction.amethyst);
+    final before = runtime.wallet.balance;
+    final first = runtime.concludeChronicle(
+      operationId: StoryOperationId.wake,
+      report: _report(link: 45),
+      replay: false,
+    );
+    final duplicate = runtime.concludeChronicle(
+      operationId: StoryOperationId.wake,
+      report: _report(link: 45),
+      replay: true,
+    );
+    await runtime.flushLocalState();
+    expect(first.directiveBonusCredit, 15);
+    expect(duplicate.directiveBonusCredit, 0);
+    expect(runtime.wallet.balance, before + 15);
+    expect(runtime.storyProgress.medals, contains(StoryOperationId.wake));
+    expect(
+      runtime.rewardLedger.claimedDirectiveBonusIds,
+      contains('chronicle-directive-wake'),
+    );
+  });
+
+  test(
+    'malformed story preserves a separately valid lifetime ledger',
+    () async {
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: _MemoryStateStore.withValue(
+          schema2WithMalformedStoryAndWakeClaim,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.storyProgress.currentOperation, StoryOperationId.wake);
+      expect(
+        runtime.rewardLedger.claimedDirectiveBonusIds,
+        contains('chronicle-directive-wake'),
+      );
+    },
+  );
+
+  test(
+    'malformed ledger preserves separately valid Chronicle progress',
+    () async {
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: _MemoryStateStore.withValue(
+          schema2WithWakeConcludedAndMalformedLedger,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      expect(
+        runtime.storyProgress.concludedOperations,
+        contains(StoryOperationId.wake),
+      );
+      expect(runtime.storyProgress.currentOperation, StoryOperationId.echo);
+      expect(runtime.rewardLedger.claimedDirectiveBonusIds, isEmpty);
+    },
+  );
+
+  test('schema 2 round trip restores campaign and reward ledger', () async {
+    final store = _MemoryStateStore();
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    final reports = <StoryOperationId, BattleReport>{
+      StoryOperationId.wake: _report(link: 45),
+      StoryOperationId.echo: _report(relays: 2),
+      StoryOperationId.split: _report(commandKills: 3),
+      StoryOperationId.crown: _report(rank: 2),
+      StoryOperationId.lastInstruction: _report(winner: Faction.amethyst),
+    };
+    runtime.lockChronicleCore(Faction.amethyst);
+    for (final operation in StoryOperationId.values) {
+      runtime.concludeChronicle(
+        operationId: operation,
+        report: reports[operation]!,
+        replay: false,
+      );
+    }
+    runtime.chooseChronicleEnding(EndingChoice.openRelay);
+    await runtime.flushLocalState();
+    runtime.dispose();
+
+    final restored = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    addTearDown(restored.dispose);
+    expect(restored.storyProgress.campaignFaction, Faction.amethyst);
+    expect(
+      restored.storyProgress.concludedOperations,
+      orderedEquals(StoryOperationId.values),
+    );
+    expect(
+      restored.storyProgress.medals,
+      orderedEquals(StoryOperationId.values),
+    );
+    expect(
+      restored.storyProgress.recoveredTransmissions,
+      orderedEquals(StoryOperationId.values),
+    );
+    expect(restored.storyProgress.ending, EndingChoice.openRelay);
+    expect(
+      restored.rewardLedger.claimedDirectiveBonusIds,
+      containsAll(<String>[
+        'chronicle-directive-wake',
+        'chronicle-directive-echo',
+        'chronicle-directive-split',
+        'chronicle-directive-crown',
+        'chronicle-directive-lastInstruction',
+      ]),
+    );
+  });
+
+  test('flush and recreate restores the first incomplete operation', () async {
+    final store = _MemoryStateStore();
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    runtime.lockChronicleCore(Faction.amethyst);
+    runtime.concludeChronicle(
+      operationId: StoryOperationId.wake,
+      report: _report(link: 45),
+      replay: false,
+    );
+    await runtime.flushLocalState();
+    runtime.dispose();
+
+    final restored = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    addTearDown(restored.dispose);
+    expect(restored.storyProgress.currentOperation, StoryOperationId.echo);
+    expect(
+      restored.storyProgress.concludedOperations,
+      contains(StoryOperationId.wake),
+    );
+  });
+
+  test(
+    'restart preserves lifetime medal claim without a second credit',
+    () async {
+      final store = _MemoryStateStore();
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      runtime.lockChronicleCore(Faction.amethyst);
+      runtime.concludeChronicle(
+        operationId: StoryOperationId.wake,
+        report: _report(link: 45),
+        replay: false,
+      );
+      runtime.restartChronicle();
+      runtime.lockChronicleCore(Faction.amethyst);
+      final second = runtime.concludeChronicle(
+        operationId: StoryOperationId.wake,
+        report: _report(link: 45),
+        replay: false,
+      );
+      await runtime.flushLocalState();
+      runtime.dispose();
+
+      final restored = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(restored.dispose);
+      expect(second.directiveBonusCredit, 0);
+      expect(restored.wallet.balance, 15);
+      expect(restored.storyProgress.medals, contains(StoryOperationId.wake));
+      expect(
+        restored.rewardLedger.claimedDirectiveBonusIds,
+        contains('chronicle-directive-wake'),
+      );
+    },
+  );
+
   test('default runtime is offline-safe and consent starts off', () async {
     final runtime = TokenfrontRuntime(
       platform: ClientPlatform.web,
@@ -461,3 +699,50 @@ void main() {
     },
   );
 }
+
+const schema1Fixture =
+    '''{"version":1,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory","trail_relay_tape","death_fracture"],"equippedIds":{"factionColor":"color_relay_ivory","movementTrail":"trail_relay_tape","deathEffect":"death_fracture"}},"preferences":{"lowSpecMode":true,"forceReducedMotion":true,"mouseCameraEnabled":false,"hapticsEnabled":false,"audioEnabled":false,"languageCode":"ko"},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true}}''';
+
+const schema2WithMalformedStoryAndWakeClaim =
+    '''{"version":2,"wallet":{"balance":90},"preferences":{},"privacy":{},"story":"malformed","rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
+
+const schema2WithWakeConcludedAndMalformedLedger =
+    '''{"version":2,"wallet":{"balance":90},"preferences":{},"privacy":{},"story":{"campaignFaction":"amethyst","concludedOperations":["wake"],"medals":[],"recoveredTransmissions":["wake"],"ending":null},"rewardLedger":[]}''';
+
+BattleReport _report({
+  ChronicleEndReason reason = ChronicleEndReason.timeLimit,
+  Faction? winner,
+  int relays = 0,
+  int commandKills = 0,
+  double link = 0,
+  int rank = 4,
+}) => BattleReport(
+  endReason: reason,
+  standingsAtConclusion: const [
+    FactionStanding(
+      faction: Faction.amethyst,
+      survivors: 0,
+      levelSum: 0,
+      kills: 0,
+    ),
+    FactionStanding(
+      faction: Faction.cobalt,
+      survivors: 0,
+      levelSum: 0,
+      kills: 0,
+    ),
+    FactionStanding(faction: Faction.volt, survivors: 0, levelSum: 0, kills: 0),
+    FactionStanding(
+      faction: Faction.prism,
+      survivors: 0,
+      levelSum: 0,
+      kills: 0,
+    ),
+  ],
+  globalWinner: winner,
+  commandRelays: relays,
+  commandKills: commandKills,
+  longestCommandLinkSeconds: link,
+  playerRank: rank,
+  playerSurvivors: 0,
+);
