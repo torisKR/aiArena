@@ -10,6 +10,7 @@ import 'game/faction_visuals.dart';
 import 'game/simulation.dart';
 import 'game/tokenfront_game.dart';
 import 'story/story_models.dart';
+import 'story/story_catalog.dart';
 import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
 import 'services/analytics/analytics_event.dart';
@@ -33,11 +34,13 @@ class TokenfrontApp extends StatefulWidget {
     this.runtime,
     this.disposeRuntime = false,
     this.orientationController,
+    this.storyOperationsProvider,
   });
 
   final TokenfrontRuntime? runtime;
   final bool disposeRuntime;
   final BattleOrientationController? orientationController;
+  final StoryOperationsProvider? storyOperationsProvider;
 
   @override
   State<TokenfrontApp> createState() => _TokenfrontAppState();
@@ -72,22 +75,43 @@ class _TokenfrontAppState extends State<TokenfrontApp> {
       home: TokenfrontRoot(
         runtime: runtime,
         orientationController: orientationController,
+        storyOperationsProvider: widget.storyOperationsProvider,
       ),
     ),
   );
 }
 
-enum _Screen { lobby, battle, result }
+typedef StoryOperationsProvider = Iterable<StoryOperation> Function();
+
+enum _Screen { lobby, briefing, battle, result }
+
+final class _ActiveBattle {
+  const _ActiveBattle({
+    required this.mode,
+    required this.faction,
+    required this.matchId,
+    this.operation,
+    this.replay = false,
+  });
+
+  final GameMode mode;
+  final Faction faction;
+  final String matchId;
+  final StoryOperation? operation;
+  final bool replay;
+}
 
 class TokenfrontRoot extends StatefulWidget {
   const TokenfrontRoot({
     super.key,
     required this.runtime,
     required this.orientationController,
+    this.storyOperationsProvider,
   });
 
   final TokenfrontRuntime runtime;
   final BattleOrientationController orientationController;
+  final StoryOperationsProvider? storyOperationsProvider;
 
   @override
   State<TokenfrontRoot> createState() => _TokenfrontRootState();
@@ -97,12 +121,17 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     with WidgetsBindingObserver {
   _Screen screen = _Screen.lobby;
   Faction selectedFaction = Faction.amethyst;
+  late final List<StoryOperation> storyOperations;
+  bool chronicleAvailable = true;
+  StoryOperation? briefingOperation;
+  _ActiveBattle? activeBattle;
   TokenfrontGame? game;
   MatchResult? result;
   int relays = 0;
   double elapsed = 0;
   int matchIndex = 0;
   int completedMatches = 0;
+  int attemptNumber = 0;
   int baseReward = 0;
   String currentMatchId = '';
   bool bannerVisible = false;
@@ -114,10 +143,32 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   void initState() {
     super.initState();
+    try {
+      storyOperations = List<StoryOperation>.unmodifiable(
+        (widget.storyOperationsProvider ?? () => StoryCatalog.operations)(),
+      );
+      briefingOperation = _currentOperation();
+    } on StateError {
+      storyOperations = const [];
+      chronicleAvailable = false;
+    } on FormatException {
+      storyOperations = const [];
+      chronicleAvailable = false;
+    }
     WidgetsBinding.instance.addObserver(this);
     runtime.addListener(_runtimeChanged);
     runtime.record(AnalyticsEvent.tutorialStarted());
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
+  }
+
+  StoryOperation? _currentOperation() {
+    final id = runtime.storyProgress.currentOperation;
+    if (id == null) return null;
+    try {
+      return storyOperations.firstWhere((operation) => operation.id == id);
+    } on StateError {
+      throw StateError('story operation ${id.name} is unavailable');
+    }
   }
 
   @override
@@ -203,6 +254,34 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   }
 
   Future<void> startMatch(Faction faction) async {
+    await _startBattle(
+      mode: GameMode.skirmish,
+      faction: faction,
+      operation: null,
+    );
+  }
+
+  void _openChronicle() {
+    if (!chronicleAvailable || briefingOperation == null) return;
+    setState(() => screen = _Screen.briefing);
+  }
+
+  Future<void> _startChronicle(Faction faction) async {
+    final operation = briefingOperation;
+    if (!chronicleAvailable || operation == null) return;
+    await _startBattle(
+      mode: GameMode.chronicle,
+      faction: faction,
+      operation: operation,
+    );
+  }
+
+  Future<void> _startBattle({
+    required GameMode mode,
+    required Faction faction,
+    required StoryOperation? operation,
+    bool replay = false,
+  }) async {
     if (_startingMatch) return;
     _startingMatch = true;
     await _lockBattleOrientation();
@@ -218,8 +297,28 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     elapsed = 0;
     baseReward = 0;
     bannerVisible = false;
-    matchIndex += 1;
-    currentMatchId = 'match-${20260715 + matchIndex}';
+    attemptNumber += 1;
+    final seed = operation?.seed ?? 20260715 + (++matchIndex);
+    currentMatchId = [
+      mode.name,
+      if (operation != null) operation.id.name,
+      'seed-$seed',
+      'attempt-$attemptNumber',
+    ].join('-');
+    activeBattle = _ActiveBattle(
+      mode: mode,
+      faction: faction,
+      matchId: currentMatchId,
+      operation: operation,
+      replay: replay,
+    );
+    if (mode == GameMode.chronicle &&
+        operation?.id == StoryOperationId.wake &&
+        runtime.storyProgress.campaignFaction == null &&
+        !replay) {
+      runtime.lockChronicleCore(faction);
+    }
+    selectedFaction = faction;
     runtime.record(
       AnalyticsEvent.factionSelected(faction: faction.visual.name),
     );
@@ -229,14 +328,17 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         isFirstMatch: completedMatches == 0,
       ),
     );
-    if (completedMatches == 0) {
-      runtime.record(AnalyticsEvent.tutorialCompleted());
-    }
-
     late final TokenfrontGame nextGame;
     nextGame = TokenfrontGame(
       playerFaction: faction,
-      seed: 20260715 + matchIndex,
+      mode: mode,
+      operation: operation,
+      seed: seed,
+      config: operation == null
+          ? const BattleConfig()
+          : BattleConfig(
+              matchLimitSeconds: operation.duration.inSeconds.toDouble(),
+            ),
       reduceMotion: runtime.preferences.reducedMotionFor(
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
       ),
@@ -263,7 +365,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
           winner: report.globalWinner,
           standings: report.standingsAtConclusion,
         );
-        unawaited(_finishMatch(nextGame, matchResult, report.commandRelays));
+        unawaited(_finishMatch(nextGame, matchResult, report));
       },
     );
     game?.dispose();
@@ -277,16 +379,33 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   Future<void> _finishMatch(
     TokenfrontGame endedGame,
     MatchResult matchResult,
-    int relayCount,
+    BattleReport report,
   ) async {
     if (!mounted || game != endedGame) return;
-    final playerStanding = matchResult.standings.firstWhere(
+    final playerStanding = report.standingsAtConclusion.firstWhere(
       (standing) => standing.faction == selectedFaction,
     );
     final matchElapsed = endedGame.simulation.matchElapsed;
-    final reward = 40 + relayCount * 8 + (playerStanding.kills ~/ 5);
+    final reward = 40 + report.commandRelays * 8 + (playerStanding.kills ~/ 5);
     completedMatches += 1;
     runtime.claimBaseReward(matchId: currentMatchId, amount: reward);
+    final active = activeBattle;
+    final wasFirstOperation =
+        active?.mode == GameMode.chronicle &&
+        active?.operation?.id == StoryOperationId.wake &&
+        !runtime.storyProgress.concludedOperations.contains(
+          StoryOperationId.wake,
+        );
+    if (active?.mode == GameMode.chronicle && active?.operation != null) {
+      runtime.concludeChronicle(
+        operationId: active!.operation!.id,
+        report: report,
+        replay: active.replay,
+      );
+    }
+    if (wasFirstOperation) {
+      runtime.record(AnalyticsEvent.tutorialCompleted());
+    }
     runtime.record(
       AnalyticsEvent.matchCompleted(
         matchId: currentMatchId,
@@ -295,7 +414,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         selectedFaction: selectedFaction.visual.name,
         winningFaction: matchResult.winner?.visual.name ?? 'DRAW',
         killCount: playerStanding.kills,
-        handoffCount: relayCount,
+        handoffCount: report.commandRelays,
       ),
     );
     runtime.record(
@@ -310,11 +429,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     if (!mounted || game != endedGame) return;
     setState(() {
       result = matchResult;
-      relays = relayCount;
+      relays = report.commandRelays;
       elapsed = matchElapsed;
       baseReward = reward;
       screen = _Screen.result;
     });
+    briefingOperation = _currentOperation();
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
   }
 
@@ -322,7 +442,13 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     await runtime.closeResult(completedMatches: completedMatches);
     if (!mounted) return;
     if (rematch) {
-      await startMatch(selectedFaction);
+      final active = activeBattle;
+      await _startBattle(
+        mode: active?.mode ?? GameMode.skirmish,
+        faction: selectedFaction,
+        operation: active?.operation,
+        replay: active?.replay ?? false,
+      );
       return;
     }
     await _restoreBattleOrientation();
@@ -330,9 +456,25 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     game?.dispose();
     setState(() {
       game = null;
+      activeBattle = null;
       screen = _Screen.lobby;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
+  }
+
+  Future<void> _continueFromResult() async {
+    final active = activeBattle;
+    if (active?.mode != GameMode.chronicle || active?.operation == null) {
+      await _leaveResult(rematch: false);
+      return;
+    }
+    await runtime.closeResult(completedMatches: completedMatches);
+    if (!mounted) return;
+    briefingOperation = _currentOperation();
+    setState(() {
+      game = null;
+      screen = _Screen.briefing;
+    });
   }
 
   @override
@@ -343,6 +485,19 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
+      chronicleAvailable: chronicleAvailable,
+      onOpenChronicle: _openChronicle,
+    ),
+    _Screen.briefing => LobbyScreen(
+      onDeploy: startMatch,
+      onChronicleDeploy: _startChronicle,
+      warTokenBalance: runtime.wallet.balance,
+      onOpenSettings: _openSettings,
+      onOpenLocker: _openLocker,
+      bannerVisible: bannerVisible,
+      chronicleAvailable: chronicleAvailable,
+      briefing: true,
+      currentOperation: briefingOperation,
     ),
     _Screen.battle => BattleScreen(
       game: game!,
@@ -367,6 +522,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenLocker: _openLocker,
       onRematch: () => _leaveResult(rematch: true),
       onLobby: () => _leaveResult(rematch: false),
+      onContinue: activeBattle?.mode == GameMode.chronicle
+          ? _continueFromResult
+          : null,
     ),
   };
 }

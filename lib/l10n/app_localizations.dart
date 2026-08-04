@@ -951,6 +951,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{faction}  · YOU'**
   String standingFactionYou(String faction);
+
+  /// Story catalog failure notice.
+  ///
+  /// In en, this message translates to:
+  /// **'CHRONICLE UNAVAILABLE'**
+  String get chronicleUnavailable;
 }
 
 class _AppLocalizationsDelegate

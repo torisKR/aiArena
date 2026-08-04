@@ -466,4 +466,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String standingFactionYou(String faction) {
     return '$faction  · 你';
   }
+
+  @override
+  String get chronicleUnavailable => '信号编年史暂不可用';
 }

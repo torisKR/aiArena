@@ -521,4 +521,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String standingFactionYou(String faction) {
     return '$faction  · YOU';
   }
+
+  @override
+  String get chronicleUnavailable => 'CHRONICLE UNAVAILABLE';
 }

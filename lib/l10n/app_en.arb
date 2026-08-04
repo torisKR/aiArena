@@ -354,5 +354,7 @@
   "@standingFactionYou": {
     "description": "Player faction label in the result standings.",
     "placeholders": {"faction": {"type": "String", "example": "AMETHYST"}}
-  }
+  },
+  "chronicleUnavailable": "CHRONICLE UNAVAILABLE",
+  "@chronicleUnavailable": {"description": "Story catalog failure notice."}
 }

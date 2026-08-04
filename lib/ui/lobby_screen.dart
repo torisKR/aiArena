@@ -4,6 +4,7 @@ import '../design/tokens.dart';
 import '../game/faction_visuals.dart';
 import '../game/simulation.dart';
 import '../l10n/l10n.dart';
+import '../story/story_models.dart';
 import 'primitives.dart';
 
 class LobbyScreen extends StatefulWidget {
@@ -14,6 +15,11 @@ class LobbyScreen extends StatefulWidget {
     required this.onOpenSettings,
     required this.onOpenLocker,
     required this.bannerVisible,
+    this.onOpenChronicle,
+    this.onChronicleDeploy,
+    this.chronicleAvailable = true,
+    this.briefing = false,
+    this.currentOperation,
   });
 
   final void Function(Faction faction) onDeploy;
@@ -21,6 +27,11 @@ class LobbyScreen extends StatefulWidget {
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLocker;
   final bool bannerVisible;
+  final VoidCallback? onOpenChronicle;
+  final void Function(Faction faction)? onChronicleDeploy;
+  final bool chronicleAvailable;
+  final bool briefing;
+  final StoryOperation? currentOperation;
 
   @override
   State<LobbyScreen> createState() => _LobbyScreenState();
@@ -56,6 +67,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         onOpenLocker: widget.onOpenLocker,
                       ),
                       SizedBox(height: compact ? 38 : 72),
+                      if (widget.briefing && widget.currentOperation != null)
+                        _BriefingHeader(operation: widget.currentOperation!),
+                      if (!widget.briefing) ...[
+                        _ModeRail(
+                          chronicleAvailable: widget.chronicleAvailable,
+                          onChronicle: widget.onOpenChronicle,
+                          onSkirmish: () => widget.onDeploy(selected),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
                       _FactionSelector(
                         selected: selected,
                         compact: compact,
@@ -114,14 +135,23 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: TacticalButton(
-                          label: context.l10n.deploySignal,
+                          key: widget.briefing
+                              ? const Key('chronicle-deploy')
+                              : widget.chronicleAvailable
+                              ? const Key('skirmish-deploy')
+                              : const Key('skirmish-action'),
+                          label: widget.briefing
+                              ? 'DEPLOY OP-${(widget.currentOperation!.id.index + 1).toString().padLeft(2, '0')}'
+                              : context.l10n.deploySignal,
                           color: selected.visual.color,
                           icon: FactionGlyph(
                             kind: _glyphFor(selected),
                             color: TokenfrontColors.deepField,
                             size: 20,
                           ),
-                          onPressed: () => widget.onDeploy(selected),
+                          onPressed: widget.briefing
+                              ? () => widget.onChronicleDeploy?.call(selected)
+                              : () => widget.onDeploy(selected),
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -199,6 +229,76 @@ class _UtilityButton extends StatelessWidget {
         borderRadius: BorderRadius.all(Radius.circular(7)),
       ),
       textStyle: TokenfrontType.instrument.copyWith(fontSize: 9),
+    ),
+  );
+}
+
+class _ModeRail extends StatelessWidget {
+  const _ModeRail({
+    required this.chronicleAvailable,
+    required this.onChronicle,
+    required this.onSkirmish,
+  });
+
+  final bool chronicleAvailable;
+  final VoidCallback? onChronicle;
+  final VoidCallback onSkirmish;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    alignment: WrapAlignment.center,
+    spacing: 10,
+    runSpacing: 10,
+    children: [
+      TacticalButton(
+        key: chronicleAvailable
+            ? const Key('chronicle-mode')
+            : const Key('chronicle-deploy-disabled'),
+        label: chronicleAvailable
+            ? 'CHRONICLE'
+            : context.l10n.chronicleUnavailable,
+        color: TokenfrontColors.relayIvory,
+        onPressed: chronicleAvailable ? onChronicle : null,
+      ),
+      TacticalButton(
+        key: chronicleAvailable
+            ? const Key('skirmish-mode')
+            : const Key('skirmish-deploy'),
+        label: 'SKIRMISH',
+        color: TokenfrontColors.cobalt,
+        onPressed: onSkirmish,
+      ),
+    ],
+  );
+}
+
+class _BriefingHeader extends StatelessWidget {
+  const _BriefingHeader({required this.operation});
+
+  final StoryOperation operation;
+
+  @override
+  Widget build(BuildContext context) => TacticalPanel(
+    color: TokenfrontColors.deepField.withValues(alpha: .82),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'OP-${(operation.id.index + 1).toString().padLeft(2, '0')} // SIGNAL CHRONICLE',
+          style: TokenfrontType.instrument.copyWith(
+            color: TokenfrontColors.relayIvory,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'SEED ${operation.seed}  //  ${operation.duration.inSeconds}s',
+          style: TokenfrontType.instrument.copyWith(
+            color: TokenfrontColors.quietText,
+            fontSize: 10,
+          ),
+        ),
+      ],
     ),
   );
 }

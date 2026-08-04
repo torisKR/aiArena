@@ -24,6 +24,7 @@ class ResultScreen extends StatefulWidget {
     required this.onOpenLocker,
     required this.onRematch,
     required this.onLobby,
+    this.onContinue,
   });
 
   final MatchResult result;
@@ -39,6 +40,7 @@ class ResultScreen extends StatefulWidget {
   final VoidCallback onOpenLocker;
   final VoidCallback onRematch;
   final VoidCallback onLobby;
+  final VoidCallback? onContinue;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -187,6 +189,12 @@ class _ResultScreenState extends State<ResultScreen> {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
+                        if (widget.onContinue != null)
+                          TacticalButton(
+                            label: 'CONTINUE',
+                            onPressed: widget.onContinue,
+                            color: TokenfrontColors.relayIvory,
+                          ),
                         TacticalButton(
                           label: requestingReward
                               ? l10n.requestingAd

@@ -144,5 +144,7 @@
   "alive": "生存",
   "levelSum": "Σ LV",
   "kills": "撃破",
-  "standingFactionYou": "{faction}  · 自分"
+  "standingFactionYou": "{faction}  · 自分",
+  "chronicleUnavailable": "シグナル・クロニクル利用不可",
+  "@chronicleUnavailable": {"description": "ストーリーカタログ障害の通知。"}
 }

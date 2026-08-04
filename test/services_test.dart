@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/economy/war_token_wallet.dart';
+import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/services/ads/ad_service.dart';
 import 'package:tokenfront/services/analytics/analytics_event.dart';
 import 'package:tokenfront/services/analytics/analytics_service.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
+import 'package:tokenfront/story/story_models.dart';
 
 void main() {
   const trackingId = 'tracking-id-must-be-gated';
@@ -62,6 +65,62 @@ void main() {
         expect(state.filterTrackingIdentifier(trackingId), isNull);
       }
     });
+  });
+
+  test('Chronicle directive credit stays separate from base claim', () {
+    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+    addTearDown(runtime.dispose);
+    runtime.lockChronicleCore(Faction.amethyst);
+    final report = BattleReport(
+      endReason: ChronicleEndReason.playerEliminated,
+      standingsAtConclusion: const [
+        FactionStanding(
+          faction: Faction.amethyst,
+          survivors: 0,
+          levelSum: 0,
+          kills: 0,
+        ),
+        FactionStanding(
+          faction: Faction.cobalt,
+          survivors: 2,
+          levelSum: 4,
+          kills: 1,
+        ),
+        FactionStanding(
+          faction: Faction.volt,
+          survivors: 0,
+          levelSum: 0,
+          kills: 0,
+        ),
+        FactionStanding(
+          faction: Faction.prism,
+          survivors: 0,
+          levelSum: 0,
+          kills: 0,
+        ),
+      ],
+      globalWinner: null,
+      commandRelays: 0,
+      commandKills: 0,
+      longestCommandLinkSeconds: 45,
+      playerRank: 4,
+      playerSurvivors: 0,
+    );
+
+    expect(
+      runtime.claimBaseReward(
+        matchId: 'chronicle-wake-seed-2026080501-attempt-1',
+        amount: 40,
+      ),
+      40,
+    );
+    final transition = runtime.concludeChronicle(
+      operationId: StoryOperationId.wake,
+      report: report,
+      replay: false,
+    );
+    expect(transition.directiveBonusCredit, 15);
+    expect(runtime.wallet.balance, 55);
   });
 
   group('launch-safe advertising policy', () {

@@ -12,6 +12,90 @@ import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/result_screen.dart';
 
 void main() {
+  testWidgets('Chronicle construction failure keeps Skirmish deployable', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(
+      TokenfrontApp(
+        runtime: runtime,
+        storyOperationsProvider: () => throw StateError('catalog unavailable'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHRONICLE UNAVAILABLE'), findsOneWidget);
+    expect(find.byKey(const Key('chronicle-deploy-disabled')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Chronicle elimination debrief advances to OP-02', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      platform: ClientPlatform.web,
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CHRONICLE'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('OP-01'), findsWidgets);
+    await tester.tap(find.text('AMETHYST').first);
+    await tester.ensureVisible(find.text('DEPLOY OP-01'));
+    await tester.tap(find.text('DEPLOY OP-01'));
+    await tester.pump();
+
+    final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    for (final unit in battle.game.simulation.units) {
+      if (unit.faction == Faction.amethyst) {
+        unit.alive = false;
+        unit.state = AiState.dead;
+      }
+    }
+    battle.game.update(1 / 30);
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(
+      runtime.analytics.pendingEvents.where(
+        (e) => e.event.name == 'tutorial_completed',
+      ),
+      hasLength(1),
+    );
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('OP-02'), findsWidgets);
+  });
+
+  testWidgets('Skirmish elimination preserves spectator battle', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('SKIRMISH').first);
+    await tester.pump();
+    final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    for (final unit in battle.game.simulation.units) {
+      if (unit.faction == Faction.amethyst) {
+        unit.alive = false;
+        unit.state = AiState.dead;
+      }
+    }
+    battle.game.update(1 / 30);
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+    expect(find.byType(ResultScreen), findsNothing);
+  });
+
   testWidgets('lobby exposes factions and deploy action', (tester) async {
     await tester.pumpWidget(const TokenfrontApp());
     await tester.pumpAndSettle();
@@ -83,7 +167,7 @@ void main() {
           .toList(growable: false);
       expect(
         events.where((event) => event.name == 'tutorial_completed'),
-        hasLength(1),
+        isEmpty,
       );
       expect(
         events
@@ -136,7 +220,7 @@ void main() {
         runtime.analytics.pendingEvents.where(
           (envelope) => envelope.event.name == 'tutorial_completed',
         ),
-        hasLength(1),
+        isEmpty,
       );
     },
   );

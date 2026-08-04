@@ -468,4 +468,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String standingFactionYou(String faction) {
     return '$faction  · 自分';
   }
+
+  @override
+  String get chronicleUnavailable => 'シグナル・クロニクル利用不可';
 }

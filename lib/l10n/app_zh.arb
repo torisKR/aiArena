@@ -144,5 +144,7 @@
   "alive": "存活",
   "levelSum": "Σ LV",
   "kills": "击杀",
-  "standingFactionYou": "{faction}  · 你"
+  "standingFactionYou": "{faction}  · 你",
+  "chronicleUnavailable": "信号编年史暂不可用",
+  "@chronicleUnavailable": {"description": "故事目录故障提示。"}
 }

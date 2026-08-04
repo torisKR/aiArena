@@ -144,5 +144,7 @@
   "alive": "생존",
   "levelSum": "Σ LV",
   "kills": "처치",
-  "standingFactionYou": "{faction}  · 나"
+  "standingFactionYou": "{faction}  · 나",
+  "chronicleUnavailable": "시그널 크로니클 이용 불가",
+  "@chronicleUnavailable": {"description": "스토리 카탈로그 오류 안내."}
 }
