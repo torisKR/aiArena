@@ -8,6 +8,7 @@ import 'package:tokenfront/services/ads/ad_service.dart';
 import 'package:tokenfront/services/analytics/analytics_event.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
 import 'package:tokenfront/settings/game_preferences.dart';
+import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/result_screen.dart';
 
@@ -95,6 +96,104 @@ void main() {
     expect(find.byType(BattleScreen), findsOneWidget);
     expect(find.byType(ResultScreen), findsNothing);
   });
+
+  testWidgets('Chronicle uses its locked core for later operations', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      platform: ClientPlatform.web,
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CHRONICLE'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AMETHYST').first);
+    await tester.ensureVisible(find.text('DEPLOY OP-01'));
+    await tester.tap(find.text('DEPLOY OP-01'));
+    await tester.pump();
+    final firstBattle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    for (final unit in firstBattle.game.simulation.units) {
+      if (unit.faction == Faction.amethyst) {
+        unit.alive = false;
+        unit.state = AiState.dead;
+      }
+    }
+    firstBattle.game.update(1 / 30);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('COBALT').first);
+    await tester.ensureVisible(find.text('DEPLOY OP-02'));
+    await tester.tap(find.text('DEPLOY OP-02'));
+    await tester.pump();
+    final secondBattle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    expect(secondBattle.game.mode, GameMode.chronicle);
+    expect(secondBattle.game.playerFaction, Faction.amethyst);
+    expect(runtime.storyProgress.campaignFaction, Faction.amethyst);
+  });
+
+  testWidgets(
+    'Chronicle rematch is a non-canonical replay on the locked core',
+    (tester) async {
+      final runtime = TokenfrontRuntime(
+        platform: ClientPlatform.web,
+        preferences: GamePreferences(
+          audioEnabled: false,
+          hapticsEnabled: false,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('CHRONICLE'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('DEPLOY OP-01'));
+      await tester.tap(find.text('DEPLOY OP-01'));
+      await tester.pump();
+      final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      for (final unit in battle.game.simulation.units) {
+        if (unit.faction == Faction.amethyst) {
+          unit.alive = false;
+          unit.state = AiState.dead;
+        }
+      }
+      battle.game.update(1 / 30);
+      await tester.pumpAndSettle();
+      expect(
+        runtime.storyProgress.concludedOperations,
+        contains(StoryOperationId.wake),
+      );
+      await tester.tap(find.text('REMATCH'));
+      await tester.pump();
+
+      final replay = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      expect(replay.game.mode, GameMode.chronicle);
+      expect(replay.game.operation?.id, StoryOperationId.wake);
+      expect(replay.game.playerFaction, Faction.amethyst);
+      for (final unit in replay.game.simulation.units) {
+        if (unit.faction == Faction.amethyst) {
+          unit.alive = false;
+          unit.state = AiState.dead;
+        }
+      }
+      replay.game.update(1 / 30);
+      await tester.pumpAndSettle();
+      expect(runtime.storyProgress.concludedOperations, {
+        StoryOperationId.wake,
+      });
+      expect(
+        runtime.analytics.pendingEvents.where(
+          (event) => event.event.name == 'tutorial_completed',
+        ),
+        hasLength(1),
+      );
+    },
+  );
 
   testWidgets('lobby exposes factions and deploy action', (tester) async {
     await tester.pumpWidget(const TokenfrontApp());

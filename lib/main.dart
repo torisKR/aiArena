@@ -291,7 +291,16 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       return;
     }
     final l10n = context.l10n;
-    selectedFaction = faction;
+    if (mode == GameMode.chronicle &&
+        operation?.id == StoryOperationId.wake &&
+        runtime.storyProgress.campaignFaction == null &&
+        !replay) {
+      runtime.lockChronicleCore(faction);
+    }
+    final battleFaction = mode == GameMode.chronicle
+        ? runtime.storyProgress.campaignFaction ?? faction
+        : faction;
+    selectedFaction = battleFaction;
     result = null;
     relays = 0;
     elapsed = 0;
@@ -307,20 +316,13 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     ].join('-');
     activeBattle = _ActiveBattle(
       mode: mode,
-      faction: faction,
+      faction: battleFaction,
       matchId: currentMatchId,
       operation: operation,
       replay: replay,
     );
-    if (mode == GameMode.chronicle &&
-        operation?.id == StoryOperationId.wake &&
-        runtime.storyProgress.campaignFaction == null &&
-        !replay) {
-      runtime.lockChronicleCore(faction);
-    }
-    selectedFaction = faction;
     runtime.record(
-      AnalyticsEvent.factionSelected(faction: faction.visual.name),
+      AnalyticsEvent.factionSelected(faction: battleFaction.visual.name),
     );
     runtime.record(
       AnalyticsEvent.matchStarted(
@@ -330,7 +332,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     );
     late final TokenfrontGame nextGame;
     nextGame = TokenfrontGame(
-      playerFaction: faction,
+      playerFaction: battleFaction,
       mode: mode,
       operation: operation,
       seed: seed,
@@ -445,9 +447,11 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       final active = activeBattle;
       await _startBattle(
         mode: active?.mode ?? GameMode.skirmish,
-        faction: selectedFaction,
+        faction: active?.faction ?? selectedFaction,
         operation: active?.operation,
-        replay: active?.replay ?? false,
+        replay: active?.mode == GameMode.chronicle
+            ? true
+            : active?.replay ?? false,
       );
       return;
     }
