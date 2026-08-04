@@ -8,6 +8,7 @@ import 'package:tokenfront/services/ads/ad_service.dart';
 import 'package:tokenfront/services/analytics/analytics_event.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
 import 'package:tokenfront/settings/game_preferences.dart';
+import 'package:tokenfront/story/story_catalog.dart';
 import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/result_screen.dart';
@@ -194,6 +195,45 @@ void main() {
       );
     },
   );
+
+  testWidgets('incomplete Chronicle catalog fails closed after continue', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      platform: ClientPlatform.web,
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(
+      TokenfrontApp(
+        runtime: runtime,
+        storyOperationsProvider: () => [StoryCatalog.operations.first],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHRONICLE'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('DEPLOY OP-01'));
+    await tester.tap(find.text('DEPLOY OP-01'));
+    await tester.pump();
+    final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    for (final unit in battle.game.simulation.units) {
+      if (unit.faction == Faction.amethyst) {
+        unit.alive = false;
+        unit.state = AiState.dead;
+      }
+    }
+    battle.game.update(1 / 30);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+    expect(find.text('CHRONICLE UNAVAILABLE'), findsOneWidget);
+    expect(find.byKey(const Key('chronicle-deploy-disabled')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('lobby exposes factions and deploy action', (tester) async {
     await tester.pumpWidget(const TokenfrontApp());

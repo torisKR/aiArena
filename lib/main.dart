@@ -171,6 +171,20 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     }
   }
 
+  StoryOperation? _resolveCurrentOperation() {
+    try {
+      return _currentOperation();
+    } on StateError {
+      chronicleAvailable = false;
+      briefingOperation = null;
+      return null;
+    } on FormatException {
+      chronicleAvailable = false;
+      briefingOperation = null;
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -436,7 +450,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       baseReward = reward;
       screen = _Screen.result;
     });
-    briefingOperation = _currentOperation();
+    briefingOperation = _resolveCurrentOperation();
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
   }
 
@@ -474,10 +488,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     }
     await runtime.closeResult(completedMatches: completedMatches);
     if (!mounted) return;
-    briefingOperation = _currentOperation();
+    final nextOperation = _resolveCurrentOperation();
     setState(() {
       game = null;
-      screen = _Screen.briefing;
+      screen = nextOperation == null ? _Screen.lobby : _Screen.briefing;
     });
   }
 
