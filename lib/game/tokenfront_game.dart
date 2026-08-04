@@ -15,6 +15,7 @@ import '../design/tokens.dart';
 import '../economy/cosmetic_catalog.dart';
 import 'faction_visuals.dart';
 import 'simulation.dart';
+import '../story/story_models.dart';
 
 enum HandoffStage {
   impactHold,
@@ -58,6 +59,7 @@ class BattleHudSnapshot {
     required this.currentLevel,
     required this.currentKills,
     required this.relayCount,
+    required this.directiveProgress,
     required this.handoffProgress,
     required this.handoffStage,
     required this.playerEliminated,
@@ -72,6 +74,7 @@ class BattleHudSnapshot {
     bool mouseCameraEnabled = true,
     int unitsPerFaction = 1000,
     double matchLimitSeconds = 900,
+    DirectiveProgress? directiveProgress,
   }) => BattleHudSnapshot(
     elapsed: 0,
     remaining: matchLimitSeconds,
@@ -81,6 +84,7 @@ class BattleHudSnapshot {
     currentLevel: 1,
     currentKills: 0,
     relayCount: 0,
+    directiveProgress: directiveProgress,
     handoffProgress: null,
     handoffStage: null,
     playerEliminated: false,
@@ -96,6 +100,7 @@ class BattleHudSnapshot {
   final int currentLevel;
   final int currentKills;
   final int relayCount;
+  final DirectiveProgress? directiveProgress;
   final double? handoffProgress;
   final HandoffStage? handoffStage;
   final bool playerEliminated;
@@ -114,7 +119,9 @@ class _CombatFlash {
 class TokenfrontGame extends FlameGame with KeyboardEvents {
   TokenfrontGame({
     required this.playerFaction,
-    required this.onMatchEnded,
+    required this.onBattleConcluded,
+    this.mode = GameMode.skirmish,
+    this.operation,
     this.seed = 20260715,
     BattleConfig config = const BattleConfig(),
     this.reduceMotion = false,
@@ -131,7 +138,8 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     this.combatOutCode = 'OUT',
     this.onHandoffStarted,
     this.onHandoffOutcome,
-  }) : simulation = BattleSimulation(
+  }) : assert(mode == GameMode.skirmish || operation != null),
+       simulation = BattleSimulation(
          seed: seed,
          config: config,
          playerFaction: playerFaction,
@@ -142,6 +150,13 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
            mouseCameraEnabled: mouseCameraEnabled,
            unitsPerFaction: config.unitsPerFaction,
            matchLimitSeconds: config.matchLimitSeconds,
+           directiveProgress: operation == null
+               ? null
+               : DirectiveProgress(
+                   kind: operation.directive.kind,
+                   current: 0,
+                   target: operation.directive.target,
+                 ),
          ),
        ),
        _commandAccent = Color(
@@ -155,6 +170,8 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
        );
 
   final Faction playerFaction;
+  final GameMode mode;
+  final StoryOperation? operation;
   final int seed;
   final bool reduceMotion;
   bool lowSpecMode;
@@ -166,7 +183,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   final String combatOutCode;
   final VoidCallback? onHandoffStarted;
   final ValueChanged<bool>? onHandoffOutcome;
-  final void Function(MatchResult result, int relays) onMatchEnded;
+  final void Function(BattleReport report) onBattleConcluded;
   final BattleSimulation simulation;
 
   final ValueNotifier<BattleHudSnapshot> hud;
@@ -195,6 +212,12 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   Rect _visibleWorldBounds = Rect.zero;
   int _seenHandoffs = 0;
   int _relayCount = 0;
+  int _commandKills = 0;
+  int? _linkUnitId;
+  double _commandLinkSeconds = 0;
+  double _longestCommandLinkSeconds = 0;
+  bool _handoffRelayEligible = false;
+  bool _conclusionPending = false;
   bool _resultReported = false;
   final List<_CombatFlash> _combatFlashes = [];
   final List<Vec2> _trailPoints = <Vec2>[];
@@ -245,6 +268,37 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
 
   @visibleForTesting
   int get debugFpsSampleCount => _fpsSampleCount;
+
+  int get commandRelays => _relayCount;
+  int get commandKills => _commandKills;
+  double get longestCommandLinkSeconds => _longestCommandLinkSeconds;
+  DirectiveProgress? get directiveProgress => _directiveProgress;
+
+  DirectiveProgress? get _directiveProgress {
+    final currentOperation = operation;
+    if (currentOperation == null) return null;
+    final current = switch (currentOperation.directive.kind) {
+      DirectiveKind.longestCommandLink => _longestCommandLinkSeconds,
+      DirectiveKind.commandRelays => _relayCount.toDouble(),
+      DirectiveKind.commandKills => _commandKills.toDouble(),
+      DirectiveKind.finalRank => _livePlayerRank().toDouble(),
+      DirectiveKind.victory =>
+        simulation.result?.winner == playerFaction ? 1.0 : 0.0,
+    };
+    return DirectiveProgress(
+      kind: currentOperation.directive.kind,
+      current: current,
+      target: currentOperation.directive.target,
+    );
+  }
+
+  int _livePlayerRank() {
+    final standings = simulation.standings();
+    final index = standings.indexWhere(
+      (standing) => standing.faction == playerFaction,
+    );
+    return index < 0 ? standings.length : index + 1;
+  }
 
   @visibleForTesting
   void debugResetPerformanceMetrics() {
@@ -554,7 +608,34 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     final simulationDt = handoffActive
         ? safeDt * HandoffTimeline.simulationScaleAt(_handoffElapsed)
         : safeDt;
+    final commandedBeforeStep = simulation.controlledUnitId;
+    final elapsedBeforeStep = simulation.matchElapsed;
     simulation.step(simulationDt);
+
+    for (final event in simulation.frameCombatEvents) {
+      if (event.winnerId == commandedBeforeStep) _commandKills += 1;
+    }
+    final elapsedDelta = math
+        .max(0, simulation.matchElapsed - elapsedBeforeStep)
+        .toDouble();
+    final commandedAfterStep = simulation.controlledUnitId;
+    final commandedAlive =
+        simulation.unitById(commandedAfterStep)?.alive ?? false;
+    if (commandedAfterStep != _linkUnitId) {
+      if (_commandLinkSeconds > _longestCommandLinkSeconds) {
+        _longestCommandLinkSeconds = _commandLinkSeconds;
+      }
+      _linkUnitId = commandedAfterStep;
+      _commandLinkSeconds = 0;
+    }
+    if (commandedAfterStep != null &&
+        commandedAlive &&
+        commandedAfterStep == commandedBeforeStep) {
+      _commandLinkSeconds += elapsedDelta;
+      if (_commandLinkSeconds > _longestCommandLinkSeconds) {
+        _longestCommandLinkSeconds = _commandLinkSeconds;
+      }
+    }
 
     final combatFlashLimit = lowSpecMode ? 16 : _combatFlashLimit;
     for (final event in simulation.frameCombatEvents) {
@@ -592,10 +673,11 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       unawaited(_safeStart(_relayAudioPool, volume: .72));
       if (hapticsEnabled) HapticFeedback.mediumImpact();
       if (!event.factionEliminated) {
-        _relayCount += 1;
+        _handoffRelayEligible = true;
       } else {
         _handoffElapsed = -1;
         onHandoffOutcome?.call(false);
+        _maybeConcludePlayerElimination();
       }
     }
 
@@ -610,8 +692,15 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     }
 
     if (simulation.finished && !_resultReported && simulation.result != null) {
-      _resultReported = true;
-      onMatchEnded(simulation.result!, _relayCount);
+      if (_handoffElapsed >= 0) {
+        _conclusionPending = true;
+      } else {
+        _publishConclusion(
+          simulation.result!.reason == MatchEndReason.timeLimit
+              ? ChronicleEndReason.timeLimit
+              : ChronicleEndReason.globalResolution,
+        );
+      }
     }
   }
 
@@ -656,8 +745,20 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       if (elapsed >= HandoffTimeline.duration) {
         _handoffElapsed = -1;
         _fallenUnitId = null;
+        if (_handoffRelayEligible) {
+          _relayCount += 1;
+          _handoffRelayEligible = false;
+        }
         onHandoffOutcome?.call(true);
         if (hapticsEnabled) HapticFeedback.lightImpact();
+        if (_conclusionPending && simulation.result != null) {
+          _conclusionPending = false;
+          _publishConclusion(
+            simulation.result!.reason == MatchEndReason.timeLimit
+                ? ChronicleEndReason.timeLimit
+                : ChronicleEndReason.globalResolution,
+          );
+        }
       }
       return;
     }
@@ -736,6 +837,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       currentLevel: controlled?.level ?? 0,
       currentKills: controlled?.kills ?? 0,
       relayCount: _relayCount,
+      directiveProgress: _directiveProgress,
       handoffProgress: _handoffElapsed < 0
           ? null
           : (_handoffElapsed / HandoffTimeline.duration).clamp(0.0, 1.0),
@@ -746,6 +848,38 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       mouseCameraEnabled: mouseCameraEnabled,
       cameraZoom: _lastRenderZoom,
     );
+  }
+
+  void _maybeConcludePlayerElimination() {
+    if (mode != GameMode.chronicle ||
+        _resultReported ||
+        !simulation.playerFactionEliminated) {
+      return;
+    }
+    _publishConclusion(ChronicleEndReason.playerEliminated);
+  }
+
+  void _publishConclusion(ChronicleEndReason reason) {
+    if (_resultReported) return;
+    _resultReported = true;
+    final standings = simulation.standings();
+    final playerStanding = standings.firstWhere(
+      (standing) => standing.faction == playerFaction,
+    );
+    final result = simulation.result;
+    final report = BattleReport(
+      endReason: reason,
+      standingsAtConclusion: standings,
+      globalWinner: reason == ChronicleEndReason.playerEliminated
+          ? null
+          : result?.winner,
+      commandRelays: _relayCount,
+      commandKills: _commandKills,
+      longestCommandLinkSeconds: _longestCommandLinkSeconds,
+      playerRank: standings.indexOf(playerStanding) + 1,
+      playerSurvivors: playerStanding.survivors,
+    );
+    onBattleConcluded(report);
   }
 
   @override

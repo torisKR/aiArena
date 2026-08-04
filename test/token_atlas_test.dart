@@ -45,7 +45,7 @@ void main() {
         playerFaction: Faction.amethyst,
         audioEnabled: false,
         hapticsEnabled: false,
-        onMatchEnded: (_, _) {},
+        onBattleConcluded: (_) {},
       );
       addTearDown(game.onRemove);
 

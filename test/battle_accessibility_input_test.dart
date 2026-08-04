@@ -25,7 +25,7 @@ TokenfrontGame _game({
   mouseCameraEnabled: mouseCameraEnabled,
   hapticsEnabled: false,
   audioEnabled: false,
-  onMatchEnded: (_, _) {},
+  onBattleConcluded: (_) {},
 );
 
 KeyDownEvent _keyDown(

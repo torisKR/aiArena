@@ -9,6 +9,7 @@ import 'economy/cosmetic_catalog.dart';
 import 'game/faction_visuals.dart';
 import 'game/simulation.dart';
 import 'game/tokenfront_game.dart';
+import 'story/story_models.dart';
 import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
 import 'services/analytics/analytics_event.dart';
@@ -254,8 +255,15 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
               : HandoffAnalyticsOutcome.skipped,
         ),
       ),
-      onMatchEnded: (matchResult, relayCount) {
-        unawaited(_finishMatch(nextGame, matchResult, relayCount));
+      onBattleConcluded: (report) {
+        final matchResult = MatchResult(
+          reason: report.endReason == ChronicleEndReason.timeLimit
+              ? MatchEndReason.timeLimit
+              : MatchEndReason.elimination,
+          winner: report.globalWinner,
+          standings: report.standingsAtConclusion,
+        );
+        unawaited(_finishMatch(nextGame, matchResult, report.commandRelays));
       },
     );
     game?.dispose();
