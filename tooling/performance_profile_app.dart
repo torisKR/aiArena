@@ -39,18 +39,34 @@ Future<void> _runProfile(TokenfrontGame game) async {
 
   // Exclude installation, shader warmup, and asset loading from the sample.
   await Future<void>.delayed(const Duration(seconds: 3));
+  final warmupSimulationTicks = game.simulation.simulationTickCount;
+  final warmupSpatialGridQueries = game.simulation.grid.totalQueries;
+  final warmupSpatialGridCandidateVisits =
+      game.simulation.grid.totalCandidateVisits;
   game.debugResetPerformanceMetrics();
   await Future<void>.delayed(const Duration(seconds: 30));
 
   final report = <String, Object>{
     'unitsAllocated': game.simulation.units.length,
     'unitsAlive': game.simulation.units.where((unit) => unit.alive).length,
+    'fixedSimulationHz': game.simulation.config.simulationHz,
+    'sampleSeconds': 30,
     'samples': game.debugFpsSampleCount,
     'averageFps': double.parse(game.averageFps.toStringAsFixed(2)),
     'onePercentLowFps': game.onePercentLowFps,
-    'simulationTicks': game.simulation.simulationTickCount,
+    // Subtract counters captured after warmup so these fields describe only
+    // the 30-second sample, matching the reset FPS metrics above.
+    'simulationTicks':
+        game.simulation.simulationTickCount - warmupSimulationTicks,
     'renderedUnits': game.debugRenderedUnitCount,
     'culledUnits': game.debugCulledUnitCount,
+    'atlasBatchSubmissions': game.debugAtlasBatchSubmissionCount,
+    'atlasBatchSprites': game.debugAtlasBatchSpriteCount,
+    'spatialGridQueries':
+        game.simulation.grid.totalQueries - warmupSpatialGridQueries,
+    'spatialGridCandidateVisits':
+        game.simulation.grid.totalCandidateVisits -
+        warmupSpatialGridCandidateVisits,
   };
   // One machine-readable line makes the result easy to retain from device logs.
   debugPrint('TOKENFRONT_PERFORMANCE ${jsonEncode(report)}');

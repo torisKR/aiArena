@@ -5,6 +5,20 @@
 - Repository root: `/Users/toris/projects/aiArena`
 - Audited product: Flutter + Flame offline single-player MVP
 
+**Task 12 status: INTERIM FEATURE PREVIEW — PRIVACY REDEPLOY REQUIRED.** The
+current release Web artifact is built and its 46-line pre-deploy digest is
+recorded at `.omo/evidence/task-12/tokenfront-orbital-war-build.sha256`; the
+digest file SHA-256 is
+`b575725e9a9fe9a80d82a8b5abc99cb7e8ae6c49568ee095b2d957ad03f9c4f7`. Forty-six
+files were uploaded to the retained `tokenfront-orbital-war` Pages project as
+production deployment `e74f7d12-c7c5-40c0-9d87-83240b57de5c` at
+`2026-08-04T20:53:49.386Z` (`2026-08-05T05:53:49.386+09:00`); the canonical
+preview URL is <https://tokenfront-orbital-war.pages.dev/>. This is a dirty
+working-tree feature preview whose Cloudflare source metadata still names base
+commit `f246035`, not commit-bound final release evidence. Task 7 must rebuild
+and redeploy after the in-app privacy surface exists and prove Web/AAB source
+parity.
+
 This is an evidence audit, not a store-release declaration. “Verified” means the current workspace contains the implementation plus a relevant passing automated test, successful build/runtime command, or a recorded hands-on target-platform check. Browser visual QA is identified as hands-on rather than automated.
 
 ## Executive status
@@ -152,11 +166,43 @@ The current unit/widget suite total is **119**. The default VM run passes 118 an
 | `test/widget_test.dart` | 7 | Lobby/deploy, narrow layouts, settings/locker, result reward, and app-surface analytics behavior. |
 | **Total** | **119** | VM: 118 passed + 1 Web-only skipped; Web-only test then passed in Brave Chromium. |
 
-The separate integration suite contains one scenario:
+### Task 12 execution evidence (2026-08-05)
+
+| Scenario / invocation | Observable result | Artifact |
+|---|---|---|
+| RED gate: `flutter test integration_test/app_smoke_test.dart` before the missing import was wired | Failed while compiling the new deterministic scenarios (`ClientPlatform` undefined) | `.omo/evidence/task-12/red-integration.log` |
+| Android emulator integration: `flutter test integration_test/app_smoke_test.dart -d emulator-5554 -r expanded` | 10 scenarios plus existing smoke passed (`All tests passed!`) on the implementation API 37 emulator | `.omo/evidence/task-12/integration.log` |
+| 4,000-unit performance: `flutter test test/performance_test.dart -r expanded` | 150 fixed ticks / 30 Hz, 30,754,185 candidate visits, 205,027.9 visits/tick, 254 ms host sample | `.omo/evidence/task-12/performance.log` |
+| 4,000-unit profile: `flutter run --profile -d emulator-5554 -t tooling/performance_profile_app.dart` | `sdk gphone16k arm64`, Android API 37 emulator (not a physical device); 30-second sample at fixed 30 Hz with warmup-subtracted 895 simulation ticks, 1,474,486 grid queries, and 37,604,824 candidate visits; 1,715 frames, 58.69 average FPS, 30 FPS 1% low, 566 rendered / 47 culled units, one atlas batch | `.omo/evidence/task-12/fix-device-profile.log` |
+| Formatter: `dart format --output=none --set-exit-if-changed lib test integration_test tooling` | Exit 0 after formatting changed files | `.omo/evidence/task-12/format.log` |
+| Localization: `flutter gen-l10n` | Exit 0 | `.omo/evidence/task-12/gen-l10n.log` |
+| Analyzer: `flutter analyze` | Exit 0, `No issues found!` | `.omo/evidence/task-12/analyze.log` |
+| Full suite: `flutter test -r compact` | Exit 0, 176 passed and 1 Web-only skip | `.omo/evidence/task-12/full-test.log` |
+| Release Web build: `flutter build web --release` | Exit 0, `build/web` generated | `.omo/evidence/task-12/web-build.log` |
+| Pre-deploy digest: `find build/web ... shasum -a 256` | 46 files captured before any upload attempt | `.omo/evidence/task-12/tokenfront-orbital-war-build.sha256` |
+| Cloudflare upload: `npx wrangler pages deploy build/web --project-name=tokenfront-orbital-war --branch=main` | Production deployment completed at `2026-08-04T20:53:49.386Z`; 46 files uploaded, deployment ID `e74f7d12-c7c5-40c0-9d87-83240b57de5c` | `.omo/evidence/task-12/wrangler-deploy.log` |
+| Live preview verification | Canonical index and manifest returned exit 0; both identify `Tokenfront: Orbital Signal War` | `.omo/evidence/task-12/preview-index.html`, `.omo/evidence/task-12/preview-manifest.json` |
+
+The deployment artifact comparison redownloaded all 46 production files and
+compared each response with the pre-deploy manifest: `CHECKED=46
+MISMATCHES=0`. The deployed `manifest.json` artifact matches the expected
+SHA-256 `30144ad28592b7b7a4e58d99d8cda01111a2aa1d2e13c176f55c6ea89e5e74c9`,
+and the captured preview manifest has the same digest. The complete comparison
+record, including the `-d emulator-5554` API 37 scope, is retained in
+`.omo/evidence/task-12/post-deploy-comparison.txt`.
+
+The profile-mode entrypoint now emits `TOKENFRONT_PERFORMANCE` with fixed Hz,
+FPS, 1% low, rendered/cull counts, atlas batch submissions/sprites, and grid
+candidate metrics. A real-device 4,000-unit profile and browser hands-on
+matrix remain separate QA evidence; the historical 400-unit device result is
+not promoted to current-build acceptance.
+
+The separate integration suite contains eleven scenarios (the existing launch
+smoke plus ten deterministic Chronicle/Skirmish scenarios):
 
 | File | Count | Exact scenario | Executed targets |
 |---|---:|---|---|
-| `integration_test/app_smoke_test.dart` | 1 | `launches, configures, deploys, and survives app resume` | Physical SM A175N / Android 16 and iPhone 17 Pro Max Simulator / iOS 26.5; both passed on the 2026-07-15 prior build. |
+| `integration_test/app_smoke_test.dart` | 11 | Launch/configure/resume smoke; persistence, elimination, replay, locked-directive, five-operation, deterministic 4-core × 5-seed, and 900-second Skirmish scenarios | `emulator-5554` sdk gphone16k arm64 / Android API 37 passed on 2026-08-05; historical SM A175N / Android 16 and iPhone 17 Pro Max Simulator / iOS 26.5 evidence remains prior-build. |
 
 ## Launch-only gaps that remain open
 

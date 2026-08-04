@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/game/simulation.dart';
 
@@ -52,5 +55,17 @@ void main() {
     // algorithmic candidate-visit assertion above is the primary regression
     // guard; this wall-time ceiling catches catastrophic slowdowns.
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 8)));
+
+    final report = <String, Object>{
+      'unitsAllocated': simulation.units.length,
+      'fixedSimulationHz': simulation.config.simulationHz,
+      'sampleRenderFrames': 5 * 60,
+      'simulationTicks': simulation.simulationTickCount,
+      'spatialGridQueries': simulation.grid.totalQueries,
+      'spatialGridCandidateVisits': simulation.grid.totalCandidateVisits,
+      'candidateVisitsPerTick': visitsPerTick,
+      'elapsedMilliseconds': stopwatch.elapsedMilliseconds,
+    };
+    debugPrint('TOKENFRONT_PERFORMANCE_BASELINE ${jsonEncode(report)}');
   });
 }

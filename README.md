@@ -77,13 +77,23 @@ flutter run -d chrome
 flutter build web --release
 ```
 
-Cloudflare Pages에는 릴리스 빌드 결과를 직접 업로드합니다. `wrangler.jsonc`의 프로젝트명과 출력 경로를 사용하므로 재배포 명령은 다음과 같습니다.
-
-- 프로덕션: [https://tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev)
+Cloudflare Pages 업로드는 개인정보 화면과 Play 게시 계획이 완료되기 전까지
+**INTERIM FEATURE PREVIEW — PRIVACY REDEPLOY REQUIRED** 경계로만 취급합니다.
+최종 배포가 아니며 기존 `tokenfront-ai-arena` 프로젝트를 삭제하지 않습니다.
+Task 7에서 개인정보 surface와 Web/AAB source parity를 확인한 뒤 같은
+`tokenfront-orbital-war` 프로젝트를 재배포해야 합니다.
 
 ```sh
-npx --yes wrangler@latest pages deploy build/web --project-name tokenfront-ai-arena --branch main --commit-dirty=true
+find build/web -type f -print0 | sort -z | xargs -0 shasum -a 256 > /tmp/tokenfront-orbital-war-build.sha256
+npx wrangler pages deploy build/web --project-name tokenfront-orbital-war
 ```
+
+Task 12의 release Web build와 46-file pre-deploy digest는
+`.omo/evidence/task-12/`에 기록되어 있습니다. 현재 interim preview는
+[tokenfront-orbital-war.pages.dev](https://tokenfront-orbital-war.pages.dev/)에서
+확인할 수 있으며 deployment ID는
+`e74f7d12-c7c5-40c0-9d87-83240b57de5c`입니다. 이 배포는 Task 12의 dirty
+working-tree build이므로 커밋 결합형 최종 릴리스 증거가 아닙니다.
 
 Chrome 장치가 없으면 웹 서버 모드로 실행한 뒤 출력된 주소를 Safari 등에서 열 수 있습니다.
 
@@ -142,7 +152,7 @@ flutter test -d <device-or-simulator-id> integration_test/app_smoke_test.dart
 
 ### 실제 기기 성능 프로필
 
-`tooling/performance_profile_app.dart`는 4,000개 유닛을 카메라 크기의 100×40 밀집 전투 구역에 배치하고, 3초 워밍업 뒤 FPS 측정치를 초기화해 30초 동안 샘플링하는 전용 profile-mode 진입점입니다. 오디오와 햅틱은 측정에서 제외하며 결과를 `TOKENFRONT_PERFORMANCE` JSON 한 줄로 출력합니다.
+`tooling/performance_profile_app.dart`는 4,000개 유닛을 카메라 크기의 100×40 밀집 전투 구역에 배치하고, 3초 워밍업 뒤 FPS 측정치를 초기화해 30초 동안 샘플링하는 전용 profile-mode 진입점입니다. 오디오와 햅틱은 측정에서 제외하며 결과를 `TOKENFRONT_PERFORMANCE` JSON 한 줄로 출력합니다. 결과에는 고정 30Hz, 평균/1% low FPS, 렌더 컬링, 아틀라스 배치, SpatialGrid 방문 수가 포함됩니다.
 
 ```sh
 flutter run --profile -d <android-device-id> \
