@@ -168,6 +168,12 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
        _deathAccent = Color(
          CosmeticCatalog.byId(cosmeticLoadout.deathEffectId).accentValue,
        ) {
+    _cameraCenter =
+        simulation.controlledUnit?.position ??
+        Vec2(
+          simulation.config.worldWidth / 2,
+          simulation.config.worldHeight / 2,
+        );
     _publishHud();
   }
 
