@@ -554,20 +554,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ending => 'ENDING';
 
   @override
-  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+  String operationWakeTitle(int operation) {
+    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+  }
 
   @override
-  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+  String operationEchoTitle(int operation) {
+    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+  }
 
   @override
-  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+  String operationSplitTitle(int operation) {
+    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+  }
 
   @override
-  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+  String operationCrownTitle(int operation) {
+    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+  }
 
   @override
-  String get operationLastInstructionTitle =>
-      'OP-05  //  LAST // THE INSTRUCTION';
+  String operationLastInstructionTitle(int operation) {
+    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+  }
 
   @override
   String get operationWakeBriefing =>
@@ -677,6 +686,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get directiveVictory => 'Win the battle.';
+
+  @override
+  String directiveBonus(int amount) {
+    return 'DIRECTIVE BONUS  $amount WT';
+  }
 
   @override
   String get directiveLocked => 'DIRECTIVE LOCKED // BONUS READY';

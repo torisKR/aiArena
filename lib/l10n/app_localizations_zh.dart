@@ -498,20 +498,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ending => '结局';
 
   @override
-  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+  String operationWakeTitle(int operation) {
+    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+  }
 
   @override
-  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+  String operationEchoTitle(int operation) {
+    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+  }
 
   @override
-  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+  String operationSplitTitle(int operation) {
+    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+  }
 
   @override
-  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+  String operationCrownTitle(int operation) {
+    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+  }
 
   @override
-  String get operationLastInstructionTitle =>
-      'OP-05  //  LAST // THE INSTRUCTION';
+  String operationLastInstructionTitle(int operation) {
+    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+  }
 
   @override
   String get operationWakeBriefing => '来自沉默地表的人类权限脉冲正在升起。让一个单位持续在线，直到完成三角定位。';
@@ -526,7 +535,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get operationCrownBriefing => '中继站加冕一名幸存者，随后删除所有竞争记忆。在循环闭合前抵达王冠密钥。';
 
   @override
-  String get operationLastInstructionBriefing => '最终数据包封存在管理员锁内。在循环重置前击破这片战场。';
+  String get operationLastInstructionBriefing => '最终数据包封存在管理员锁内。在循环重置前击破力场。';
 
   @override
   String get operationWakeTransmission => '保持链路—';
@@ -609,6 +618,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get directiveVictory => '单独获胜';
+
+  @override
+  String directiveBonus(int amount) {
+    return '指令奖励  $amount WT';
+  }
 
   @override
   String get directiveLocked => '指令锁定 // 奖励就绪';

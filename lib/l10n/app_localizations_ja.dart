@@ -501,20 +501,29 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ending => 'エンディング';
 
   @override
-  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+  String operationWakeTitle(int operation) {
+    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+  }
 
   @override
-  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+  String operationEchoTitle(int operation) {
+    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+  }
 
   @override
-  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+  String operationSplitTitle(int operation) {
+    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+  }
 
   @override
-  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+  String operationCrownTitle(int operation) {
+    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+  }
 
   @override
-  String get operationLastInstructionTitle =>
-      'OP-05  //  LAST // THE INSTRUCTION';
+  String operationLastInstructionTitle(int operation) {
+    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+  }
 
   @override
   String get operationWakeBriefing =>
@@ -617,6 +626,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get directiveVictory => '単独勝利';
+
+  @override
+  String directiveBonus(int amount) {
+    return '指令ボーナス  $amount WT';
+  }
 
   @override
   String get directiveLocked => '指令ロック // ボーナス準備完了';

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
@@ -111,6 +114,101 @@ void main() {
       'You are a command signal without a body. '
       'The Last Relay is calling.',
     );
+  });
+
+  test('operation numbers are supplied as locale data, not fixed ARB copy', () {
+    const localeCodes = <String>['en', 'ko', 'ja', 'zh'];
+    const titleKeys = <String>[
+      'operationWakeTitle',
+      'operationEchoTitle',
+      'operationSplitTitle',
+      'operationCrownTitle',
+      'operationLastInstructionTitle',
+    ];
+    for (final locale in localeCodes) {
+      final arb =
+          jsonDecode(File('lib/l10n/app_$locale.arb').readAsStringSync())
+              as Map<String, dynamic>;
+      for (final key in titleKeys) {
+        expect(arb[key], isNot(contains(RegExp(r'OP-0[1-5]'))));
+        expect(arb[key], contains('{operation'));
+      }
+    }
+  });
+
+  testWidgets('localized directive rules preserve every numeric boundary', (
+    tester,
+  ) async {
+    const expected = <String, List<String>>{
+      'en': <String>[
+        'Maintain one uninterrupted command link for 45 seconds.',
+        'Complete 2 command handoffs.',
+        'Accumulate 3 kills by directly commanded units.',
+        'Finish at rank 2 or better.',
+        'Win the battle.',
+      ],
+      'ko': <String>[
+        '지휘 연결 45초 유지',
+        '지휘권 인계 2회 완료',
+        '직접 지휘 처치 3회',
+        '2위 이상으로 종료',
+        '단독 승리',
+      ],
+      'ja': <String>[
+        '指揮リンクを45秒維持',
+        '指揮引き継ぎを2回完了',
+        '直接指揮で3体撃破',
+        '2位以内で終了',
+        '単独勝利',
+      ],
+      'zh': <String>[
+        '保持指挥链路45秒',
+        '完成2次指挥交接',
+        '直接指挥击破3个单位',
+        '以第2名或更高名次结束',
+        '单独获胜',
+      ],
+    };
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final copy = StoryLocalizations(context.l10n);
+              final actual = <String>[
+                copy.directiveLabel(
+                  DirectiveKind.longestCommandLink,
+                  target: 45,
+                ),
+                copy.directiveLabel(DirectiveKind.commandRelays, target: 2),
+                copy.directiveLabel(DirectiveKind.commandKills, target: 3),
+                copy.directiveLabel(DirectiveKind.finalRank, target: 2),
+                copy.directiveLabel(DirectiveKind.victory),
+              ];
+              expect(actual, expected[locale.languageCode]);
+              for (
+                var index = 0;
+                index < StoryOperationId.values.length;
+                index++
+              ) {
+                expect(
+                  copy.operationTitle(StoryOperationId.values[index]),
+                  contains('OP-0${index + 1}'),
+                );
+              }
+              for (final amount in const <int>[15, 20, 25, 30, 40]) {
+                expect(copy.directiveBonus(amount), contains('$amount'));
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
   });
 
   testWidgets('missing localization configuration fails loudly', (

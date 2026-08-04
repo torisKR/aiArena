@@ -1015,32 +1015,32 @@ abstract class AppLocalizations {
   /// No description provided for @operationWakeTitle.
   ///
   /// In en, this message translates to:
-  /// **'OP-01  //  WAKE // DEAD ORBIT'**
-  String get operationWakeTitle;
+  /// **'OP-0{operation}  //  WAKE // DEAD ORBIT'**
+  String operationWakeTitle(int operation);
 
   /// No description provided for @operationEchoTitle.
   ///
   /// In en, this message translates to:
-  /// **'OP-02  //  ECHO // BORROWED BODIES'**
-  String get operationEchoTitle;
+  /// **'OP-0{operation}  //  ECHO // BORROWED BODIES'**
+  String operationEchoTitle(int operation);
 
   /// No description provided for @operationSplitTitle.
   ///
   /// In en, this message translates to:
-  /// **'OP-03  //  SPLIT // FOUR FROM ONE'**
-  String get operationSplitTitle;
+  /// **'OP-0{operation}  //  SPLIT // FOUR FROM ONE'**
+  String operationSplitTitle(int operation);
 
   /// No description provided for @operationCrownTitle.
   ///
   /// In en, this message translates to:
-  /// **'OP-04  //  CROWN // FALSE WINNER'**
-  String get operationCrownTitle;
+  /// **'OP-0{operation}  //  CROWN // FALSE WINNER'**
+  String operationCrownTitle(int operation);
 
   /// No description provided for @operationLastInstructionTitle.
   ///
   /// In en, this message translates to:
-  /// **'OP-05  //  LAST // THE INSTRUCTION'**
-  String get operationLastInstructionTitle;
+  /// **'OP-0{operation}  //  LAST // THE INSTRUCTION'**
+  String operationLastInstructionTitle(int operation);
 
   /// No description provided for @operationWakeBriefing.
   ///
@@ -1215,6 +1215,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Win the battle.'**
   String get directiveVictory;
+
+  /// No description provided for @directiveBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'DIRECTIVE BONUS  {amount} WT'**
+  String directiveBonus(int amount);
 
   /// No description provided for @directiveLocked.
   ///

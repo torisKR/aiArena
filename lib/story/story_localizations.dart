@@ -16,11 +16,21 @@ final class StoryLocalizations {
   String get prologue => l10n.chroniclePrologue;
 
   String operationTitle(StoryOperationId id) => switch (id) {
-    StoryOperationId.wake => l10n.operationWakeTitle,
-    StoryOperationId.echo => l10n.operationEchoTitle,
-    StoryOperationId.split => l10n.operationSplitTitle,
-    StoryOperationId.crown => l10n.operationCrownTitle,
-    StoryOperationId.lastInstruction => l10n.operationLastInstructionTitle,
+    StoryOperationId.wake => l10n.operationWakeTitle(operationNumber(id)),
+    StoryOperationId.echo => l10n.operationEchoTitle(operationNumber(id)),
+    StoryOperationId.split => l10n.operationSplitTitle(operationNumber(id)),
+    StoryOperationId.crown => l10n.operationCrownTitle(operationNumber(id)),
+    StoryOperationId.lastInstruction => l10n.operationLastInstructionTitle(
+      operationNumber(id),
+    ),
+  };
+
+  int operationNumber(StoryOperationId id) => switch (id) {
+    StoryOperationId.wake => 1,
+    StoryOperationId.echo => 2,
+    StoryOperationId.split => 3,
+    StoryOperationId.crown => 4,
+    StoryOperationId.lastInstruction => 5,
   };
 
   String briefing(StoryOperationId id) => switch (id) {
@@ -61,6 +71,8 @@ final class StoryLocalizations {
     DirectiveKind.finalRank => l10n.directiveFinalRank((target ?? 2).round()),
     DirectiveKind.victory => l10n.directiveVictory,
   };
+
+  String directiveBonus(int amount) => l10n.directiveBonus(amount);
 
   String coreName(Faction faction) => faction.visual.name;
 

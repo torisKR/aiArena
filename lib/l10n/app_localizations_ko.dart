@@ -503,20 +503,29 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ending => '결말';
 
   @override
-  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+  String operationWakeTitle(int operation) {
+    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+  }
 
   @override
-  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+  String operationEchoTitle(int operation) {
+    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+  }
 
   @override
-  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+  String operationSplitTitle(int operation) {
+    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+  }
 
   @override
-  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+  String operationCrownTitle(int operation) {
+    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+  }
 
   @override
-  String get operationLastInstructionTitle =>
-      'OP-05  //  LAST // THE INSTRUCTION';
+  String operationLastInstructionTitle(int operation) {
+    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+  }
 
   @override
   String get operationWakeBriefing =>
@@ -623,6 +632,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get directiveVictory => '단독 승리';
+
+  @override
+  String directiveBonus(int amount) {
+    return '지령 보너스  $amount WT';
+  }
 
   @override
   String get directiveLocked => '지령 잠금 // 보너스 준비';
