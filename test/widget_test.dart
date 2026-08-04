@@ -25,6 +25,45 @@ bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
 }
 
 void main() {
+  testWidgets('battle pauses and resumes without disposed focus callbacks', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TOKENFRONT'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+    expect(find.text('SIGNAL CONDITIONING'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close settings'));
+    await tester.pumpAndSettle();
+
+    if (find.text('DEPLOY SIGNAL').evaluate().isNotEmpty) {
+      await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
+      await tester.tap(find.text('DEPLOY SIGNAL'));
+    } else {
+      await tester.tap(find.text('SKIRMISH').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('skirmish-deploy')));
+    }
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsNothing);
+
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('fresh Command Deck shows prologue before core selection', (
     tester,
   ) async {

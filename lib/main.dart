@@ -140,6 +140,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   bool bannerVisible = false;
   bool _startingMatch = false;
   bool _requireLandscapeForBattle = false;
+  int _battleRequest = 0;
+  AppLifecycleState _lifecycleState = AppLifecycleState.resumed;
+  final GlobalKey<BattleScreenState> _battleScreenKey =
+      GlobalKey<BattleScreenState>();
 
   TokenfrontRuntime get runtime => widget.runtime;
 
@@ -190,12 +194,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
 
   @override
   void dispose() {
+    _battleRequest += 1;
     WidgetsBinding.instance.removeObserver(this);
     runtime.removeListener(_runtimeChanged);
     unawaited(runtime.flushLocalState());
     runtime.record(AnalyticsEvent.sessionSummary(matchCount: completedMatches));
     runtime.flushAnalytics();
-    game?.dispose();
     unawaited(widget.orientationController.restore());
     super.dispose();
   }
@@ -206,6 +210,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         state == AppLifecycleState.detached) {
       unawaited(runtime.flushLocalState());
       runtime.flushAnalytics();
+    }
+    if (mounted) {
+      setState(() => _lifecycleState = state);
+      _battleScreenKey.currentState?.handleLifecycleState(state);
     }
   }
 
@@ -263,7 +271,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     );
   }
 
-  Future<void> _lockBattleOrientation() async {
+  Future<void> _lockBattleOrientation(int request) async {
     final display = View.of(context).display;
     final logicalShortestSide =
         display.size.shortestSide / display.devicePixelRatio;
@@ -274,14 +282,17 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       await widget.orientationController.enterBattle(
         logicalShortestSide: logicalShortestSide,
       );
+      if (!mounted || request != _battleRequest) return;
     } on Object catch (error) {
       debugPrint('Landscape orientation request was denied: $error');
     }
   }
 
-  Future<void> _restoreBattleOrientation() async {
+  Future<void> _restoreBattleOrientation({TokenfrontGame? activeGame}) async {
+    if (!mounted || (activeGame != null && game != activeGame)) return;
     try {
       await widget.orientationController.restore();
+      if (!mounted || (activeGame != null && game != activeGame)) return;
     } on Object catch (error) {
       debugPrint('Orientation restore request was denied: $error');
     }
@@ -336,9 +347,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   }) async {
     if (_startingMatch) return;
     _startingMatch = true;
-    await _lockBattleOrientation();
-    if (!mounted) {
-      await _restoreBattleOrientation();
+    final request = ++_battleRequest;
+    await _lockBattleOrientation(request);
+    if (!mounted || request != _battleRequest) {
+      if (mounted) await _restoreBattleOrientation();
       _startingMatch = false;
       return;
     }
@@ -423,7 +435,6 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         unawaited(_finishMatch(nextGame, matchResult, report));
       },
     );
-    game?.dispose();
     setState(() {
       game = nextGame;
       screen = _Screen.battle;
@@ -481,9 +492,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         onePercentLowFps: endedGame.onePercentLowFps,
       ),
     );
-    await _restoreBattleOrientation();
+    await _restoreBattleOrientation(activeGame: endedGame);
     if (!mounted || game != endedGame) return;
     setState(() {
+      game = null;
       result = matchResult;
       relays = report.commandRelays;
       elapsed = matchElapsed;
@@ -510,9 +522,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       );
       return;
     }
-    await _restoreBattleOrientation();
+    await _restoreBattleOrientation(activeGame: game);
     if (!mounted) return;
-    game?.dispose();
     setState(() {
       game = null;
       activeBattle = null;
@@ -605,8 +616,11 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     _Screen.battle => Stack(
       children: [
         BattleScreen(
+          key: _battleScreenKey,
           game: game!,
           preferences: runtime.preferences,
+          observeLifecycle: false,
+          lifecycleState: _lifecycleState,
           requireLandscape: _requireLandscapeForBattle,
         ),
         if (activeBattle?.replay == true &&

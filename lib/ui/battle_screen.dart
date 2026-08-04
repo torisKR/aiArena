@@ -23,21 +23,27 @@ class BattleScreen extends StatefulWidget {
     required this.game,
     this.preferences,
     this.requireLandscape = false,
+    this.observeLifecycle = true,
+    this.lifecycleState = AppLifecycleState.resumed,
   });
 
   final TokenfrontGame game;
   final GamePreferences? preferences;
   final bool requireLandscape;
+  final bool observeLifecycle;
+  final AppLifecycleState lifecycleState;
 
   @override
-  State<BattleScreen> createState() => _BattleScreenState();
+  State<BattleScreen> createState() => BattleScreenState();
 }
 
-class _BattleScreenState extends State<BattleScreen>
+class BattleScreenState extends State<BattleScreen>
     with WidgetsBindingObserver {
   int? _mousePanPointer;
   bool _lifecyclePaused = false;
   bool _userPaused = false;
+  bool _disposing = false;
+  final ValueNotifier<bool> _lifecyclePauseNotice = ValueNotifier(false);
 
   TokenfrontGame get game => widget.game;
   bool get _gameplayInputEnabled =>
@@ -46,22 +52,50 @@ class _BattleScreenState extends State<BattleScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    if (widget.observeLifecycle) WidgetsBinding.instance.addObserver(this);
+    game.addGameStateListener(_gameStateChanged);
+  }
+
+  void _gameStateChanged() {
+    if (mounted && !_disposing) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    handleLifecycleState(state);
   }
 
   @override
   void didUpdateWidget(covariant BattleScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.lifecycleState != widget.lifecycleState &&
+        !widget.observeLifecycle) {
+      handleLifecycleState(widget.lifecycleState);
+    }
     if (oldWidget.game != game) {
+      oldWidget.game.removeGameStateListener(_gameStateChanged);
       oldWidget.game.clearInputs();
       oldWidget.game.endMouseCameraPan();
       oldWidget.game.endMinimapCameraPan();
       _mousePanPointer = null;
+      FocusManager.instance.primaryFocus?.unfocus(
+        disposition: UnfocusDisposition.scope,
+      );
+      // Flame removes the old game from the GameWidget during this update.
+      // Dispose only after that subtree has finished updating so focus and
+      // input callbacks cannot reach a disposed game.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || widget.game != oldWidget.game) {
+          oldWidget.game.dispose();
+        }
+      });
+      game.addGameStateListener(_gameStateChanged);
     }
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  /// Called by the single lifecycle owner ([TokenfrontRoot]).
+  void handleLifecycleState(AppLifecycleState state) {
+    if (!mounted || _disposing) return;
     final paused = state != AppLifecycleState.resumed;
     if (paused) {
       game.clearInputs();
@@ -72,8 +106,10 @@ class _BattleScreenState extends State<BattleScreen>
     } else if (!_userPaused && game.paused) {
       game.resumeEngine();
     }
-    if (mounted && paused != _lifecyclePaused) {
+    if (mounted) {
       setState(() => _lifecyclePaused = paused);
+      _lifecyclePauseNotice.value = paused;
+      WidgetsBinding.instance.scheduleFrame();
     }
   }
 
@@ -128,10 +164,19 @@ class _BattleScreenState extends State<BattleScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _disposing = true;
+    if (widget.observeLifecycle) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
+    _lifecyclePauseNotice.dispose();
+    game.removeGameStateListener(_gameStateChanged);
+    FocusManager.instance.primaryFocus?.unfocus(
+      disposition: UnfocusDisposition.scope,
+    );
     game.clearInputs();
     game.endMouseCameraPan();
     game.endMinimapCameraPan();
+    game.dispose();
     super.dispose();
   }
 
@@ -153,7 +198,14 @@ class _BattleScreenState extends State<BattleScreen>
               game.endMouseCameraPan();
               game.endMinimapCameraPan();
               _mousePanPointer = null;
-              return const _LandscapeRequired();
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  const _LandscapeRequired(),
+                  if (_lifecyclePaused || game.paused)
+                    Center(child: _PausedReadout(userPaused: _userPaused)),
+                ],
+              );
             }
             final compact = constraints.maxWidth < 620;
             final short = constraints.maxHeight < 560;
@@ -299,10 +351,17 @@ class _BattleScreenState extends State<BattleScreen>
                               ),
                             ),
                           ),
-                        if (game.paused)
-                          Center(
-                            child: _PausedReadout(userPaused: _userPaused),
-                          ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _lifecyclePauseNotice,
+                          builder: (context, lifecyclePaused, _) =>
+                              lifecyclePaused || game.paused
+                              ? Center(
+                                  child: _PausedReadout(
+                                    userPaused: _userPaused,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                       ],
                     ),
                   ),
@@ -987,7 +1046,9 @@ class _DashControlState extends State<_DashControl> {
             onTap: widget.enabled ? widget.game.triggerDash : null,
             canRequestFocus: true,
             focusColor: TokenfrontColors.relayIvory.withValues(alpha: .28),
-            onFocusChange: (value) => setState(() => focused = value),
+            onFocusChange: (value) {
+              if (mounted && value != focused) setState(() => focused = value);
+            },
             child: SizedBox.square(
               dimension: widget.size,
               child: Center(
@@ -1087,6 +1148,7 @@ class _BattleMinimapState extends State<_BattleMinimap> {
 
   @override
   void dispose() {
+    focusNode.unfocus(disposition: UnfocusDisposition.scope);
     widget.game.endMinimapCameraPan();
     focusNode.dispose();
     super.dispose();
@@ -1103,7 +1165,7 @@ class _BattleMinimapState extends State<_BattleMinimap> {
       focusNode: focusNode,
       onKeyEvent: handleKey,
       onFocusChange: (value) {
-        if (value != focused) setState(() => focused = value);
+        if (mounted && value != focused) setState(() => focused = value);
       },
       child: RepaintBoundary(
         child: Listener(

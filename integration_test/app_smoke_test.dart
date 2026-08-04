@@ -26,8 +26,14 @@ void main() {
     await tester.tap(find.byTooltip('Close settings'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
-    await tester.tap(find.text('DEPLOY SIGNAL'));
+    if (find.text('DEPLOY SIGNAL').evaluate().isNotEmpty) {
+      await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
+      await tester.tap(find.text('DEPLOY SIGNAL'));
+    } else {
+      await tester.tap(find.text('SKIRMISH').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('skirmish-deploy')));
+    }
     await tester.pump();
     expect(find.byType(BattleScreen), findsOneWidget);
 
@@ -37,5 +43,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsNothing);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }
