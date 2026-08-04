@@ -43,7 +43,6 @@ class BattleScreenState extends State<BattleScreen>
   bool _lifecyclePaused = false;
   bool _userPaused = false;
   bool _disposing = false;
-  final ValueNotifier<bool> _lifecyclePauseNotice = ValueNotifier(false);
 
   TokenfrontGame get game => widget.game;
   bool get _gameplayInputEnabled =>
@@ -53,11 +52,6 @@ class BattleScreenState extends State<BattleScreen>
   void initState() {
     super.initState();
     if (widget.observeLifecycle) WidgetsBinding.instance.addObserver(this);
-    game.addGameStateListener(_gameStateChanged);
-  }
-
-  void _gameStateChanged() {
-    if (mounted && !_disposing) setState(() {});
   }
 
   @override
@@ -73,7 +67,6 @@ class BattleScreenState extends State<BattleScreen>
       handleLifecycleState(widget.lifecycleState);
     }
     if (oldWidget.game != game) {
-      oldWidget.game.removeGameStateListener(_gameStateChanged);
       oldWidget.game.clearInputs();
       oldWidget.game.endMouseCameraPan();
       oldWidget.game.endMinimapCameraPan();
@@ -89,7 +82,6 @@ class BattleScreenState extends State<BattleScreen>
           oldWidget.game.dispose();
         }
       });
-      game.addGameStateListener(_gameStateChanged);
     }
   }
 
@@ -108,8 +100,9 @@ class BattleScreenState extends State<BattleScreen>
     }
     if (mounted) {
       setState(() => _lifecyclePaused = paused);
-      _lifecyclePauseNotice.value = paused;
-      WidgetsBinding.instance.scheduleFrame();
+      if (widget.observeLifecycle) {
+        WidgetsBinding.instance.scheduleForcedFrame();
+      }
     }
   }
 
@@ -168,8 +161,6 @@ class BattleScreenState extends State<BattleScreen>
     if (widget.observeLifecycle) {
       WidgetsBinding.instance.removeObserver(this);
     }
-    _lifecyclePauseNotice.dispose();
-    game.removeGameStateListener(_gameStateChanged);
     FocusManager.instance.primaryFocus?.unfocus(
       disposition: UnfocusDisposition.scope,
     );
@@ -351,17 +342,10 @@ class BattleScreenState extends State<BattleScreen>
                               ),
                             ),
                           ),
-                        ValueListenableBuilder<bool>(
-                          valueListenable: _lifecyclePauseNotice,
-                          builder: (context, lifecyclePaused, _) =>
-                              lifecyclePaused || game.paused
-                              ? Center(
-                                  child: _PausedReadout(
-                                    userPaused: _userPaused,
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
+                        if (game.paused)
+                          Center(
+                            child: _PausedReadout(userPaused: _userPaused),
+                          ),
                       ],
                     ),
                   ),
