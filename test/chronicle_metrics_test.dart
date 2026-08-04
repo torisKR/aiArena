@@ -72,6 +72,17 @@ class ChronicleGameHarness {
     }
   }
 
+  void eliminatePlayerAndAllButOneFaction() {
+    final survivor = game.simulation.units.firstWhere(
+      (unit) => unit.faction != Faction.amethyst,
+    );
+    for (final unit in game.simulation.units) {
+      if (unit.id == survivor.id) continue;
+      unit.alive = false;
+      unit.state = AiState.dead;
+    }
+  }
+
   void _advance(double seconds) {
     var remaining = seconds;
     while (remaining > 1e-9) {
@@ -114,5 +125,34 @@ void main() {
     );
     expect(harness.game.simulation.result, isNull);
     expect(harness.game.simulation.finished, isFalse);
+  });
+
+  test('global resolution wins when player elimination resolves the match', () {
+    final harness = ChronicleGameHarness(
+      operation: StoryCatalog.byId(StoryOperationId.wake),
+    );
+    harness.eliminatePlayerAndAllButOneFaction();
+    harness.game.update(1 / 30);
+
+    expect(harness.reports, hasLength(1));
+    expect(
+      harness.reports.single.endReason,
+      ChronicleEndReason.globalResolution,
+    );
+    expect(harness.reports.single.globalWinner, isNotNull);
+    expect(harness.reports.single.playerSurvivors, 0);
+  });
+
+  test('initial final-rank directive progress uses the actual rank', () {
+    final harness = ChronicleGameHarness(
+      operation: StoryCatalog.byId(StoryOperationId.crown),
+    );
+    final expectedRank =
+        harness.game.simulation.standings().indexWhere(
+          (standing) => standing.faction == Faction.amethyst,
+        ) +
+        1;
+    expect(harness.game.hud.value.directiveProgress?.current, expectedRank);
+    expect(harness.game.hud.value.directiveProgress?.current, greaterThan(0));
   });
 }

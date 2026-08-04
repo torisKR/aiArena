@@ -167,7 +167,9 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
        ),
        _deathAccent = Color(
          CosmeticCatalog.byId(cosmeticLoadout.deathEffectId).accentValue,
-       );
+       ) {
+    _publishHud();
+  }
 
   final Faction playerFaction;
   final GameMode mode;
@@ -224,6 +226,9 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   double _trailAccumulator = 0;
   final List<int> _fpsHistogram = List<int>.filled(121, 0);
   final List<int> _hudAliveCounts = List<int>.filled(Faction.values.length, 0);
+  final List<int> _hudLevelSums = List<int>.filled(Faction.values.length, 0);
+  final List<int> _hudFactionKills = List<int>.filled(Faction.values.length, 0);
+  int _hudPlayerRank = 1;
   int _fpsSampleCount = 0;
   double _fpsSampleSum = 0;
   bool _hudDisposed = false;
@@ -281,7 +286,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       DirectiveKind.longestCommandLink => _longestCommandLinkSeconds,
       DirectiveKind.commandRelays => _relayCount.toDouble(),
       DirectiveKind.commandKills => _commandKills.toDouble(),
-      DirectiveKind.finalRank => _livePlayerRank().toDouble(),
+      DirectiveKind.finalRank => _hudPlayerRank.toDouble(),
       DirectiveKind.victory =>
         simulation.result?.winner == playerFaction ? 1.0 : 0.0,
     };
@@ -290,14 +295,6 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       current: current,
       target: currentOperation.directive.target,
     );
-  }
-
-  int _livePlayerRank() {
-    final standings = simulation.standings();
-    final index = standings.indexWhere(
-      (standing) => standing.faction == playerFaction,
-    );
-    return index < 0 ? standings.length : index + 1;
   }
 
   @visibleForTesting
@@ -677,7 +674,9 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       } else {
         _handoffElapsed = -1;
         onHandoffOutcome?.call(false);
-        _maybeConcludePlayerElimination();
+        if (!simulation.finished && simulation.result == null) {
+          _maybeConcludePlayerElimination();
+        }
       }
     }
 
@@ -824,9 +823,29 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   void _publishHud() {
     final controlled = simulation.controlledUnit;
     _hudAliveCounts.fillRange(0, _hudAliveCounts.length, 0);
+    _hudLevelSums.fillRange(0, _hudLevelSums.length, 0);
+    _hudFactionKills.fillRange(0, _hudFactionKills.length, 0);
     for (final unit in simulation.units) {
-      if (unit.alive) _hudAliveCounts[unit.faction.index] += 1;
+      _hudFactionKills[unit.faction.index] += unit.kills;
+      if (unit.alive) {
+        _hudAliveCounts[unit.faction.index] += 1;
+        _hudLevelSums[unit.faction.index] += unit.level;
+      }
     }
+    final rankOrder = List<Faction>.of(Faction.values)
+      ..sort((a, b) {
+        var comparison = _hudAliveCounts[b.index].compareTo(
+          _hudAliveCounts[a.index],
+        );
+        if (comparison != 0) return comparison;
+        comparison = _hudLevelSums[b.index].compareTo(_hudLevelSums[a.index]);
+        if (comparison != 0) return comparison;
+        comparison = _hudFactionKills[b.index].compareTo(
+          _hudFactionKills[a.index],
+        );
+        return comparison != 0 ? comparison : a.index.compareTo(b.index);
+      });
+    _hudPlayerRank = rankOrder.indexOf(playerFaction) + 1;
     hud.value = BattleHudSnapshot(
       elapsed: simulation.matchElapsed,
       remaining: math.max(0, simulation.matchLimit - simulation.matchElapsed),
