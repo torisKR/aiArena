@@ -163,6 +163,8 @@ int _standingHash(FactionStanding standing) => Object.hash(
 );
 
 final class StoryProgress {
+  static const Object _unset = Object();
+
   StoryProgress({
     required this.campaignFaction,
     required Iterable<StoryOperationId> concludedOperations,
@@ -216,6 +218,33 @@ final class StoryProgress {
     medals: medals,
     recoveredTransmissions: recoveredTransmissions,
     ending: ending,
+  );
+
+  /// Returns a new progress value with only the supplied fields changed.
+  ///
+  /// [Object] parameters deliberately distinguish an omitted field from an
+  /// explicit `null`, which lets callers clear the campaign faction or ending
+  /// without exposing a mutable state path.
+  StoryProgress copyWith({
+    Object? campaignFaction = _unset,
+    Object? concludedOperations = _unset,
+    Object? medals = _unset,
+    Object? recoveredTransmissions = _unset,
+    Object? ending = _unset,
+  }) => StoryProgress(
+    campaignFaction: identical(campaignFaction, _unset)
+        ? this.campaignFaction
+        : campaignFaction as Faction?,
+    concludedOperations: identical(concludedOperations, _unset)
+        ? this.concludedOperations
+        : concludedOperations as Iterable<StoryOperationId>,
+    medals: identical(medals, _unset)
+        ? this.medals
+        : medals as Iterable<StoryOperationId>,
+    recoveredTransmissions: identical(recoveredTransmissions, _unset)
+        ? this.recoveredTransmissions
+        : recoveredTransmissions as Iterable<StoryOperationId>,
+    ending: identical(ending, _unset) ? this.ending : ending as EndingChoice?,
   );
 
   Map<String, Object?> toJson() => {
