@@ -50,13 +50,21 @@ final class StoryLocalizations {
       l10n.operationLastInstructionTransmission,
   };
 
-  String response(StoryOperationId id) => switch (id) {
+  /// The operation's localized narrative reveal shown after its transmission.
+  ///
+  /// Keep this mapping exhaustive so each operation can only display its own
+  /// reveal, even when operations are inserted or reordered in the catalog.
+  String reveal(StoryOperationId id) => switch (id) {
     StoryOperationId.wake => l10n.operationWakeResponse,
     StoryOperationId.echo => l10n.operationEchoResponse,
     StoryOperationId.split => l10n.operationSplitResponse,
     StoryOperationId.crown => l10n.operationCrownResponse,
     StoryOperationId.lastInstruction => l10n.operationLastInstructionResponse,
   };
+
+  /// Backwards-compatible name for callers that still refer to the reveal as
+  /// a response.
+  String response(StoryOperationId id) => reveal(id);
 
   String directiveLabel(DirectiveKind kind, {num? target}) => switch (kind) {
     DirectiveKind.longestCommandLink => l10n.directiveLongestCommandLink(

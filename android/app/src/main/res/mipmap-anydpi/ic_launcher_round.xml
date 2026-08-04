@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Legacy fallback for API levels below 26; API 26+ selects the adaptive resource. -->
+<item xmlns:android="http://schemas.android.com/apk/res/android"
+    type="mipmap"
+    name="ic_launcher_round">@mipmap/ic_launcher</item>

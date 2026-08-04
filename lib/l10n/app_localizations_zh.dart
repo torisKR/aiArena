@@ -640,6 +640,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get directiveMissed => '指令未完成';
 
   @override
+  String get directiveNameLongestCommandLink => '指挥链路';
+
+  @override
+  String get directiveNameCommandRelays => '指挥交接';
+
+  @override
+  String get directiveNameCommandKills => '直接指挥击破';
+
+  @override
+  String get directiveNameFinalRank => '最终排名';
+
+  @override
+  String get directiveNameVictory => '胜利';
+
+  @override
+  String directiveLiveProgress(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target';
+  }
+
+  @override
+  String directiveOnTrack(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // 进行中';
+  }
+
+  @override
+  String directivePending(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // 等待最终报告';
+  }
+
+  @override
   String get bonusClaimed => '奖励已领取';
 
   @override

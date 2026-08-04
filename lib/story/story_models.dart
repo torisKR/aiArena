@@ -186,7 +186,7 @@ final class StoryProgress {
   factory StoryProgress.fromJson(Map<String, Object?> json) {
     final factionName = json['campaignFaction'];
     final endingName = json['ending'];
-    return StoryProgress(
+    final progress = StoryProgress(
       campaignFaction: factionName == null
           ? null
           : Faction.values.byName(factionName as String),
@@ -197,6 +197,10 @@ final class StoryProgress {
           ? null
           : EndingChoice.values.byName(endingName as String),
     );
+    if (!progress.isSemanticallyValid) {
+      throw const FormatException('story progress is semantically invalid');
+    }
+    return progress;
   }
 
   final Faction? campaignFaction;
@@ -204,6 +208,21 @@ final class StoryProgress {
   final Set<StoryOperationId> medals;
   final Set<StoryOperationId> recoveredTransmissions;
   final EndingChoice? ending;
+
+  /// Whether this progress can be produced by the sequential campaign rules.
+  ///
+  /// This is intentionally checked only when decoding persisted data. Runtime
+  /// transitions remain responsible for enforcing their own preconditions.
+  bool get isSemanticallyValid {
+    if (!_isPrefix(concludedOperations)) return false;
+    if (!concludedOperations.containsAll(medals)) return false;
+    if (!concludedOperations.containsAll(recoveredTransmissions)) return false;
+    if (concludedOperations.isNotEmpty && campaignFaction == null) return false;
+    if (ending == null) return true;
+    return campaignFaction != null &&
+        concludedOperations.length == StoryOperationId.values.length &&
+        concludedOperations.containsAll(StoryOperationId.values);
+  }
 
   StoryOperationId? get currentOperation {
     for (final operation in StoryOperationId.values) {
@@ -318,6 +337,18 @@ Set<StoryOperationId> _orderedStoryIds(Iterable<StoryOperationId> source) {
   return Set<StoryOperationId>.unmodifiable(
     StoryOperationId.values.where(present.contains),
   );
+}
+
+bool _isPrefix(Set<StoryOperationId> operations) {
+  var missingEarlierOperation = false;
+  for (final operation in StoryOperationId.values) {
+    if (operations.contains(operation)) {
+      if (missingEarlierOperation) return false;
+    } else {
+      missingEarlierOperation = true;
+    }
+  }
+  return true;
 }
 
 Iterable<StoryOperationId> _decodeStoryIds(Object? value) {

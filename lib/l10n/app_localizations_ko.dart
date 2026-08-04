@@ -654,6 +654,51 @@ class AppLocalizationsKo extends AppLocalizations {
   String get directiveMissed => '지령 실패';
 
   @override
+  String get directiveNameLongestCommandLink => '지휘 연결';
+
+  @override
+  String get directiveNameCommandRelays => '지휘권 인계';
+
+  @override
+  String get directiveNameCommandKills => '직접 지휘 처치';
+
+  @override
+  String get directiveNameFinalRank => '최종 순위';
+
+  @override
+  String get directiveNameVictory => '승리';
+
+  @override
+  String directiveLiveProgress(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target';
+  }
+
+  @override
+  String directiveOnTrack(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // 진행 중';
+  }
+
+  @override
+  String directivePending(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // 최종 보고 대기';
+  }
+
+  @override
   String get bonusClaimed => '보너스 수령 완료';
 
   @override

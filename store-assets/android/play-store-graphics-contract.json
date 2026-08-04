@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "brand": {
+    "title": "TOKENFRONT",
+    "subtitle": "ORBITAL SIGNAL WAR",
+    "eyebrow": "OFFLINE TACTICAL SURVIVAL"
+  },
+  "palette": {
+    "field": "#050710",
+    "relay": "#F4EAD4",
+    "amethyst": "#9B6CFF",
+    "cobalt": "#3F8CFF",
+    "volt": "#FFE05C",
+    "prism": "#FF5CCF"
+  },
+  "imageGeneration": {
+    "mode": "built-in image_gen edit/reference",
+    "reference": "assets/blender/tokenfront_keyart.png",
+    "promptSummary": "Wide 2:1 Blender-like orbital command-table backdrop; exactly four abstract faction fleets converge on one white relay; dark left 36 percent reserved for deterministic text; no people, logos, company names, text, or watermark."
+  },
+  "sources": {
+    "feature-backdrop-v1.png": "925042a40554d7e1b110afff4bc1d280dde7d99aa19cbfec59810c727b0369da",
+    "tokenfront-store-icon.svg": "0c035a9c5fc4a551dc66147541fd36cdb2b63fa03140a5af7c7cccb645f2591e",
+    "feature-render.html": "27f5557d8d0747c7040226898b7c1080d1ae6cadd71aa141b95618b6ccbd0ae6"
+  },
+  "outputs": {
+    "icon-512.png": {
+      "width": 512,
+      "height": 512,
+      "sha256": "f05e9b3ff2d20dc67627a3ac199cc73a95cc1f78d5cbb9b49baa575604a4ac64"
+    },
+    "feature-graphic-1024x500.jpg": {
+      "width": 1024,
+      "height": 500,
+      "sha256": "d55db2545b5ee03a8bdcc6413a9c70acd54a8d5099f3001fe00ce04a528ccafa"
+    }
+  }
+}

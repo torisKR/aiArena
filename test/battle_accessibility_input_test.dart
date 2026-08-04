@@ -51,12 +51,15 @@ void _advance(TokenfrontGame game, double seconds) {
   }
 }
 
-Widget _localizedBattle(Widget home) => MaterialApp(
-  theme: buildTokenfrontTheme(),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: home,
-);
+Widget _localizedBattle(Widget home, {Locale locale = const Locale('en')}) =>
+    MaterialApp(
+      key: ValueKey(locale),
+      locale: locale,
+      theme: buildTokenfrontTheme(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: home,
+    );
 
 void main() {
   group('input contract', () {
@@ -354,6 +357,68 @@ void main() {
   });
 
   group('battle accessibility and responsive layout', () {
+    testWidgets(
+      'live directive text and semantics stay localized while final rank is provisional',
+      (tester) async {
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final announcements = <String>[];
+        messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (
+          message,
+        ) async {
+          if (message is Map && message['type'] == 'announce') {
+            announcements.add(message['data']['message'] as String);
+          }
+          return null;
+        });
+        addTearDown(
+          () => messenger.setMockDecodedMessageHandler(
+            SystemChannels.accessibility,
+            null,
+          ),
+        );
+
+        for (final locale in AppLocalizations.supportedLocales) {
+          final game = _game(
+            operation: StoryCatalog.byId(StoryOperationId.crown),
+          );
+          await tester.pumpWidget(
+            _localizedBattle(BattleScreen(game: game), locale: locale),
+          );
+          await tester.pump(const Duration(milliseconds: 50));
+          game.pauseEngine();
+
+          final context = tester.element(
+            find.byKey(const Key('directive-rail')),
+          );
+          final l10n = context.l10n;
+          final name = l10n.directiveNameFinalRank;
+          for (final rank in const <int>[1, 2]) {
+            game.hud.value = BattleHudSnapshot.initial(
+              unitsPerFaction: 20,
+              matchLimitSeconds: 180,
+              directiveProgress: DirectiveProgress(
+                kind: DirectiveKind.finalRank,
+                current: rank.toDouble(),
+                target: 2,
+              ),
+            );
+            await tester.pump();
+            final expected = l10n.directiveOnTrack(
+              l10n.directive,
+              name,
+              rank,
+              2,
+            );
+            expect(find.text(expected), findsOneWidget);
+            expect(find.bySemanticsLabel(expected), findsOneWidget);
+            expect(find.text(l10n.directiveLocked), findsNothing);
+            if (rank == 1) expect(announcements, contains(expected));
+          }
+        }
+      },
+    );
+
     testWidgets('directive rail announces milestones without tick spam', (
       tester,
     ) async {
@@ -771,7 +836,7 @@ void main() {
       game.setTouchInput(const Vec2(1, 0));
       await tester.pump();
 
-      final pause = find.bySemanticsLabel('Pause or resume battle');
+      final pause = find.bySemanticsLabel('PAUSE');
       expect(pause, findsOneWidget);
       await tester.tap(pause);
       await tester.pump();
@@ -779,10 +844,29 @@ void main() {
       expect(game.debugTouchInput, Vec2.zero);
       expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsOneWidget);
 
-      await tester.tap(pause);
+      await tester.tap(find.bySemanticsLabel('RESUME'));
       await tester.pump();
       expect(game.paused, isFalse);
       expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsNothing);
+    });
+
+    testWidgets('pause action semantics expose the localized current action', (
+      tester,
+    ) async {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final game = _game();
+        await tester.pumpWidget(
+          _localizedBattle(BattleScreen(game: game), locale: locale),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+        final context = tester.element(find.byKey(const Key('battle-pause')));
+        final l10n = context.l10n;
+        expect(find.bySemanticsLabel(l10n.pauseBattle), findsOneWidget);
+        await tester.tap(find.bySemanticsLabel(l10n.pauseBattle));
+        await tester.pump();
+        expect(find.bySemanticsLabel(l10n.resumeBattle), findsOneWidget);
+        expect(find.bySemanticsLabel(l10n.pauseBattle), findsNothing);
+      }
     });
 
     testWidgets('manual pause rejects every deferred gameplay input', (
@@ -796,7 +880,7 @@ void main() {
       await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
       await tester.pump(const Duration(milliseconds: 50));
 
-      final pause = find.bySemanticsLabel('Pause or resume battle');
+      final pause = find.bySemanticsLabel('PAUSE');
       await tester.tap(pause);
       await tester.pump();
       expect(game.paused, isTrue);
@@ -834,7 +918,7 @@ void main() {
       expect(game.debugDashActive, isFalse);
       expect(game.debugCameraCenter, cameraBefore);
 
-      await tester.tap(pause);
+      await tester.tap(find.bySemanticsLabel('RESUME'));
       await tester.pump();
       expect(game.paused, isFalse);
       game.update(.3);
@@ -1109,7 +1193,7 @@ void main() {
         }
 
         offsetCamera();
-        final pause = find.bySemanticsLabel('Pause or resume battle');
+        final pause = find.bySemanticsLabel('PAUSE');
         await tester.tap(pause);
         await tester.pump();
         final manualCenter = game.debugCameraCenter;
@@ -1124,7 +1208,7 @@ void main() {
         expect(game.debugCameraCenter, manualCenter);
         expect(game.debugManualZoom, manualZoom);
 
-        await tester.tap(pause);
+        await tester.tap(find.bySemanticsLabel('RESUME'));
         await tester.pump();
         offsetCamera();
         final lifecycleCenter = game.debugCameraCenter;

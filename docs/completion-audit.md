@@ -1,6 +1,6 @@
 # Tokenfront: Orbital Signal War — completion audit
 
-- Audit date: 2026-07-16 (KST)
+- Audit date: 2026-08-05 (KST)
 - Requirement source: `pasted-text-1.txt` supplied with the build request
 - Repository root: `/Users/toris/projects/aiArena`
 - Audited product: Flutter + Flame offline single-player MVP
@@ -25,10 +25,11 @@ This is an evidence audit, not a store-release declaration. “Verified” means
 
 The gameplay MVP and requested performance architecture are implemented and automated-test verified. The current build has a deterministic 4,000-unit battle (1,000 per faction), fixed 30Hz simulation, 10–15Hz tactical AI, approximately 5Hz far-idle AI, faction-partitioned spatial queries, a fixed unit pool, conservative render culling, an expanded camera with a right-side tactical minimap, sub-600dp Android/iOS/Web landscape requests and portrait gating, Blender-authored runtime atlas rendering, the complete handoff experience, responsive input/UI, offline-safe monetization boundaries, and privacy-gated analytics buffering. Current 4,000-unit physical-device performance acceptance remains open.
 
-Current 2026-07-16 web evidence includes:
+Historical 2026-07-16 web evidence for the retired
+`tokenfront-ai-arena` Pages project includes:
 
 - a successful `flutter build web --release` using the current 4,000-unit code;
-- a production Cloudflare Pages deployment at [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev), returning HTTP 200, with both `index.html` and `main.dart.js` matching the local release SHA-256 hashes;
+- the former Cloudflare Pages deployment at [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev), which returned HTTP 200 and matched that historical local release's `index.html` and `main.dart.js` SHA-256 hashes; this is not the current product project or release evidence;
 - current-build Brave checks at 844×390 confirming the four 1,000-unit lobby entries, 4,000-unit total, battle HUD, right-side tactical minimap, controls, and zero browser-console errors or warnings;
 - a local fresh-match seconds 3–8 `requestAnimationFrame` diagnostic of 58.197 average FPS, approximately 29.499 FPS 1% low, 34ms maximum frame time, and 58 frames above 25ms. This short headless desktop-browser diagnostic is not physical-device or endurance acceptance.
 
@@ -47,9 +48,9 @@ The remaining work is launch integration and acceptance work, not missing core g
 | Evidence | Current result | Classification |
 |---|---|---|
 | `flutter analyze` | Exit 0: `No issues found!` | **Verified** |
-| `flutter test` | Exit 0: **118 VM tests passed; 1 Web-only test skipped and then passed separately in Brave Chromium** | **Verified** |
+| `flutter test` | Exit 0 on 2026-08-05: **190 VM tests passed; 1 Web-only test skipped** | **Verified checkpoint; Web-only test remains a separate browser invocation** |
 | Current Brave release QA | 844×390 local release and Cloudflare production checks confirm 4×1,000 lobby data, battle HUD, tactical minimap, controls, and 0 console errors/warnings | **Verified current hands-on browser QA** |
-| Cloudflare Pages production | [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev) returns HTTP 200; deployed `index.html` and `main.dart.js` SHA-256 hashes match `build/web` | **Verified deployment** |
+| Historical Cloudflare Pages deployment | The retired [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev) project matched its 2026-07-16 build; it is not the current product project or final release | **Historical evidence only** |
 | Android integration test | `integration_test/app_smoke_test.dart` passed on physical SM A175N / Android 16 on 2026-07-15 | **Historical prior-build platform evidence** |
 | Android profile-mode performance | Historical SM A175N / Android 16 result for the former 400-unit build: 30-second dense sample, 2,599 frame samples, 88.38 average FPS, 45 FPS 1% low; retained in `docs/performance-profile-sm-a175n-2026-07-15.json` | **Historical baseline; current 4,000-unit device profile pending** |
 | iOS integration test | The same smoke passed on iPhone 17 Pro Max Simulator / iOS 26.5 on 2026-07-15 | **Historical prior-build platform evidence** |
@@ -148,23 +149,23 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 ## Automated test inventory
 
-The current unit/widget suite total is **119**. The default VM run passes 118 and skips the one Web-only store test; that test passes separately in Brave Chromium.
+The 2026-08-05 integrated worktree checkpoint passed **190 VM tests** and
+skipped the one browser-only localStorage test. The inventory now covers:
 
-| File | Count | Primary coverage |
-|---|---:|---|
-| `test/simulation_test.dart` | 26 | 4,000-unit spawn/distribution/staging and contact pacing, movement speed, combat probability and locking, faction-bucket SpatialGrid, 30Hz cadence, normal/far AI cadence and determinism, steering, replay export, handoff, spectating, and timed ranking. |
-| `test/performance_test.dart` | 1 | 4,000 units, spatial-query baseline, 150-tick ceiling, fixed object identity, and retained dead units. |
-| `test/battle_accessibility_input_test.dart` | 26 | Keyboard/touch/mouse/minimap input and semantics, 104dp/72dp mobile control targets and non-overlap, focus-safe stop/reverse/diagonal movement, focused-HUD Space activation, minimap repeat/mixed-key isolation, rotation-safe joystick and keyboard release, closer default-motion camera and clamped viewport, single-batch atlas rendering, combat-flash cap, handoff presentation, render culling, landscape gate, responsive HUD, and lifecycle behavior. |
-| `test/token_atlas_test.dart` | 2 | Blender atlas dimensions/manifest and runtime image/source-cell loading. |
-| `test/services_test.dart` | 20 | Privacy/ATT gates, ad placement/frequency/failure, reward/economy policy, analytics schema and buffer. |
-| `test/runtime_test.dart` | 15 | Offline defaults, privacy gate, ad lifecycle analytics, reward idempotency, local-state round trips, automatic mutation saves, transient I/O retry, and overwrite protection. |
-| `test/economy_test.dart` | 3 | Defaults, cosmetics-only spending, rewarded bonus. |
-| `test/game_preferences_test.dart` | 2 | Reduced motion and independent presentation preferences. |
-| `test/localization_test.dart` | 10 | English-base locale resolution plus Korean, Japanese, and Simplified Chinese selection, layout, live updates, and persistence. |
-| `test/orientation_test.dart` | 6 | Android/iOS and mobile-Web landscape requests, OS-default restore, mobile-Web portrait gate, desktop/600dp exclusions, and app battle/result integration. |
-| `test/tokenfront_state_store_web_test.dart` | 1 | Browser local-storage round trip before widget mount; executed in Brave Chromium. |
-| `test/widget_test.dart` | 7 | Lobby/deploy, narrow layouts, settings/locker, result reward, and app-surface analytics behavior. |
-| **Total** | **119** | VM: 118 passed + 1 Web-only skipped; Web-only test then passed in Brave Chromium. |
+- 4,000-unit simulation, deterministic combat, spatial-query performance,
+  culling, atlas batching, input, camera, orientation, pause/resume, and
+  lifecycle behavior;
+- the five-operation Signal Chronicle, directives, rewards, both endings,
+  non-canonical replay, semantic persistence validation, and result layouts;
+- English, Korean, Japanese, and Simplified Chinese presentation plus localized
+  live directive and accessibility semantics;
+- offline NoOp ads/analytics, privacy gates, wallet/settings/story persistence,
+  and the source-level release data-flow contract; and
+- Blender asset dimensions/runtime sampling plus Google Play icon and feature
+  graphic format/dimension contracts.
+
+The browser-only `test/tokenfront_state_store_web_test.dart` remains a separate
+Chromium invocation and is not promoted by this VM checkpoint.
 
 ### Task 12 execution evidence (2026-08-05)
 

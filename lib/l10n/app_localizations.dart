@@ -1252,6 +1252,69 @@ abstract class AppLocalizations {
   /// **'DIRECTIVE MISSED'**
   String get directiveMissed;
 
+  /// No description provided for @directiveNameLongestCommandLink.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMAND LINK'**
+  String get directiveNameLongestCommandLink;
+
+  /// No description provided for @directiveNameCommandRelays.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMAND RELAYS'**
+  String get directiveNameCommandRelays;
+
+  /// No description provided for @directiveNameCommandKills.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMAND KILLS'**
+  String get directiveNameCommandKills;
+
+  /// No description provided for @directiveNameFinalRank.
+  ///
+  /// In en, this message translates to:
+  /// **'FINAL RANK'**
+  String get directiveNameFinalRank;
+
+  /// No description provided for @directiveNameVictory.
+  ///
+  /// In en, this message translates to:
+  /// **'VICTORY'**
+  String get directiveNameVictory;
+
+  /// No description provided for @directiveLiveProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{heading} // {directive} {current} / {target}'**
+  String directiveLiveProgress(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  );
+
+  /// No description provided for @directiveOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'{heading} // {directive} {current} / {target} // ON TRACK'**
+  String directiveOnTrack(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  );
+
+  /// No description provided for @directivePending.
+  ///
+  /// In en, this message translates to:
+  /// **'{heading} // {directive} {current} / {target} // PENDING FINAL REPORT'**
+  String directivePending(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  );
+
   /// No description provided for @bonusClaimed.
   ///
   /// In en, this message translates to:

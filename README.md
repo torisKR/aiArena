@@ -134,7 +134,7 @@ flutter build ios --release --no-codesign
 
 ### 통합 테스트
 
-단위·위젯·성능 테스트 전체는 `flutter test`로 실행합니다. 2026-07-16 현재 **119개가 대상 플랫폼에서 모두 통과**하며, 기본 VM 실행은 118개를 통과하고 Web 저장소 전용 1개를 건너뛴 뒤 해당 테스트를 실제 Chromium 브라우저에서 별도로 통과합니다. 여기에는 4,000-unit 스폰·분산 대형·공간 질의·고정 풀 성능, 포커스 전환 뒤 자유로운 방향 이동, 확대된 모바일 조작 영역과 HUD 비겹침, HUD Space 분리, 미니맵 반복·혼합키 격리, 화면 회전 시 조이스틱·키보드 해제, 카메라 확대·미니맵 탐색, Android/iOS/Web 휴대폰 가로 방향 요청·복원과 세로 화면 차단, 네 언어 자동 감지·즉시 전환·재실행 복원, Blender 런타임 아틀라스, 지휘 인계 테이프 렌더 회귀, War Token·설정·동의의 자동 저장과 재실행 복원이 포함됩니다. `integration_test/app_smoke_test.dart`는 앱 시작, 설정 열기, 매치 진입, 앱 pause/resume을 검사합니다.
+단위·위젯·성능 테스트 전체는 `flutter test`로 실행합니다. 2026-08-05 통합 체크포인트의 기본 VM 실행은 **190개를 통과하고 Web 저장소 전용 1개를 건너뛰었습니다**. 여기에는 4,000-unit 스폰·분산 대형·공간 질의·고정 풀 성능, 자유 이동과 확대된 모바일 조작 영역, Signal Chronicle 5개 작전·결말·손상 저장 복구, 네 언어 전투 지령과 접근성, Blender 런타임 아틀라스, Play 그래픽 규격, War Token·설정·동의의 자동 저장과 재실행 복원이 포함됩니다. Web 저장소 전용 테스트는 별도의 실제 Chromium 실행 대상이며, `integration_test/app_smoke_test.dart`는 앱 시작, 설정 열기, 매치 진입, 앱 pause/resume과 결정론적 Chronicle/Skirmish 시나리오를 검사합니다.
 
 ```sh
 flutter test -d <device-or-simulator-id> integration_test/app_smoke_test.dart
@@ -171,7 +171,7 @@ Samsung SM A175N · `RFKYB09D9TL` · Android 16의 기존 400-unit 성공 실행
 
 ## Blender MCP 자산
 
-저장소에는 로컬 Blender MCP 작업으로 만든 키 아트, 런타임 스프라이트 아틀라스와 재현 스크립트가 함께 들어 있습니다. 라이브 BlenderMCP v1.28.1 세션에서 `execute_blender_code` 호출이 성공해 아틀라스 PNG, 프레임 manifest와 `.blend` 원본을 생성했으며, 작업 뒤 MCP 서버를 정상 종료했습니다.
+저장소에는 로컬 Blender MCP 작업으로 만든 키 아트, 런타임 스프라이트 아틀라스와 재현 스크립트가 함께 들어 있습니다. 기록된 BlenderMCP v1.28.1 세션에서 `execute_blender_code` 호출이 성공해 아틀라스 PNG, 프레임 manifest와 `.blend` 원본을 생성했으며, 작업 뒤 MCP 서버를 정상 종료했습니다. 이 저장소에는 BlenderMCP 서버나 Blender 애드온을 vendoring하지 않습니다.
 
 ```text
 assets/blender/
@@ -186,24 +186,22 @@ tooling/
   build_tokenfront_scene.py     기본 메시·머티리얼로 장면 생성/저장/렌더/내보내기
   build_token_sprite_atlas.py   네 진영 아틀라스·manifest·Blend 원본 생성
   blender_mcp_call.py           로컬 Blender MCP stdio ↔ socket 호출 도우미
-tools/blender-mcp/
-  addon.py                      Blender 애드온 소스
-  src/blender_mcp/              MCP 서버 소스와 라이선스 자료
 ```
+
+BlenderMCP의 소스·애드온·서버·라이선스는 이 저장소에 포함되지 않는 외부 prerequisite입니다. 생성 당시 사용한 로컬 checkout은 `.gitignore`로 제외되어 있으므로 fresh clone에서 자동으로 제공된다고 가정하지 마세요. upstream BlenderMCP는 별도로 설치·검토해야 하며, 이 프로젝트가 그 파일을 재배포한다고 주장하지 않습니다. 이미 커밋된 결과물은 BlenderMCP를 실행하지 않아도 사용할 수 있습니다.
 
 생성 스크립트는 외부 모델, 텍스처, 생성형 3D API를 내려받지 않고 Blender 기본 메시와 자체 머티리얼만 사용합니다. 호출 도우미는 `DISABLE_TELEMETRY=true`와 `PYTHONDONTWRITEBYTECODE=1`을 적용합니다.
 
 ### 재생성
 
-1. GUI Blender에서 `tools/blender-mcp/addon.py`를 애드온으로 설치·활성화합니다.
-2. 3D View의 BlenderMCP 패널에서 socket 서버를 시작합니다. 기본 주소는 `localhost:9876`입니다.
-3. `blender-mcp`와 MCP Python 패키지가 설치된 Python 환경을 지정합니다.
-4. 장면 스크립트를 MCP의 `execute_blender_code`로 보냅니다.
+1. 별도로 설치한 BlenderMCP 애드온을 GUI Blender에 설치·활성화하고, 3D View의 BlenderMCP 패널에서 socket 서버를 시작합니다. 기본 주소는 `localhost:9876`입니다. 애드온 소스는 이 저장소의 경로가 아닙니다.
+2. `blender-mcp` 실행 파일과 MCP Python 패키지가 들어 있는 외부 Python 환경을 지정합니다. 기록된 macOS 실행에서는 다음 캐시 경로를 사용했습니다(다른 컴퓨터에서는 자신의 설치 경로로 바꿉니다).
 
 ```sh
-export BLENDER_MCP_CACHE_ENV=/absolute/path/to/blender-mcp-python-env
+export BLENDER_MCP_CACHE_ENV=/Users/toris/.cache/uv/archive-v0/2MdHiH30JWRWtlL_
 export BLENDER_MCP_EXECUTABLE="$BLENDER_MCP_CACHE_ENV/bin/blender-mcp"
 
+cd /Users/toris/projects/aiArena
 python3 tooling/blender_mcp_call.py --list-tools
 python3 tooling/blender_mcp_call.py \
   --code-file tooling/build_tokenfront_scene.py \
@@ -214,7 +212,7 @@ python3 tooling/blender_mcp_call.py \
   --user-prompt "Rebuild Tokenfront runtime token atlas"
 ```
 
-`BLENDER_MCP_CACHE_ENV`에는 `bin/python`과 MCP 의존성이 있어야 합니다. 다른 위치에 설치했다면 두 환경 변수를 현재 환경에 맞게 바꿉니다. 저장소를 다른 경로로 옮긴 경우 두 생성 스크립트의 `ROOT`도 복제 경로로 맞춰야 합니다. Blender MCP는 임의 Python 코드를 실행할 수 있으므로 신뢰하는 로컬 스크립트만 사용하고 실행 전에 장면을 저장하세요.
+`BLENDER_MCP_CACHE_ENV`에는 `bin/python`과 MCP 의존성이 있어야 합니다. `BLENDER_MCP_EXECUTABLE`은 그 환경의 `bin/blender-mcp` 또는 외부 설치의 절대 경로를 가리켜야 합니다. `--code-file` 경로를 사용하면 호출 도우미가 자신의 위치에서 저장소 루트를 계산해 Blender 코드에 전달하므로 복제 경로를 소스에 하드코딩하지 않습니다. Blender MCP는 임의 Python 코드를 실행할 수 있으므로 신뢰하는 로컬 스크립트만 사용하고 실행 전에 장면을 저장하세요.
 
 ## 주요 구조
 
@@ -246,4 +244,4 @@ tooling/performance_profile_app.dart 실제 기기 밀집 전투 profile 측정 
 - SM A175N의 과거 400-unit 30초 결과와 별도로, 대표 Android/iOS 실제 기기와 실제 배포 브라우저에서 현재 4,000-unit 장시간·반복 FPS·1% low, 발열·메모리·resume 내구성 측정
 - 실제 기기와 브라우저의 오디오 지연·햅틱 품질, 선택형 Wasm/Skwasm 배포 경로의 호환성 확인
 
-현재 구현은 119개 자동 테스트(기본 VM 118개 + Web 전용 Chromium 1개)로 핵심 규칙과 UI 흐름을 검증합니다. 위 Android·iOS·Chrome·Safari smoke QA와 SM A175N의 30초 profile 합격은 2026-07-15 이전 빌드의 보존 증거이며, 현재 4,000-unit 빌드의 실제 기기 방향 동작과 장시간 성능은 별도 출시 검증 항목입니다.
+2026-08-05 통합 체크포인트는 기본 VM 자동 테스트 190개를 통과했고 Web 저장소 전용 1개는 해당 실행에서 건너뛰었습니다. 위 Android·iOS·Chrome·Safari smoke QA와 SM A175N의 30초 profile 합격은 2026-07-15 이전 빌드의 보존 증거이며, 현재 4,000-unit 빌드의 실제 기기 방향 동작과 장시간 성능은 별도 출시 검증 항목입니다.

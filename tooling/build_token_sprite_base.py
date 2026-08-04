@@ -13,7 +13,12 @@ import bpy
 from mathutils import Vector
 
 
-ROOT = "/Users/toris/projects/aiArena"
+ROOT = os.environ.get("TOKENFRONT_REPO_ROOT")
+if not ROOT:
+    raise RuntimeError(
+        "TOKENFRONT_REPO_ROOT is required; invoke this file with "
+        "tooling/blender_mcp_call.py --code-file."
+    )
 OUTPUT_DIR = os.path.join(ROOT, "assets", "generated", "sprites")
 BASE_PATH = os.path.join(OUTPUT_DIR, "token-signal-base.png")
 BLEND_PATH = os.path.join(ROOT, "assets", "blender", "token_sprite_base.blend")

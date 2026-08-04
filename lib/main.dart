@@ -123,6 +123,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     with WidgetsBindingObserver {
   _Screen screen = _Screen.lobby;
   Faction selectedFaction = Faction.amethyst;
+  Faction chronicleFaction = Faction.amethyst;
+  Faction skirmishFaction = Faction.amethyst;
   late final List<StoryOperation> storyOperations;
   bool chronicleAvailable = true;
   StoryOperation? briefingOperation;
@@ -265,6 +267,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
           briefingOperation = _resolveCurrentOperation();
           screen = _Screen.briefing;
           selectedFaction = Faction.amethyst;
+          chronicleFaction = Faction.amethyst;
+          skirmishFaction = Faction.amethyst;
         });
       },
       onReplay: (operationId) => _startChronicleReplay(operationId),
@@ -334,10 +338,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   }
 
   Future<void> _deployChronicle() {
-    return _startChronicle(selectedFaction);
+    return _startChronicle(chronicleFaction);
   }
 
-  Future<void> _deploySkirmish() => startMatch(selectedFaction);
+  Future<void> _deploySkirmish() => startMatch(skirmishFaction);
 
   Future<void> _startBattle({
     required GameMode mode,
@@ -571,12 +575,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       selectedMode: chronicleAvailable ? GameMode.chronicle : GameMode.skirmish,
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
-      selectedSkirmishFaction: selectedFaction,
+      selectedSkirmishFaction: skirmishFaction,
       onSelectChronicleCore: (faction) {
-        setState(() => selectedFaction = faction);
+        setState(() => chronicleFaction = faction);
       },
       onSelectSkirmishFaction: (faction) =>
-          setState(() => selectedFaction = faction),
+          setState(() => skirmishFaction = faction),
       onDeployChronicle: _deployChronicle,
       onDeploySkirmish: _deploySkirmish,
       onOpenArchive: _openArchive,
@@ -585,6 +589,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
+      onChooseEnding: _chooseEnding,
       lowSpec: runtime.preferences.lowSpecMode,
       reduceMotion: runtime.preferences.reducedMotionFor(
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
@@ -594,12 +599,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       selectedMode: GameMode.chronicle,
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
-      selectedSkirmishFaction: selectedFaction,
+      selectedSkirmishFaction: skirmishFaction,
       onSelectChronicleCore: (faction) {
-        setState(() => selectedFaction = faction);
+        setState(() => chronicleFaction = faction);
       },
       onSelectSkirmishFaction: (faction) =>
-          setState(() => selectedFaction = faction),
+          setState(() => skirmishFaction = faction),
       onDeployChronicle: _deployChronicle,
       onDeploySkirmish: _deploySkirmish,
       onOpenArchive: _openArchive,
@@ -608,6 +613,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
+      onChooseEnding: _chooseEnding,
       lowSpec: runtime.preferences.lowSpecMode,
       reduceMotion: runtime.preferences.reducedMotionFor(
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),

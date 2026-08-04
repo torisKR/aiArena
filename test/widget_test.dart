@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui' show SemanticsFlag;
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/semantics.dart' show SemanticsNode;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
+import 'package:tokenfront/app/tokenfront_state_store.dart';
 import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/main.dart';
@@ -23,6 +25,18 @@ import 'package:tokenfront/ui/primitives.dart';
 bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
   // ignore: deprecated_member_use
   return node.hasFlag(flag);
+}
+
+final class _MemoryStateStore implements TokenfrontStateStore {
+  _MemoryStateStore(this.value);
+
+  String? value;
+
+  @override
+  Future<String?> read() async => value;
+
+  @override
+  Future<void> write(String value) async => this.value = value;
 }
 
 void main() {
@@ -110,7 +124,15 @@ void main() {
     const prologue =
         'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.';
     expect(find.text(prologue), findsOneWidget);
-    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsNothing);
+    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+    expect(
+      find.text(
+        'DIRECTIVE: Maintain one uninterrupted command link for 45 seconds.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('DIRECTIVE BONUS  15 WT'), findsOneWidget);
+    expect(find.textContaining('03:00'), findsOneWidget);
     expect(find.text('AMETHYST'), findsOneWidget);
     expect(find.text('COBALT'), findsOneWidget);
     expect(find.text('VOLT'), findsOneWidget);
@@ -118,6 +140,9 @@ void main() {
     expect(find.text('ARCHIVE'), findsWidgets);
     expect(find.text('SKIRMISH'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('COMMAND DECK //')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('15:00'), findsOneWidget);
   });
 
   testWidgets(
@@ -231,6 +256,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsWidgets);
     expect(find.text('RETRY DIRECTIVE'), findsNWidgets(5));
+  });
+
+  testWidgets('completed Chronicle without ending exposes persistent choices', (
+    tester,
+  ) async {
+    final operations = StoryOperationId.values
+        .map((operation) => operation.name)
+        .toList();
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: _MemoryStateStore(
+        jsonEncode({
+          'version': 2,
+          'wallet': {
+            'balance': 0,
+            'unlockedIds': <String>[],
+            'equippedIds': <String, String>{},
+          },
+          'preferences': {
+            'lowSpecMode': false,
+            'forceReducedMotion': false,
+            'mouseCameraEnabled': true,
+            'hapticsEnabled': false,
+            'audioEnabled': false,
+            'languageCode': 'en',
+          },
+          'privacy': {
+            'analyticsSharingAllowed': false,
+            'adRequestsAllowed': false,
+          },
+          'story': {
+            'campaignFaction': 'amethyst',
+            'concludedOperations': operations,
+            'medals': <String>[],
+            'recoveredTransmissions': operations,
+            'ending': null,
+          },
+          'rewardLedger': {'claimedDirectiveBonusIds': <String>[]},
+        }),
+      ),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('claim-ending')), findsOneWidget);
+    expect(find.byKey(const Key('open-ending')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('open-ending')));
+    await tester.pumpAndSettle();
+    expect(runtime.storyProgress.ending, EndingChoice.openRelay);
+    expect(find.byKey(const Key('open-ending')), findsNothing);
   });
 
   testWidgets('Command Deck and Archive fit 320x568', (tester) async {

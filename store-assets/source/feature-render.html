@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1024, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 1024px; height: 500px; margin: 0; overflow: hidden; background: #050710; }
+    .frame { position: relative; width: 1024px; height: 500px; overflow: hidden; background: #050710; }
+    .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,7,16,.98) 0%, rgba(5,7,16,.88) 24%, rgba(5,7,16,.2) 53%, rgba(5,7,16,.04) 100%); }
+    .scan { position: absolute; inset: 0; opacity: .15; background-image: repeating-linear-gradient(0deg, transparent 0 23px, rgba(99,228,255,.18) 24px); }
+    .copy { position: absolute; left: 62px; top: 108px; width: 450px; color: #f4ead4; text-transform: uppercase; }
+    .eyebrow { margin: 0 0 16px; color: #63e4ff; font: 700 13px/1 Arial, sans-serif; letter-spacing: 5px; }
+    h1 { margin: 0; font: 900 72px/.84 Arial Black, Arial, sans-serif; letter-spacing: -4px; }
+    h2 { margin: 20px 0 0; font: 700 22px/1.1 Arial, sans-serif; letter-spacing: 8px; }
+    .rule { width: 214px; height: 4px; margin-top: 31px; background: linear-gradient(90deg, #9b6cff 0 25%, #3f8cff 25% 50%, #ffe05c 50% 75%, #ff5ccf 75%); }
+    .corner { position: absolute; left: 28px; top: 28px; width: 42px; height: 42px; border-left: 2px solid rgba(244,234,212,.42); border-top: 2px solid rgba(244,234,212,.42); }
+    .corner.br { left: auto; top: auto; right: 28px; bottom: 28px; border: 0; border-right: 2px solid rgba(244,234,212,.42); border-bottom: 2px solid rgba(244,234,212,.42); }
+  </style>
+</head>
+<body>
+  <main class="frame" aria-label="Tokenfront feature graphic">
+    <img class="art" src="feature-backdrop-v1.png" alt="">
+    <div class="shade"></div>
+    <div class="scan"></div>
+    <div class="corner"></div><div class="corner br"></div>
+    <section class="copy">
+      <p class="eyebrow">OFFLINE TACTICAL SURVIVAL</p>
+      <h1>TOKENFRONT</h1>
+      <h2>ORBITAL SIGNAL WAR</h2>
+      <div class="rule"></div>
+    </section>
+  </main>
+</body>
+</html>

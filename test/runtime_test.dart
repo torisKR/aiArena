@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/app/tokenfront_state_store.dart';
@@ -260,6 +262,123 @@ void main() {
       expect(runtime.rewardLedger.claimedDirectiveBonusIds, isEmpty);
     },
   );
+
+  test(
+    'semantically impossible story resets only story while preserving ledger',
+    () async {
+      final invalidStories = <String, Map<String, Object?>>{
+        'conclusions are not a prefix': <String, Object?>{
+          'campaignFaction': 'amethyst',
+          'concludedOperations': ['wake', 'split'],
+          'medals': <String>[],
+          'recoveredTransmissions': <String>[],
+          'ending': null,
+        },
+        'medals are not concluded': <String, Object?>{
+          'campaignFaction': 'amethyst',
+          'concludedOperations': ['wake'],
+          'medals': ['echo'],
+          'recoveredTransmissions': <String>[],
+          'ending': null,
+        },
+        'transmissions are not concluded': <String, Object?>{
+          'campaignFaction': 'amethyst',
+          'concludedOperations': ['wake'],
+          'medals': <String>[],
+          'recoveredTransmissions': ['echo'],
+          'ending': null,
+        },
+        'conclusions require a campaign core': <String, Object?>{
+          'campaignFaction': null,
+          'concludedOperations': ['wake'],
+          'medals': <String>[],
+          'recoveredTransmissions': ['wake'],
+          'ending': null,
+        },
+        'ending requires all conclusions': <String, Object?>{
+          'campaignFaction': 'amethyst',
+          'concludedOperations': ['wake', 'echo', 'split', 'crown'],
+          'medals': <String>[],
+          'recoveredTransmissions': <String>[],
+          'ending': 'openRelay',
+        },
+        'ending requires a campaign core': <String, Object?>{
+          'campaignFaction': null,
+          'concludedOperations': [
+            'wake',
+            'echo',
+            'split',
+            'crown',
+            'lastInstruction',
+          ],
+          'medals': <String>[],
+          'recoveredTransmissions': <String>[],
+          'ending': 'claimRelay',
+        },
+      };
+
+      for (final entry in invalidStories.entries) {
+        final runtime = await TokenfrontRuntime.restore(
+          platform: ClientPlatform.web,
+          stateStore: _MemoryStateStore.withValue(
+            _schema2Fixture(story: entry.value),
+          ),
+        );
+        addTearDown(runtime.dispose);
+        _expectNonDefaultPersistedSections(runtime);
+        expect(
+          runtime.storyProgress,
+          StoryProgress.initial(),
+          reason: entry.key,
+        );
+        expect(
+          runtime.storyProgress.currentOperation,
+          StoryOperationId.wake,
+          reason: entry.key,
+        );
+        expect(
+          runtime.rewardLedger.claimedDirectiveBonusIds,
+          contains('chronicle-directive-wake'),
+          reason: entry.key,
+        );
+      }
+    },
+  );
+
+  test('all concluded operations without an ending remain valid', () async {
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: _MemoryStateStore.withValue(
+        _schema2Fixture(
+          story: const <String, Object?>{
+            'campaignFaction': 'amethyst',
+            'concludedOperations': [
+              'wake',
+              'echo',
+              'split',
+              'crown',
+              'lastInstruction',
+            ],
+            'medals': <String>[],
+            'recoveredTransmissions': <String>[],
+            'ending': null,
+          },
+        ),
+      ),
+    );
+    addTearDown(runtime.dispose);
+
+    expect(
+      runtime.storyProgress.concludedOperations,
+      orderedEquals(StoryOperationId.values),
+    );
+    expect(runtime.storyProgress.ending, isNull);
+    expect(runtime.storyProgress.currentOperation, isNull);
+    expect(
+      runtime.rewardLedger.claimedDirectiveBonusIds,
+      contains('chronicle-directive-wake'),
+    );
+  });
 
   test(
     'unknown top-level schema keeps the existing corruption fallback',
@@ -796,6 +915,40 @@ const schema2WithWakeConcludedAndMalformedLedger =
 
 const schema99Fixture =
     '''{"version":99,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory"]},"preferences":{"languageCode":"ko","lowSpecMode":true},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true},"story":{"campaignFaction":"amethyst"},"rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
+
+String _schema2Fixture({required Map<String, Object?> story}) =>
+    jsonEncode(<String, Object?>{
+      'version': 2,
+      'wallet': <String, Object?>{
+        'balance': 275,
+        'unlockedIds': [
+          'color_relay_ivory',
+          'trail_relay_tape',
+          'death_fracture',
+        ],
+        'equippedIds': <String, String>{
+          'factionColor': 'color_relay_ivory',
+          'movementTrail': 'trail_relay_tape',
+          'deathEffect': 'death_fracture',
+        },
+      },
+      'preferences': <String, Object?>{
+        'lowSpecMode': true,
+        'forceReducedMotion': true,
+        'mouseCameraEnabled': false,
+        'hapticsEnabled': false,
+        'audioEnabled': false,
+        'languageCode': 'ko',
+      },
+      'privacy': <String, bool>{
+        'analyticsSharingAllowed': true,
+        'adRequestsAllowed': true,
+      },
+      'story': story,
+      'rewardLedger': <String, Object?>{
+        'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
+      },
+    });
 
 void _expectNonDefaultPersistedSections(TokenfrontRuntime runtime) {
   expect(runtime.wallet.balance, 275);

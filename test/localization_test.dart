@@ -192,7 +192,14 @@ void main() {
               expect(copy.archive, isNotEmpty);
               expect(copy.restart, isNotEmpty);
               expect(copy.archiveSimulation, isNotEmpty);
-              expect(context.l10n.orbitalProgressSemantics(copy.commandDeck, 0, 'OP-01'), isNotEmpty);
+              expect(
+                context.l10n.orbitalProgressSemantics(
+                  copy.commandDeck,
+                  0,
+                  'OP-01',
+                ),
+                isNotEmpty,
+              );
               expect(context.l10n.deployOperation('01'), isNotEmpty);
               expect(context.l10n.medalEarned, isNotEmpty);
               expect(context.l10n.restartDisclosure, isNotEmpty);
@@ -291,6 +298,77 @@ void main() {
               for (final amount in const <int>[15, 20, 25, 30, 40]) {
                 expect(copy.directiveBonus(amount), contains('$amount'));
               }
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
+  testWidgets('live directive status copy is exact in every locale', (
+    tester,
+  ) async {
+    const expected = <String, (String, String, String)>{
+      'en': (
+        'DIRECTIVE // COMMAND KILLS 1 / 3',
+        'DIRECTIVE // FINAL RANK 1 / 2 // ON TRACK',
+        'DIRECTIVE // FINAL RANK 3 / 2 // PENDING FINAL REPORT',
+      ),
+      'ko': (
+        '지령 // 직접 지휘 처치 1 / 3',
+        '지령 // 최종 순위 1 / 2 // 진행 중',
+        '지령 // 최종 순위 3 / 2 // 최종 보고 대기',
+      ),
+      'ja': (
+        '指令 // 直接指揮撃破 1 / 3',
+        '指令 // 最終順位 1 / 2 // 進行中',
+        '指令 // 最終順位 3 / 2 // 最終報告待ち',
+      ),
+      'zh': (
+        '指令 // 直接指挥击破 1 / 3',
+        '指令 // 最终排名 1 / 2 // 进行中',
+        '指令 // 最终排名 3 / 2 // 等待最终报告',
+      ),
+    };
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final l10n = context.l10n;
+              expect(
+                l10n.directiveLiveProgress(
+                  l10n.directive,
+                  l10n.directiveNameCommandKills,
+                  1,
+                  3,
+                ),
+                expected[locale.languageCode]!.$1,
+              );
+              expect(
+                l10n.directiveOnTrack(
+                  l10n.directive,
+                  l10n.directiveNameFinalRank,
+                  1,
+                  2,
+                ),
+                expected[locale.languageCode]!.$2,
+              );
+              expect(
+                l10n.directivePending(
+                  l10n.directive,
+                  l10n.directiveNameFinalRank,
+                  3,
+                  2,
+                ),
+                expected[locale.languageCode]!.$3,
+              );
               return const SizedBox.shrink();
             },
           ),

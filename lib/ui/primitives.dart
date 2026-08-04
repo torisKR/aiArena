@@ -213,11 +213,21 @@ class TacticalButton extends StatelessWidget {
           textStyle: const WidgetStatePropertyAll(TokenfrontType.instrument),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[icon!, const SizedBox(width: 9)],
-            Text(label),
+            if (expanded)
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              Text(label),
           ],
         ),
       ),

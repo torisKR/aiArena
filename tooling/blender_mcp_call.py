@@ -145,6 +145,12 @@ def load_call(ns: argparse.Namespace) -> tuple[str, dict[str, Any]] | None:
                 code = ns.code_file.read_text(encoding="utf-8")
             except OSError as exc:
                 raise CliError(f"Could not read code file: {exc}") from exc
+            repository_root = Path(__file__).resolve().parents[1]
+            code = (
+                "import os\n"
+                f"os.environ['TOKENFRONT_REPO_ROOT'] = {str(repository_root)!r}\n"
+                + code
+            )
         else:
             code = ns.code
         return "execute_blender_code", {

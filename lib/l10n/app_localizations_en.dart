@@ -708,6 +708,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get directiveMissed => 'DIRECTIVE MISSED';
 
   @override
+  String get directiveNameLongestCommandLink => 'COMMAND LINK';
+
+  @override
+  String get directiveNameCommandRelays => 'COMMAND RELAYS';
+
+  @override
+  String get directiveNameCommandKills => 'COMMAND KILLS';
+
+  @override
+  String get directiveNameFinalRank => 'FINAL RANK';
+
+  @override
+  String get directiveNameVictory => 'VICTORY';
+
+  @override
+  String directiveLiveProgress(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target';
+  }
+
+  @override
+  String directiveOnTrack(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // ON TRACK';
+  }
+
+  @override
+  String directivePending(
+    String heading,
+    String directive,
+    int current,
+    int target,
+  ) {
+    return '$heading // $directive $current / $target // PENDING FINAL REPORT';
+  }
+
+  @override
   String get bonusClaimed => 'BONUS CLAIMED';
 
   @override

@@ -5,6 +5,7 @@ import '../game/faction_visuals.dart';
 import '../game/simulation.dart';
 import '../l10n/l10n.dart';
 import '../story/story_localizations.dart';
+import '../story/story_catalog.dart';
 import '../story/story_models.dart';
 import 'orbital_progress_ring.dart';
 import 'primitives.dart';
@@ -25,6 +26,7 @@ class LobbyScreen extends StatefulWidget {
     required this.onOpenSettings,
     required this.onOpenLocker,
     required this.bannerVisible,
+    this.onChooseEnding,
     this.chronicleAvailable = true,
     this.lowSpec = false,
     this.reduceMotion = false,
@@ -43,6 +45,7 @@ class LobbyScreen extends StatefulWidget {
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLocker;
   final bool bannerVisible;
+  final ValueChanged<EndingChoice>? onChooseEnding;
   final bool chronicleAvailable;
   final bool lowSpec;
   final bool reduceMotion;
@@ -72,6 +75,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final lockedCore = widget.storyProgress.campaignFaction;
     final selectedCore = lockedCore ?? chronicleSelection ?? Faction.amethyst;
     final operation = widget.storyProgress.currentOperation;
+    final pendingEnding =
+        operation == null &&
+        widget.storyProgress.ending == null &&
+        widget.onChooseEnding != null;
     return Scaffold(
       body: TacticalBackdrop(
         child: SafeArea(
@@ -87,7 +94,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _Header(compact: compact),
+                      _Header(compact: compact, mode: mode),
                       const SizedBox(height: 12),
                       _UtilityRail(
                         compact: compact,
@@ -119,21 +126,27 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       ),
                       const SizedBox(height: 18),
                       if (mode == GameMode.chronicle) ...[
-                        if (lockedCore == null && operation != null)
-                          ...[
-                            _Prologue(prologue: copy.prologue),
-                            ExcludeSemantics(
-                              child: Text(
-                                'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
-                                style: TokenfrontType.instrument.copyWith(
-                                  color: TokenfrontColors.quietText,
-                                  fontSize: 9,
-                                ),
+                        if (lockedCore == null && operation != null) ...[
+                          _Prologue(prologue: copy.prologue),
+                          ExcludeSemantics(
+                            child: Text(
+                              'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
+                              style: TokenfrontType.instrument.copyWith(
+                                color: TokenfrontColors.quietText,
+                                fontSize: 9,
                               ),
                             ),
-                          ],
-                        if (lockedCore != null && operation != null)
-                          _Briefing(operation: operation, copy: copy),
+                          ),
+                        ],
+                        if (operation != null)
+                          _Briefing(
+                            operation: StoryCatalog.byId(operation),
+                            copy: copy,
+                          ),
+                        if (pendingEnding)
+                          _EndingChoicePanel(
+                            onChooseEnding: widget.onChooseEnding!,
+                          ),
                         OrbitalProgressRing(
                           progress: widget.storyProgress,
                           lowSpec: widget.lowSpec,
@@ -151,25 +164,27 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           },
                         ),
                         const SizedBox(height: 18),
-                        _ProtocolPanel(
-                          faction: selectedCore,
-                        ),
+                        _ProtocolPanel(faction: selectedCore),
                         const SizedBox(height: 16),
-                        TacticalButton(
-                          key: const Key('chronicle-deploy'),
-                          expanded: compact,
-                          label: operation == null
-                              ? context.l10n.chronicleUnavailable
-                              : context.l10n.deployOperation(
-                                  (operation.index + 1).toString().padLeft(2, '0'),
-                                ),
-                          color: selectedCore.visual.color,
-                          onPressed: operation == null
-                              ? null
-                              : () {
-                                  widget.onDeployChronicle();
-                                },
-                        ),
+                        if (!pendingEnding)
+                          TacticalButton(
+                            key: const Key('chronicle-deploy'),
+                            expanded: compact,
+                            label: operation == null
+                                ? context.l10n.chronicleUnavailable
+                                : context.l10n.deployOperation(
+                                    (operation.index + 1).toString().padLeft(
+                                      2,
+                                      '0',
+                                    ),
+                                  ),
+                            color: selectedCore.visual.color,
+                            onPressed: operation == null
+                                ? null
+                                : () {
+                                    widget.onDeployChronicle();
+                                  },
+                          ),
                       ] else ...[
                         _FactionSelector(
                           selected: widget.selectedSkirmishFaction,
@@ -246,7 +261,7 @@ class _Prologue extends StatelessWidget {
 
 class _Briefing extends StatelessWidget {
   const _Briefing({required this.operation, required this.copy});
-  final StoryOperationId operation;
+  final StoryOperation operation;
   final StoryLocalizations copy;
   @override
   Widget build(BuildContext context) => TacticalPanel(
@@ -255,20 +270,87 @@ class _Briefing extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          copy.operationTitle(operation),
+          copy.operationTitle(operation.id),
           style: TokenfrontType.instrument.copyWith(fontSize: 13),
         ),
         const SizedBox(height: 7),
         Text(
-          copy.briefing(operation),
+          copy.briefing(operation.id),
           style: TokenfrontType.body.copyWith(
             fontSize: 10,
             color: TokenfrontColors.quietText,
           ),
         ),
+        const SizedBox(height: 7),
+        Text(
+          '${copy.directiveHeading}: ${copy.directiveLabel(operation.directive.kind, target: operation.directive.target)}',
+          style: TokenfrontType.body.copyWith(
+            fontSize: 10,
+            color: TokenfrontColors.relayIvory,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          copy.directiveBonus(operation.oneTimeBonus),
+          style: TokenfrontType.instrument.copyWith(
+            fontSize: 9,
+            color: TokenfrontColors.volt,
+          ),
+        ),
       ],
     ),
   );
+}
+
+class _EndingChoicePanel extends StatelessWidget {
+  const _EndingChoicePanel({required this.onChooseEnding});
+
+  final ValueChanged<EndingChoice> onChooseEnding;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: TacticalPanel(
+        borderColor: TokenfrontColors.volt,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(copy.endingHeading, style: TokenfrontType.instrument),
+            const SizedBox(height: 8),
+            Text(
+              context.l10n.continueCampaign,
+              style: TokenfrontType.body.copyWith(
+                color: TokenfrontColors.quietText,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                TacticalButton(
+                  key: const Key('claim-ending'),
+                  label: copy.endingLabel(EndingChoice.claimRelay),
+                  onPressed: () => onChooseEnding(EndingChoice.claimRelay),
+                  color: TokenfrontColors.relayIvory,
+                ),
+                TacticalButton(
+                  key: const Key('open-ending'),
+                  label: copy.endingLabel(EndingChoice.openRelay),
+                  onPressed: () => onChooseEnding(EndingChoice.openRelay),
+                  color: TokenfrontColors.volt,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ModeRail extends StatelessWidget {
@@ -418,6 +500,7 @@ class _CoreCard extends StatelessWidget {
       button: !locked,
       enabled: !locked,
       selected: selected,
+      onTap: locked ? null : onTap,
       child: ExcludeSemantics(
         child: SizedBox(
           width: compact ? 142 : 214,
@@ -508,8 +591,9 @@ class _ProtocolPanel extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.compact});
+  const _Header({required this.compact, required this.mode});
   final bool compact;
+  final GameMode mode;
   @override
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +622,7 @@ class _Header extends StatelessWidget {
       TacticalPanel(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Text(
-          '${context.l10n.offline}\n15:00',
+          '${context.l10n.offline}\n${mode == GameMode.chronicle ? '03:00' : '15:00'}',
           textAlign: TextAlign.right,
           style: TokenfrontType.instrument.copyWith(fontSize: 10, height: 1.3),
         ),

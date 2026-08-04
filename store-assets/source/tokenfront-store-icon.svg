@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Tokenfront orbital relay icon</title>
+  <desc id="desc">Four colored signal cores converge around a white orbital relay.</desc>
+  <defs>
+    <radialGradient id="field" cx="50%" cy="44%" r="72%">
+      <stop offset="0" stop-color="#17243c"/>
+      <stop offset="0.56" stop-color="#0a1020"/>
+      <stop offset="1" stop-color="#050710"/>
+    </radialGradient>
+    <filter id="relayGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="104" fill="url(#field)"/>
+  <g fill="none" stroke="#f4ead4" stroke-linecap="square">
+    <path d="M132 278A130 130 0 0 1 247 126" stroke-width="7" opacity="0.28"/>
+    <path d="M280 129A130 130 0 0 1 386 248" stroke-width="7" opacity="0.28"/>
+    <path d="M383 281A130 130 0 0 1 268 386" stroke-width="7" opacity="0.28"/>
+    <path d="M236 385A130 130 0 0 1 130 266" stroke-width="7" opacity="0.28"/>
+    <circle cx="256" cy="256" r="83" stroke-width="5" stroke-dasharray="73 26" opacity="0.74"/>
+  </g>
+  <g opacity="0.92">
+    <path d="M154 240H96" stroke="#9b6cff" stroke-width="11"/>
+    <path d="M271 154V96" stroke="#3f8cff" stroke-width="11"/>
+    <path d="M174 336l-41 41" stroke="#ffe05c" stroke-width="11"/>
+    <path d="M338 331l41 41" stroke="#ff5ccf" stroke-width="11"/>
+  </g>
+  <g>
+    <rect x="78" y="220" width="40" height="40" rx="6" transform="rotate(45 98 240)" fill="#9b6cff"/>
+    <rect x="251" y="73" width="40" height="40" rx="8" fill="#3f8cff"/>
+    <path d="M104 395l46-13-33-33z" fill="#ffe05c"/>
+    <path d="M398 347l24 14v28l-24 14-24-14v-28z" fill="#ff5ccf"/>
+  </g>
+  <g filter="url(#relayGlow)">
+    <path d="M256 207l43 25v49l-43 25-43-25v-49z" fill="#f4ead4"/>
+    <path d="M256 225l27 16v31l-27 16-27-16v-31z" fill="#111a2c"/>
+    <path d="M256 238v36M238 256h36" stroke="#f4ead4" stroke-width="8" stroke-linecap="square"/>
+  </g>
+  <circle cx="256" cy="256" r="156" fill="none" stroke="#63e4ff" stroke-width="2" stroke-dasharray="3 19" opacity="0.34"/>
+</svg>

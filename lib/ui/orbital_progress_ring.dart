@@ -123,7 +123,7 @@ final class _OrbitalProgressPainter extends CustomPainter {
           ..strokeWidth = 2;
         canvas.drawCircle(point, 11, halo);
       }
-      final label = 'OP-${index + 1}'.padLeft(5, '0');
+      final label = 'OP-${(index + 1).toString().padLeft(2, '0')}';
       final painter = TextPainter(
         text: TextSpan(
           text: label,

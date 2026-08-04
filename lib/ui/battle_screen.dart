@@ -536,15 +536,19 @@ class _DirectiveRailState extends State<_DirectiveRail> {
   void initState() {
     super.initState();
     _announcedMilestone = _milestoneFor(progress);
-    _queueAnnouncement(progress, _announcedMilestone);
-    if (progress.completed) _startCueIfNeeded();
+    // Localized copy is unavailable during initState; announce after the
+    // first frame once Localizations has attached to this subtree.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _queueAnnouncement(progress, _announcedMilestone);
+    });
+    if (_isBattleComplete(progress)) _startCueIfNeeded();
   }
 
   @override
   void didUpdateWidget(covariant _DirectiveRail oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.snapshot.directiveProgress!.completed &&
-        progress.completed) {
+    if (!_isBattleComplete(oldWidget.snapshot.directiveProgress!) &&
+        _isBattleComplete(progress)) {
       _startCueIfNeeded();
     }
     final nextMilestone = _milestoneFor(progress);
@@ -574,6 +578,11 @@ class _DirectiveRailState extends State<_DirectiveRail> {
   }
 
   int _milestoneFor(DirectiveProgress value) {
+    // Final rank is provisional until the BattleReport is created. A good
+    // transient rank must never announce the irreversible completion cue.
+    if (value.kind == DirectiveKind.finalRank) {
+      return value.current <= value.target ? 1 : 0;
+    }
     if (value.completed) return 2;
     if (value.current <= 0) return 0;
     final midpoint = math.max(1, (value.target / 2).floor());
@@ -581,12 +590,38 @@ class _DirectiveRailState extends State<_DirectiveRail> {
   }
 
   String _labelFor(DirectiveProgress value, int milestone) {
+    final name = _directiveName(context, value.kind);
+    final target = value.target.round();
+    if (value.kind == DirectiveKind.finalRank) {
+      final current = value.current.round();
+      return value.current <= value.target
+          ? context.l10n.directiveOnTrack(
+              context.l10n.directive,
+              name,
+              current,
+              target,
+            )
+          : context.l10n.directivePending(
+              context.l10n.directive,
+              name,
+              current,
+              target,
+            );
+    }
     if (milestone == 2) return context.l10n.directiveLocked;
     final current = milestone == 1
-        ? (value.target / 2).floor().clamp(1, value.target.round())
+        ? (value.target / 2).floor().clamp(1, target)
         : 0;
-    return 'DIRECTIVE // ${_directiveName(value.kind)} $current / ${value.target.round()}';
+    return context.l10n.directiveLiveProgress(
+      context.l10n.directive,
+      name,
+      current,
+      target,
+    );
   }
+
+  bool _isBattleComplete(DirectiveProgress value) =>
+      value.kind != DirectiveKind.finalRank && value.completed;
 
   void _startCueIfNeeded() {
     if (!progress.completed ||
@@ -611,11 +646,32 @@ class _DirectiveRailState extends State<_DirectiveRail> {
   Widget build(BuildContext context) {
     final value = progress;
     final milestone = _milestoneFor(value);
-    final completed = value.completed;
+    final completed = _isBattleComplete(value);
     final current = value.current.round().clamp(0, value.target.round());
+    final target = value.target.round();
+    final name = _directiveName(context, value.kind);
     final text = completed
         ? context.l10n.directiveLocked
-        : 'DIRECTIVE // ${_directiveName(value.kind)} $current / ${value.target.round()}';
+        : value.kind == DirectiveKind.finalRank
+        ? value.current <= value.target
+              ? context.l10n.directiveOnTrack(
+                  context.l10n.directive,
+                  name,
+                  value.current.round(),
+                  target,
+                )
+              : context.l10n.directivePending(
+                  context.l10n.directive,
+                  name,
+                  value.current.round(),
+                  target,
+                )
+        : context.l10n.directiveLiveProgress(
+            context.l10n.directive,
+            name,
+            current,
+            target,
+          );
     return IgnorePointer(
       child: Semantics(
         key: Key('directive-rail-semantics-$milestone'),
@@ -661,13 +717,15 @@ class _DirectiveRailState extends State<_DirectiveRail> {
   }
 }
 
-String _directiveName(DirectiveKind kind) => switch (kind) {
-  DirectiveKind.longestCommandLink => 'COMMAND LINK',
-  DirectiveKind.commandRelays => 'COMMAND RELAYS',
-  DirectiveKind.commandKills => 'COMMAND KILLS',
-  DirectiveKind.finalRank => 'FINAL RANK',
-  DirectiveKind.victory => 'VICTORY',
-};
+String _directiveName(BuildContext context, DirectiveKind kind) =>
+    switch (kind) {
+      DirectiveKind.longestCommandLink =>
+        context.l10n.directiveNameLongestCommandLink,
+      DirectiveKind.commandRelays => context.l10n.directiveNameCommandRelays,
+      DirectiveKind.commandKills => context.l10n.directiveNameCommandKills,
+      DirectiveKind.finalRank => context.l10n.directiveNameFinalRank,
+      DirectiveKind.victory => context.l10n.directiveNameVictory,
+    };
 
 class _ViewRail extends StatelessWidget {
   const _ViewRail({
@@ -760,7 +818,9 @@ class _PauseButton extends StatelessWidget {
     key: const Key('battle-pause'),
     button: true,
     enabled: enabled,
-    label: context.l10n.pauseBattleSemantics,
+    excludeSemantics: true,
+    label: paused ? context.l10n.resumeBattle : context.l10n.pauseBattle,
+    hint: context.l10n.pauseBattleSemantics,
     child: TacticalButton(
       label: paused ? context.l10n.resumeBattle : context.l10n.pauseBattle,
       onPressed: enabled ? onPressed : null,
