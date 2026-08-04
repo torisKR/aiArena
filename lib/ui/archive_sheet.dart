@@ -94,7 +94,7 @@ final class _ArchiveSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 5),
-            if (storyProgress.concludedOperations.isNotEmpty)
+            if (storyProgress.ending != null)
               Text(
                 copy.archiveSimulation,
                 style: TokenfrontType.instrument.copyWith(
@@ -201,9 +201,44 @@ final class _ArchiveRow extends StatelessWidget {
         ),
       );
     }
-    final transmission = concluded
-        ? copy.transmission(operation.id)
-        : copy.directiveLocked;
+    if (current) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 9),
+        child: TacticalPanel(
+          borderColor: TokenfrontColors.relayIvory,
+          padding: const EdgeInsets.fromLTRB(13, 12, 10, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                copy.operationTitle(operation.id),
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.relayIvory,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                copy.currentOperation,
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.volt,
+                  fontSize: 9,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                copy.directiveLabel(
+                  operation.directive.kind,
+                  target: operation.directive.target,
+                ),
+                style: TokenfrontType.body.copyWith(fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    final transmission = copy.transmission(operation.id);
     final medal = progress.medals.contains(operation.id)
         ? context.l10n.medalEarned
         : copy.directiveMissed;
@@ -228,13 +263,9 @@ final class _ArchiveRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    locked
-                        ? 'OP-${operation.id.index + 1}'.padLeft(5, '0')
-                        : copy.operationTitle(operation.id),
+                    copy.operationTitle(operation.id),
                     style: TokenfrontType.instrument.copyWith(
-                      color: locked
-                          ? TokenfrontColors.quietText
-                          : TokenfrontColors.relayIvory,
+                      color: TokenfrontColors.relayIvory,
                       fontSize: 11,
                     ),
                   ),
@@ -243,7 +274,7 @@ final class _ArchiveRow extends StatelessWidget {
                     transmission,
                     style: TokenfrontType.body.copyWith(
                       fontSize: 11,
-                      color: locked ? TokenfrontColors.quietText : null,
+                      color: null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -251,9 +282,7 @@ final class _ArchiveRow extends StatelessWidget {
                     '$medal  //  $bonus',
                     style: TokenfrontType.instrument.copyWith(
                       fontSize: 9,
-                      color: concluded
-                          ? TokenfrontColors.volt
-                          : TokenfrontColors.quietText,
+                      color: TokenfrontColors.volt,
                     ),
                   ),
                 ],

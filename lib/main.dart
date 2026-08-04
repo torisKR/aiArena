@@ -586,7 +586,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
           preferences: runtime.preferences,
           requireLandscape: _requireLandscapeForBattle,
         ),
-        if (activeBattle?.replay == true)
+        if (activeBattle?.replay == true && runtime.storyProgress.ending != null)
           Positioned(
             top: 18,
             left: 18,

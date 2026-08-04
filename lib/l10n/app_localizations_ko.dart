@@ -504,27 +504,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String operationWakeTitle(int operation) {
-    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+    return 'OP-0$operation  //  기상 // 죽은 궤도';
   }
 
   @override
   String operationEchoTitle(int operation) {
-    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+    return 'OP-0$operation  //  메아리 // 빌린 몸들';
   }
 
   @override
   String operationSplitTitle(int operation) {
-    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+    return 'OP-0$operation  //  분열 // 하나에서 넷으로';
   }
 
   @override
   String operationCrownTitle(int operation) {
-    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+    return 'OP-0$operation  //  왕관 // 거짓 승자';
   }
 
   @override
   String operationLastInstructionTitle(int operation) {
-    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+    return 'OP-0$operation  //  마지막 // 그 지시';
   }
 
   @override
@@ -661,6 +661,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get commandDeck => '지휘 갑판';
+
+  @override
+  String get currentOperation => '현재 작전';
 
   @override
   String orbitalProgressSemantics(String deck, int concluded, String current) {

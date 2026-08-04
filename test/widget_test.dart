@@ -1,4 +1,7 @@
+import 'dart:ui' show SemanticsFlag;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsNode;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
@@ -12,7 +15,13 @@ import 'package:tokenfront/settings/game_preferences.dart';
 import 'package:tokenfront/story/story_catalog.dart';
 import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
+import 'package:tokenfront/ui/archive_sheet.dart';
 import 'package:tokenfront/ui/result_screen.dart';
+
+bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
+  // ignore: deprecated_member_use
+  return node.hasFlag(flag);
+}
 
 void main() {
   testWidgets('fresh Command Deck shows prologue before core selection', (
@@ -48,13 +57,38 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
     expect(find.textContaining('OP-01'), findsWidgets);
-    expect(find.bySemanticsLabel(RegExp('AMETHYST.*DIRECTIVE LOCKED')), findsOneWidget);
+    final lockedCards = find.bySemanticsLabel(RegExp('DIRECTIVE LOCKED'));
+    expect(lockedCards, findsNWidgets(4));
+    for (var index = 0; index < lockedCards.evaluate().length; index++) {
+      final semantics = tester.getSemantics(lockedCards.at(index));
+      final flags = semantics.getSemanticsData().flagsCollection;
+      expect(flags.isButton, isFalse);
+      expect(_hasSemanticsFlag(semantics, SemanticsFlag.isFocusable), isFalse);
+    }
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    final skirmishDeploy = tester.getSemantics(
+      find.byKey(const Key('skirmish-deploy')),
+    );
+    final skirmishFlags = skirmishDeploy.getSemanticsData().flagsCollection;
+    expect(skirmishFlags.isButton, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(tester.binding.focusManager.primaryFocus, isNotNull);
     await tester.ensureVisible(find.byKey(const Key('archive-action')));
     await tester.tap(find.byKey(const Key('archive-action')));
     await tester.pumpAndSettle();
+    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+    expect(find.text('CURRENT OPERATION'), findsOneWidget);
+    expect(
+      find.text('Maintain one uninterrupted command link for 45 seconds.'),
+      findsOneWidget,
+    );
     expect(find.text('OP-02'), findsOneWidget);
     expect(find.text('OP-02  //  ECHO // BORROWED BODIES'), findsNothing);
     expect(find.text('TRANSMISSION LOCKED'), findsNothing);
+    expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsNothing);
+    expect(find.text('DIRECTIVE MISSED'), findsNothing);
+    expect(find.textContaining('DIRECTIVE BONUS'), findsNothing);
   });
 
   testWidgets('Skirmish mode selects configuration before separate deploy', (
@@ -66,7 +100,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(BattleScreen), findsNothing);
     expect(find.byKey(const Key('skirmish-deploy')), findsOneWidget);
-    expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsOneWidget);
+    expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
   });
 
   testWidgets('Archive restart resets story while preserving wallet', (tester) async {
@@ -86,6 +120,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(runtime.storyProgress, StoryProgress.initial());
     expect(runtime.wallet.balance, before);
+  });
+
+  testWidgets('ending Archive exposes the non-canonical replay disclosure', (
+    tester,
+  ) async {
+    final progress = StoryProgress(
+      campaignFaction: Faction.amethyst,
+      concludedOperations: StoryOperationId.values,
+      medals: StoryOperationId.values,
+      recoveredTransmissions: StoryOperationId.values,
+      ending: EndingChoice.claimRelay,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSignalArchive(
+              context: context,
+              storyProgress: progress,
+              rewardLedger: ProfileRewardLedger.empty(),
+              onReplay: (_) {},
+            ),
+            child: const Text('OPEN ARCHIVE'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('OPEN ARCHIVE'));
+    await tester.pumpAndSettle();
+    expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsWidgets);
+    expect(find.text('RETRY DIRECTIVE'), findsNWidgets(5));
   });
 
   testWidgets('Command Deck and Archive fit 320x568', (tester) async {
@@ -265,8 +332,11 @@ void main() {
         runtime.storyProgress.concludedOperations,
         contains(StoryOperationId.wake),
       );
+      final currentBeforeReplay = runtime.storyProgress.currentOperation;
+      final endingBeforeReplay = runtime.storyProgress.ending;
       await tester.tap(find.text('REMATCH'));
       await tester.pump();
+      expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
 
       final replay = tester.widget<BattleScreen>(find.byType(BattleScreen));
       expect(replay.game.mode, GameMode.chronicle);
@@ -283,6 +353,8 @@ void main() {
       expect(runtime.storyProgress.concludedOperations, {
         StoryOperationId.wake,
       });
+      expect(runtime.storyProgress.currentOperation, currentBeforeReplay);
+      expect(runtime.storyProgress.ending, endingBeforeReplay);
       expect(
         runtime.analytics.pendingEvents.where(
           (event) => event.event.name == 'tutorial_completed',
@@ -342,6 +414,8 @@ void main() {
     expect(find.text('PRISM'), findsOneWidget);
     expect(find.text('1000 UNITS'), findsNWidgets(4));
     expect(find.text('4,000'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
     expect(find.text('DEPLOY TO ORBIT'), findsOneWidget);
   });
 
@@ -357,6 +431,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TOKENFRONT'), findsOneWidget);
+    expect(find.text('DEPLOY TO ORBIT'), findsNothing);
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
     expect(find.text('DEPLOY TO ORBIT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -369,9 +446,12 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('DEPLOY TO ORBIT'));
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY TO ORBIT'));
+    await tester.tap(find.text('AMETHYST').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
 
     expect(find.byType(BattleScreen), findsOneWidget);
@@ -393,8 +473,12 @@ void main() {
       await tester.pumpWidget(TokenfrontApp(runtime: runtime));
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('DEPLOY TO ORBIT'));
-      await tester.tap(find.text('DEPLOY TO ORBIT'));
+      await tester.tap(find.byKey(const Key('skirmish-mode')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('AMETHYST').first);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+      await tester.tap(find.byKey(const Key('skirmish-deploy')));
       await tester.pump();
 
       var events = runtime.analytics.pendingEvents

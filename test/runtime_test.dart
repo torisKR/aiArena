@@ -330,6 +330,16 @@ void main() {
         platform: ClientPlatform.web,
         stateStore: store,
       );
+      runtime.preferences
+        ..setLanguageCode('ko')
+        ..setMouseCameraEnabled(false);
+      runtime.wallet.creditMatchReward(
+        baseAmount: 100,
+        rewardedAdCompleted: false,
+      );
+      final cosmetic = CosmeticCatalog.byId('color_relay_ivory').item;
+      expect(runtime.wallet.unlock(cosmetic), CosmeticUnlockResult.unlocked);
+      expect(runtime.wallet.equip(cosmetic), CosmeticEquipResult.equipped);
       runtime.lockChronicleCore(Faction.amethyst);
       runtime.concludeChronicle(
         operationId: StoryOperationId.wake,
@@ -352,11 +362,18 @@ void main() {
       );
       addTearDown(restored.dispose);
       expect(second.directiveBonusCredit, 0);
-      expect(restored.wallet.balance, 15);
+      expect(restored.wallet.balance, 25);
       expect(restored.storyProgress.medals, contains(StoryOperationId.wake));
       expect(
         restored.rewardLedger.claimedDirectiveBonusIds,
         contains('chronicle-directive-wake'),
+      );
+      expect(restored.preferences.languageCode, 'ko');
+      expect(restored.preferences.mouseCameraEnabled, isFalse);
+      expect(restored.wallet.isUnlocked('color_relay_ivory'), isTrue);
+      expect(
+        restored.wallet.equippedId(CosmeticCategory.factionColor),
+        'color_relay_ivory',
       );
     },
   );

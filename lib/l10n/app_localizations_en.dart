@@ -717,6 +717,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandDeck => 'COMMAND DECK';
 
   @override
+  String get currentOperation => 'CURRENT OPERATION';
+
+  @override
   String orbitalProgressSemantics(String deck, int concluded, String current) {
     return '$deck // $concluded of 5 operations // $current';
   }

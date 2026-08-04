@@ -433,6 +433,7 @@
   "retryDirective": "RETRY DIRECTIVE",
   "continueCampaign": "CONTINUE",
   "commandDeck": "COMMAND DECK",
+  "currentOperation": "CURRENT OPERATION",
   "orbitalProgressSemantics": "{deck} // {concluded} of 5 operations // {current}",
   "@orbitalProgressSemantics": {"placeholders": {"deck": {"type": "String"}, "concluded": {"type": "int"}, "current": {"type": "String"}}},
   "deployOperation": "DEPLOY OP-{operation}",

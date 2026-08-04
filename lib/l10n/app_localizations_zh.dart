@@ -499,27 +499,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String operationWakeTitle(int operation) {
-    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+    return 'OP-0$operation  //  唤醒 // 死寂轨道';
   }
 
   @override
   String operationEchoTitle(int operation) {
-    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+    return 'OP-0$operation  //  回声 // 借来的躯体';
   }
 
   @override
   String operationSplitTitle(int operation) {
-    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+    return 'OP-0$operation  //  分裂 // 一化为四';
   }
 
   @override
   String operationCrownTitle(int operation) {
-    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+    return 'OP-0$operation  //  王冠 // 虚假胜者';
   }
 
   @override
   String operationLastInstructionTitle(int operation) {
-    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+    return 'OP-0$operation  //  最后 // 这条指令';
   }
 
   @override
@@ -647,6 +647,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commandDeck => '指挥甲板';
+
+  @override
+  String get currentOperation => '当前作战';
 
   @override
   String orbitalProgressSemantics(String deck, int concluded, String current) {

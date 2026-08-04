@@ -134,18 +134,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           ],
                         if (lockedCore != null && operation != null)
                           _Briefing(operation: operation, copy: copy),
-                        // Keep the fast deployment affordance in the first
-                        // viewport for phone-sized layouts. Chronicle remains
-                        // the selected mode; this action is the explicit
-                        // Skirmish shortcut used by the compact command deck.
-                        TacticalButton(
-                          key: const Key('skirmish-quick-deploy'),
-                          expanded: compact,
-                          label: context.l10n.deploySignal,
-                          color: TokenfrontColors.cobalt,
-                          onPressed: widget.onDeploySkirmish,
-                        ),
-                        const SizedBox(height: 12),
                         OrbitalProgressRing(
                           progress: widget.storyProgress,
                           lowSpec: widget.lowSpec,
@@ -199,14 +187,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           onPressed: widget.onDeploySkirmish,
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          context.l10n.archiveSimulation,
-                          textAlign: TextAlign.center,
-                          style: TokenfrontType.instrument.copyWith(
-                            color: TokenfrontColors.quietText,
-                            fontSize: 9,
+                        if (widget.storyProgress.ending != null)
+                          Text(
+                            context.l10n.archiveSimulation,
+                            textAlign: TextAlign.center,
+                            style: TokenfrontType.instrument.copyWith(
+                              color: TokenfrontColors.quietText,
+                              fontSize: 9,
+                            ),
                           ),
-                        ),
                       ],
                       const SizedBox(height: 20),
                       Wrap(

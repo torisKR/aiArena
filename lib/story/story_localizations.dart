@@ -118,4 +118,5 @@ final class StoryLocalizations {
   String get retryDirective => l10n.retryDirective;
   String get continueCampaign => l10n.continueCampaign;
   String get commandDeck => l10n.commandDeck;
+  String get currentOperation => l10n.currentOperation;
 }

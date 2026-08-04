@@ -103,7 +103,12 @@ void main() {
       TokenfrontApp(runtime: runtime, orientationController: controller),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY TO ORBIT'));
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AMETHYST').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
     await tester.pump();
 
@@ -141,7 +146,12 @@ void main() {
       TokenfrontApp(runtime: runtime, orientationController: controller),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY TO ORBIT'));
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AMETHYST').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
     await tester.pump();
 

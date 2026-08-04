@@ -502,27 +502,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String operationWakeTitle(int operation) {
-    return 'OP-0$operation  //  WAKE // DEAD ORBIT';
+    return 'OP-0$operation  //  覚醒 // 死んだ軌道';
   }
 
   @override
   String operationEchoTitle(int operation) {
-    return 'OP-0$operation  //  ECHO // BORROWED BODIES';
+    return 'OP-0$operation  //  反響 // 借り物の身体';
   }
 
   @override
   String operationSplitTitle(int operation) {
-    return 'OP-0$operation  //  SPLIT // FOUR FROM ONE';
+    return 'OP-0$operation  //  分裂 // 一つから四つへ';
   }
 
   @override
   String operationCrownTitle(int operation) {
-    return 'OP-0$operation  //  CROWN // FALSE WINNER';
+    return 'OP-0$operation  //  王冠 // 偽りの勝者';
   }
 
   @override
   String operationLastInstructionTitle(int operation) {
-    return 'OP-0$operation  //  LAST // THE INSTRUCTION';
+    return 'OP-0$operation  //  最後 // その指示';
   }
 
   @override
@@ -655,6 +655,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get commandDeck => 'コマンドデッキ';
+
+  @override
+  String get currentOperation => '現在の作戦';
 
   @override
   String orbitalProgressSemantics(String deck, int concluded, String current) {

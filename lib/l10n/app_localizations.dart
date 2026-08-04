@@ -1270,6 +1270,12 @@ abstract class AppLocalizations {
   /// **'COMMAND DECK'**
   String get commandDeck;
 
+  /// No description provided for @currentOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT OPERATION'**
+  String get currentOperation;
+
   /// No description provided for @orbitalProgressSemantics.
   ///
   /// In en, this message translates to:

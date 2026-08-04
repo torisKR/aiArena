@@ -116,6 +116,66 @@ void main() {
     );
   });
 
+  testWidgets('operation narrative titles are natural in every locale', (
+    tester,
+  ) async {
+    const expected = <String, List<String>>{
+      'en': <String>[
+        'OP-01  //  WAKE // DEAD ORBIT',
+        'OP-02  //  ECHO // BORROWED BODIES',
+        'OP-03  //  SPLIT // FOUR FROM ONE',
+        'OP-04  //  CROWN // FALSE WINNER',
+        'OP-05  //  LAST // THE INSTRUCTION',
+      ],
+      'ko': <String>[
+        'OP-01  //  기상 // 죽은 궤도',
+        'OP-02  //  메아리 // 빌린 몸들',
+        'OP-03  //  분열 // 하나에서 넷으로',
+        'OP-04  //  왕관 // 거짓 승자',
+        'OP-05  //  마지막 // 그 지시',
+      ],
+      'ja': <String>[
+        'OP-01  //  覚醒 // 死んだ軌道',
+        'OP-02  //  反響 // 借り物の身体',
+        'OP-03  //  分裂 // 一つから四つへ',
+        'OP-04  //  王冠 // 偽りの勝者',
+        'OP-05  //  最後 // その指示',
+      ],
+      'zh': <String>[
+        'OP-01  //  唤醒 // 死寂轨道',
+        'OP-02  //  回声 // 借来的躯体',
+        'OP-03  //  分裂 // 一化为四',
+        'OP-04  //  王冠 // 虚假胜者',
+        'OP-05  //  最后 // 这条指令',
+      ],
+    };
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Builder(
+              builder: (context) {
+                final copy = StoryLocalizations(context.l10n);
+                expect(
+                  StoryOperationId.values
+                      .map(copy.operationTitle)
+                      .toList(growable: false),
+                  expected[locale.languageCode],
+                );
+                expect(copy.currentOperation, isNotEmpty);
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
   testWidgets('Command Deck archive and ring labels stay localized', (
     tester,
   ) async {
@@ -267,6 +327,8 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
     expect(find.text('궤도 투입'), findsOneWidget);
     expect(find.text('SIGNAL SETTINGS'), findsNothing);
   });
@@ -284,6 +346,8 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
     expect(find.text('軌道へ展開'), findsOneWidget);
   });
 
@@ -331,6 +395,8 @@ void main() {
       await tester.pumpWidget(TokenfrontApp(runtime: runtime));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const Key('skirmish-mode')));
+      await tester.pumpAndSettle();
       expect(find.text(localeCase.deploy), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text(localeCase.tune));
