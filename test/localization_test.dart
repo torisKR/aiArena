@@ -5,6 +5,8 @@ import 'package:tokenfront/app/tokenfront_state_store.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/main.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
+import 'package:tokenfront/story/story_localizations.dart';
+import 'package:tokenfront/story/story_models.dart';
 
 final class _MemoryStateStore implements TokenfrontStateStore {
   String? value;
@@ -38,6 +40,76 @@ void main() {
         Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
       ], AppLocalizations.supportedLocales),
       const Locale('en'),
+    );
+  });
+
+  testWidgets('Signal Chronicle copy is complete in every supported locale', (
+    tester,
+  ) async {
+    const productContracts = <String, (String, String, String)>{
+      'en': (
+        'Tokenfront: Orbital Signal War',
+        'FOUR AI CORES. ONE LAST RELAY.',
+        'DEPLOY TO ORBIT',
+      ),
+      'ko': ('Tokenfront: 궤도 신호전', '네 AI 코어. 단 하나의 최후 릴레이.', '궤도 투입'),
+      'ja': ('Tokenfront: 軌道信号戦', '4つのAIコア。最後のリレーは1つ。', '軌道へ展開'),
+      'zh': ('Tokenfront：轨道信号战', '四个AI核心，最后一座中继站。', '部署至轨道'),
+    };
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final copy = StoryLocalizations(context.l10n);
+              for (final operation in StoryOperationId.values) {
+                expect(copy.operationTitle(operation), isNotEmpty);
+                expect(copy.briefing(operation), isNotEmpty);
+                expect(copy.transmission(operation), isNotEmpty);
+                expect(copy.response(operation), isNotEmpty);
+              }
+              for (final kind in DirectiveKind.values) {
+                expect(copy.directiveLabel(kind, target: 45), isNotEmpty);
+              }
+              for (final ending in EndingChoice.values) {
+                expect(copy.endingLabel(ending), isNotEmpty);
+                expect(copy.endingEpilogue(ending), isNotEmpty);
+              }
+              final contract = productContracts[locale.languageCode]!;
+              expect(context.l10n.appTitle, contract.$1);
+              expect(context.l10n.lobbyTagline, contract.$2);
+              expect(context.l10n.deploySignal, contract.$3);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
+  testWidgets('Signal Chronicle English prologue uses the approved sentence', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: SizedBox.shrink(),
+      ),
+    );
+    await tester.pump();
+    final context = tester.element(find.byType(SizedBox));
+    expect(
+      StoryLocalizations(context.l10n).prologue,
+      'The surface has been silent for 72 years. '
+      'You are a command signal without a body. '
+      'The Last Relay is calling.',
     );
   });
 

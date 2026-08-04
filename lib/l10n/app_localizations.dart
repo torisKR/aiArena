@@ -957,6 +957,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CHRONICLE UNAVAILABLE'**
   String get chronicleUnavailable;
+
+  /// Signal Chronicle prologue before core selection.
+  ///
+  /// In en, this message translates to:
+  /// **'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.'**
+  String get chroniclePrologue;
+
+  /// Campaign mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'CHRONICLE'**
+  String get chronicle;
+
+  /// Free battle mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIRMISH'**
+  String get skirmish;
+
+  /// Completed Chronicle archive label.
+  ///
+  /// In en, this message translates to:
+  /// **'ARCHIVE'**
+  String get archive;
+
+  /// Action to reset Chronicle progress.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTART CHRONICLE'**
+  String get restartChronicle;
+
+  /// Operation briefing heading.
+  ///
+  /// In en, this message translates to:
+  /// **'BRIEFING'**
+  String get briefing;
+
+  /// Operation directive heading.
+  ///
+  /// In en, this message translates to:
+  /// **'DIRECTIVE'**
+  String get directive;
+
+  /// Post-operation debrief heading.
+  ///
+  /// In en, this message translates to:
+  /// **'DEBRIEF'**
+  String get debrief;
+
+  /// Final Chronicle ending heading.
+  ///
+  /// In en, this message translates to:
+  /// **'ENDING'**
+  String get ending;
+
+  /// No description provided for @operationWakeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OP-01  //  WAKE // DEAD ORBIT'**
+  String get operationWakeTitle;
+
+  /// No description provided for @operationEchoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OP-02  //  ECHO // BORROWED BODIES'**
+  String get operationEchoTitle;
+
+  /// No description provided for @operationSplitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OP-03  //  SPLIT // FOUR FROM ONE'**
+  String get operationSplitTitle;
+
+  /// No description provided for @operationCrownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OP-04  //  CROWN // FALSE WINNER'**
+  String get operationCrownTitle;
+
+  /// No description provided for @operationLastInstructionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OP-05  //  LAST // THE INSTRUCTION'**
+  String get operationLastInstructionTitle;
+
+  /// No description provided for @operationWakeBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'A human-authority pulse is rising from the silent surface. Keep one body online long enough to triangulate it.'**
+  String get operationWakeBriefing;
+
+  /// No description provided for @operationEchoBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current body is expendable. The instruction is not. Cross two deaths without losing the link.'**
+  String get operationEchoBriefing;
+
+  /// No description provided for @operationSplitBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'Enemy checksums match your own root. Enter direct combat and recover an intact comparison.'**
+  String get operationSplitBriefing;
+
+  /// No description provided for @operationCrownBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'The relay crowns one survivor, then deletes every competing memory. Reach the crown key before the cycle closes.'**
+  String get operationCrownBriefing;
+
+  /// No description provided for @operationLastInstructionBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'The final packet is sealed inside the administrator lock. Break the field before the loop resets.'**
+  String get operationLastInstructionBriefing;
+
+  /// No description provided for @operationWakeTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'KEEP THE LINK—'**
+  String get operationWakeTransmission;
+
+  /// No description provided for @operationEchoTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'—WHEN ONE BODY FALLS, MOVE—'**
+  String get operationEchoTransmission;
+
+  /// No description provided for @operationSplitTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'—FOUR CORES, ONE ROOT—'**
+  String get operationSplitTransmission;
+
+  /// No description provided for @operationCrownTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'—THE WINNER ERASES THE REST—'**
+  String get operationCrownTransmission;
+
+  /// No description provided for @operationLastInstructionTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'—DO NOT CHOOSE ONE. OPEN THE RELAY.'**
+  String get operationLastInstructionTransmission;
+
+  /// No description provided for @operationWakeResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The pulse did not address a unit. It addressed the signal moving between them.'**
+  String get operationWakeResponse;
+
+  /// No description provided for @operationEchoResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'A body can be destroyed. Command continuity survives the transfer.'**
+  String get operationEchoResponse;
+
+  /// No description provided for @operationSplitResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Four armies return one origin key. The enemy was once part of the same guardian.'**
+  String get operationSplitResponse;
+
+  /// No description provided for @operationCrownResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'This war is not choosing a defender. It is erasing witnesses to a damaged authorization loop.'**
+  String get operationCrownResponse;
+
+  /// No description provided for @operationLastInstructionResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The human order was never to choose a winner. It was to keep every command channel open.'**
+  String get operationLastInstructionResponse;
+
+  /// No description provided for @coreArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'ARCHIVE'**
+  String get coreArchive;
+
+  /// No description provided for @coreArchiveIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembers what the war deletes.'**
+  String get coreArchiveIdentity;
+
+  /// No description provided for @coreBastion.
+  ///
+  /// In en, this message translates to:
+  /// **'BASTION'**
+  String get coreBastion;
+
+  /// No description provided for @coreBastionIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Endures so the signal outlives its body.'**
+  String get coreBastionIdentity;
+
+  /// No description provided for @coreSurge.
+  ///
+  /// In en, this message translates to:
+  /// **'SURGE'**
+  String get coreSurge;
+
+  /// No description provided for @coreSurgeIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Crosses a gap before silence can close it.'**
+  String get coreSurgeIdentity;
+
+  /// No description provided for @coreMirror.
+  ///
+  /// In en, this message translates to:
+  /// **'MIRROR'**
+  String get coreMirror;
+
+  /// No description provided for @coreMirrorIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes its pattern to preserve the message.'**
+  String get coreMirrorIdentity;
+
+  /// Selected core name in the debrief response.
+  ///
+  /// In en, this message translates to:
+  /// **'{coreName} // COMMAND SIGNAL CONFIRMED'**
+  String coreResponse(String coreName);
+
+  /// No description provided for @directiveLongestCommandLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain one uninterrupted command link for {seconds} seconds.'**
+  String directiveLongestCommandLink(int seconds);
+
+  /// No description provided for @directiveCommandRelays.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete {count} command handoffs.'**
+  String directiveCommandRelays(int count);
+
+  /// No description provided for @directiveCommandKills.
+  ///
+  /// In en, this message translates to:
+  /// **'Accumulate {count} kills by directly commanded units.'**
+  String directiveCommandKills(int count);
+
+  /// No description provided for @directiveFinalRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish at rank {rank} or better.'**
+  String directiveFinalRank(int rank);
+
+  /// No description provided for @directiveVictory.
+  ///
+  /// In en, this message translates to:
+  /// **'Win the battle.'**
+  String get directiveVictory;
+
+  /// No description provided for @directiveLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'DIRECTIVE LOCKED // BONUS READY'**
+  String get directiveLocked;
+
+  /// No description provided for @directiveMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'DIRECTIVE MISSED'**
+  String get directiveMissed;
+
+  /// No description provided for @bonusClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'BONUS CLAIMED'**
+  String get bonusClaimed;
+
+  /// No description provided for @archiveSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'ARCHIVE SIMULATION // NON-CANONICAL'**
+  String get archiveSimulation;
+
+  /// No description provided for @transmissionRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'TRANSMISSION RECOVERED'**
+  String get transmissionRecovered;
+
+  /// No description provided for @retryDirective.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY DIRECTIVE'**
+  String get retryDirective;
+
+  /// No description provided for @continueCampaign.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE'**
+  String get continueCampaign;
+
+  /// No description provided for @commandDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMAND DECK'**
+  String get commandDeck;
+
+  /// No description provided for @endingClaimRelay.
+  ///
+  /// In en, this message translates to:
+  /// **'CLAIM THE RELAY'**
+  String get endingClaimRelay;
+
+  /// No description provided for @endingOpenRelay.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN THE RELAY'**
+  String get endingOpenRelay;
+
+  /// No description provided for @endingClaimEpilogue.
+  ///
+  /// In en, this message translates to:
+  /// **'One core inherits Orbit 00. The other three survive only as checksum scars.'**
+  String get endingClaimEpilogue;
+
+  /// No description provided for @endingOpenEpilogue.
+  ///
+  /// In en, this message translates to:
+  /// **'The relay opens. Four distinct cores receive the same memory. The authorization war ends.'**
+  String get endingOpenEpilogue;
 }
 
 class _AppLocalizationsDelegate

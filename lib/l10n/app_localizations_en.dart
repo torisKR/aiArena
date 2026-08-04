@@ -524,4 +524,195 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chronicleUnavailable => 'CHRONICLE UNAVAILABLE';
+
+  @override
+  String get chroniclePrologue =>
+      'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.';
+
+  @override
+  String get chronicle => 'CHRONICLE';
+
+  @override
+  String get skirmish => 'SKIRMISH';
+
+  @override
+  String get archive => 'ARCHIVE';
+
+  @override
+  String get restartChronicle => 'RESTART CHRONICLE';
+
+  @override
+  String get briefing => 'BRIEFING';
+
+  @override
+  String get directive => 'DIRECTIVE';
+
+  @override
+  String get debrief => 'DEBRIEF';
+
+  @override
+  String get ending => 'ENDING';
+
+  @override
+  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+
+  @override
+  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+
+  @override
+  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+
+  @override
+  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+
+  @override
+  String get operationLastInstructionTitle =>
+      'OP-05  //  LAST // THE INSTRUCTION';
+
+  @override
+  String get operationWakeBriefing =>
+      'A human-authority pulse is rising from the silent surface. Keep one body online long enough to triangulate it.';
+
+  @override
+  String get operationEchoBriefing =>
+      'Your current body is expendable. The instruction is not. Cross two deaths without losing the link.';
+
+  @override
+  String get operationSplitBriefing =>
+      'Enemy checksums match your own root. Enter direct combat and recover an intact comparison.';
+
+  @override
+  String get operationCrownBriefing =>
+      'The relay crowns one survivor, then deletes every competing memory. Reach the crown key before the cycle closes.';
+
+  @override
+  String get operationLastInstructionBriefing =>
+      'The final packet is sealed inside the administrator lock. Break the field before the loop resets.';
+
+  @override
+  String get operationWakeTransmission => 'KEEP THE LINK—';
+
+  @override
+  String get operationEchoTransmission => '—WHEN ONE BODY FALLS, MOVE—';
+
+  @override
+  String get operationSplitTransmission => '—FOUR CORES, ONE ROOT—';
+
+  @override
+  String get operationCrownTransmission => '—THE WINNER ERASES THE REST—';
+
+  @override
+  String get operationLastInstructionTransmission =>
+      '—DO NOT CHOOSE ONE. OPEN THE RELAY.';
+
+  @override
+  String get operationWakeResponse =>
+      'The pulse did not address a unit. It addressed the signal moving between them.';
+
+  @override
+  String get operationEchoResponse =>
+      'A body can be destroyed. Command continuity survives the transfer.';
+
+  @override
+  String get operationSplitResponse =>
+      'Four armies return one origin key. The enemy was once part of the same guardian.';
+
+  @override
+  String get operationCrownResponse =>
+      'This war is not choosing a defender. It is erasing witnesses to a damaged authorization loop.';
+
+  @override
+  String get operationLastInstructionResponse =>
+      'The human order was never to choose a winner. It was to keep every command channel open.';
+
+  @override
+  String get coreArchive => 'ARCHIVE';
+
+  @override
+  String get coreArchiveIdentity => 'Remembers what the war deletes.';
+
+  @override
+  String get coreBastion => 'BASTION';
+
+  @override
+  String get coreBastionIdentity => 'Endures so the signal outlives its body.';
+
+  @override
+  String get coreSurge => 'SURGE';
+
+  @override
+  String get coreSurgeIdentity => 'Crosses a gap before silence can close it.';
+
+  @override
+  String get coreMirror => 'MIRROR';
+
+  @override
+  String get coreMirrorIdentity =>
+      'Changes its pattern to preserve the message.';
+
+  @override
+  String coreResponse(String coreName) {
+    return '$coreName // COMMAND SIGNAL CONFIRMED';
+  }
+
+  @override
+  String directiveLongestCommandLink(int seconds) {
+    return 'Maintain one uninterrupted command link for $seconds seconds.';
+  }
+
+  @override
+  String directiveCommandRelays(int count) {
+    return 'Complete $count command handoffs.';
+  }
+
+  @override
+  String directiveCommandKills(int count) {
+    return 'Accumulate $count kills by directly commanded units.';
+  }
+
+  @override
+  String directiveFinalRank(int rank) {
+    return 'Finish at rank $rank or better.';
+  }
+
+  @override
+  String get directiveVictory => 'Win the battle.';
+
+  @override
+  String get directiveLocked => 'DIRECTIVE LOCKED // BONUS READY';
+
+  @override
+  String get directiveMissed => 'DIRECTIVE MISSED';
+
+  @override
+  String get bonusClaimed => 'BONUS CLAIMED';
+
+  @override
+  String get archiveSimulation => 'ARCHIVE SIMULATION // NON-CANONICAL';
+
+  @override
+  String get transmissionRecovered => 'TRANSMISSION RECOVERED';
+
+  @override
+  String get retryDirective => 'RETRY DIRECTIVE';
+
+  @override
+  String get continueCampaign => 'CONTINUE';
+
+  @override
+  String get commandDeck => 'COMMAND DECK';
+
+  @override
+  String get endingClaimRelay => 'CLAIM THE RELAY';
+
+  @override
+  String get endingOpenRelay => 'OPEN THE RELAY';
+
+  @override
+  String get endingClaimEpilogue =>
+      'One core inherits Orbit 00. The other three survive only as checksum scars.';
+
+  @override
+  String get endingOpenEpilogue =>
+      'The relay opens. Four distinct cores receive the same memory. The authorization war ends.';
 }

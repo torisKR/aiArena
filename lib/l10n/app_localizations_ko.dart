@@ -473,4 +473,191 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get chronicleUnavailable => '시그널 크로니클 이용 불가';
+
+  @override
+  String get chroniclePrologue =>
+      '지상은 72년 동안 침묵했습니다. 당신은 육체 없는 지휘 신호입니다. 최후의 릴레이가 호출하고 있습니다.';
+
+  @override
+  String get chronicle => '크로니클';
+
+  @override
+  String get skirmish => '스커미시';
+
+  @override
+  String get archive => '아카이브';
+
+  @override
+  String get restartChronicle => '크로니클 재시작';
+
+  @override
+  String get briefing => '작전 브리핑';
+
+  @override
+  String get directive => '지령';
+
+  @override
+  String get debrief => '작전 보고';
+
+  @override
+  String get ending => '결말';
+
+  @override
+  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+
+  @override
+  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+
+  @override
+  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+
+  @override
+  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+
+  @override
+  String get operationLastInstructionTitle =>
+      'OP-05  //  LAST // THE INSTRUCTION';
+
+  @override
+  String get operationWakeBriefing =>
+      '침묵한 지상에서 인간 권한의 펄스가 솟아오릅니다. 좌표를 삼각 측량할 때까지 한 몸체를 계속 가동하십시오.';
+
+  @override
+  String get operationEchoBriefing =>
+      '현재 몸체는 소모품입니다. 지령은 그렇지 않습니다. 연결을 잃지 말고 두 번의 죽음을 건너십시오.';
+
+  @override
+  String get operationSplitBriefing =>
+      '적의 체크섬이 당신의 루트와 일치합니다. 직접 교전에 들어가 온전한 대조값을 회수하십시오.';
+
+  @override
+  String get operationCrownBriefing =>
+      '릴레이는 생존자 하나를 왕좌에 올린 뒤 모든 경쟁 기억을 삭제합니다. 순환이 닫히기 전에 왕좌 키에 도달하십시오.';
+
+  @override
+  String get operationLastInstructionBriefing =>
+      '최종 패킷은 관리자 잠금 안에 봉인되어 있습니다. 순환이 초기화되기 전에 장벽을 깨십시오.';
+
+  @override
+  String get operationWakeTransmission => '연결을 유지하라—';
+
+  @override
+  String get operationEchoTransmission => '—한 몸체가 쓰러지면, 이동하라—';
+
+  @override
+  String get operationSplitTransmission => '—네 코어, 하나의 근원—';
+
+  @override
+  String get operationCrownTransmission => '—승자가 나머지를 지운다—';
+
+  @override
+  String get operationLastInstructionTransmission => '—하나를 고르지 마라. 릴레이를 열어라.';
+
+  @override
+  String get operationWakeResponse =>
+      '펄스는 유닛을 향하지 않았습니다. 유닛 사이를 이동하는 신호를 향했습니다.';
+
+  @override
+  String get operationEchoResponse => '몸체는 파괴될 수 있습니다. 지휘의 연속성은 인계로 살아남습니다.';
+
+  @override
+  String get operationSplitResponse =>
+      '네 군대가 하나의 기원 키를 반환합니다. 적은 한때 같은 수호 지능의 일부였습니다.';
+
+  @override
+  String get operationCrownResponse =>
+      '이 전쟁은 수호자를 고르는 것이 아닙니다. 손상된 인증 순환의 목격자를 지우는 일입니다.';
+
+  @override
+  String get operationLastInstructionResponse =>
+      '인간의 명령은 승자를 고르는 것이 아니었습니다. 모든 지휘 채널을 열어 두는 것이었습니다.';
+
+  @override
+  String get coreArchive => 'ARCHIVE';
+
+  @override
+  String get coreArchiveIdentity => '전쟁이 지우는 것을 기억합니다.';
+
+  @override
+  String get coreBastion => 'BASTION';
+
+  @override
+  String get coreBastionIdentity => '신호가 몸체보다 오래 살아남도록 버팁니다.';
+
+  @override
+  String get coreSurge => 'SURGE';
+
+  @override
+  String get coreSurgeIdentity => '침묵이 닫히기 전에 간극을 가로지릅니다.';
+
+  @override
+  String get coreMirror => 'MIRROR';
+
+  @override
+  String get coreMirrorIdentity => '메시지를 보존하기 위해 패턴을 바꿉니다.';
+
+  @override
+  String coreResponse(String coreName) {
+    return '$coreName // 지휘 신호 확인';
+  }
+
+  @override
+  String directiveLongestCommandLink(int seconds) {
+    return '지휘 연결 $seconds초 유지';
+  }
+
+  @override
+  String directiveCommandRelays(int count) {
+    return '지휘권 인계 $count회 완료';
+  }
+
+  @override
+  String directiveCommandKills(int count) {
+    return '직접 지휘 처치 $count회';
+  }
+
+  @override
+  String directiveFinalRank(int rank) {
+    return '$rank위 이상으로 종료';
+  }
+
+  @override
+  String get directiveVictory => '단독 승리';
+
+  @override
+  String get directiveLocked => '지령 잠금 // 보너스 준비';
+
+  @override
+  String get directiveMissed => '지령 실패';
+
+  @override
+  String get bonusClaimed => '보너스 수령 완료';
+
+  @override
+  String get archiveSimulation => '아카이브 시뮬레이션 // 비정사';
+
+  @override
+  String get transmissionRecovered => '전송 기록 복구';
+
+  @override
+  String get retryDirective => '지령 재시도';
+
+  @override
+  String get continueCampaign => '계속';
+
+  @override
+  String get commandDeck => '지휘 갑판';
+
+  @override
+  String get endingClaimRelay => '릴레이 장악';
+
+  @override
+  String get endingOpenRelay => '릴레이 개방';
+
+  @override
+  String get endingClaimEpilogue =>
+      '하나의 코어가 Orbit 00을 계승합니다. 나머지 셋은 체크섬의 상흔으로만 남습니다.';
+
+  @override
+  String get endingOpenEpilogue => '릴레이가 열립니다. 네 코어가 같은 기억을 받습니다. 인증 전쟁이 끝납니다.';
 }

@@ -469,4 +469,180 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chronicleUnavailable => '信号编年史暂不可用';
+
+  @override
+  String get chroniclePrologue => '地表已沉默72年。你是没有躯体的指挥信号。最后一座中继站正在呼叫。';
+
+  @override
+  String get chronicle => '编年史';
+
+  @override
+  String get skirmish => '遭遇战';
+
+  @override
+  String get archive => '档案';
+
+  @override
+  String get restartChronicle => '重启编年史';
+
+  @override
+  String get briefing => '作战简报';
+
+  @override
+  String get directive => '指令';
+
+  @override
+  String get debrief => '战后报告';
+
+  @override
+  String get ending => '结局';
+
+  @override
+  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+
+  @override
+  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+
+  @override
+  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+
+  @override
+  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+
+  @override
+  String get operationLastInstructionTitle =>
+      'OP-05  //  LAST // THE INSTRUCTION';
+
+  @override
+  String get operationWakeBriefing => '来自沉默地表的人类权限脉冲正在升起。让一个单位持续在线，直到完成三角定位。';
+
+  @override
+  String get operationEchoBriefing => '当前躯体可以牺牲，指令不行。保持链路，跨过两次死亡。';
+
+  @override
+  String get operationSplitBriefing => '敌方校验和与你的根校验一致。进入直接战斗，回收完整的比对数据。';
+
+  @override
+  String get operationCrownBriefing => '中继站加冕一名幸存者，随后删除所有竞争记忆。在循环闭合前抵达王冠密钥。';
+
+  @override
+  String get operationLastInstructionBriefing => '最终数据包封存在管理员锁内。在循环重置前击破这片战场。';
+
+  @override
+  String get operationWakeTransmission => '保持链路—';
+
+  @override
+  String get operationEchoTransmission => '—一个躯体倒下，就转移—';
+
+  @override
+  String get operationSplitTransmission => '—四个核心，一个根源—';
+
+  @override
+  String get operationCrownTransmission => '—胜者抹除其余一切—';
+
+  @override
+  String get operationLastInstructionTransmission => '—不要选择一个。开放中继站。';
+
+  @override
+  String get operationWakeResponse => '脉冲呼叫的不是某个单位，而是穿行于单位之间的信号。';
+
+  @override
+  String get operationEchoResponse => '躯体可以被摧毁，指挥连续性会在转移中延续。';
+
+  @override
+  String get operationSplitResponse => '四支军队返回同一个源密钥。敌人曾是同一守护智能的一部分。';
+
+  @override
+  String get operationCrownResponse => '这场战争并非在选择守护者，而是在抹除受损授权循环的见证者。';
+
+  @override
+  String get operationLastInstructionResponse => '人类的命令从来不是选择胜者，而是让所有指挥通道保持开放。';
+
+  @override
+  String get coreArchive => 'ARCHIVE';
+
+  @override
+  String get coreArchiveIdentity => '记住战争抹去的一切。';
+
+  @override
+  String get coreBastion => 'BASTION';
+
+  @override
+  String get coreBastionIdentity => '坚持到底，让信号活过躯体。';
+
+  @override
+  String get coreSurge => 'SURGE';
+
+  @override
+  String get coreSurgeIdentity => '在沉默合拢前跨越间隙。';
+
+  @override
+  String get coreMirror => 'MIRROR';
+
+  @override
+  String get coreMirrorIdentity => '改变模式，守住这条讯息。';
+
+  @override
+  String coreResponse(String coreName) {
+    return '$coreName // 指挥信号已确认';
+  }
+
+  @override
+  String directiveLongestCommandLink(int seconds) {
+    return '保持指挥链路$seconds秒';
+  }
+
+  @override
+  String directiveCommandRelays(int count) {
+    return '完成$count次指挥交接';
+  }
+
+  @override
+  String directiveCommandKills(int count) {
+    return '直接指挥击破$count个单位';
+  }
+
+  @override
+  String directiveFinalRank(int rank) {
+    return '以第$rank名或更高名次结束';
+  }
+
+  @override
+  String get directiveVictory => '单独获胜';
+
+  @override
+  String get directiveLocked => '指令锁定 // 奖励就绪';
+
+  @override
+  String get directiveMissed => '指令未完成';
+
+  @override
+  String get bonusClaimed => '奖励已领取';
+
+  @override
+  String get archiveSimulation => '档案模拟 // 非正史';
+
+  @override
+  String get transmissionRecovered => '已恢复传输记录';
+
+  @override
+  String get retryDirective => '重试指令';
+
+  @override
+  String get continueCampaign => '继续';
+
+  @override
+  String get commandDeck => '指挥甲板';
+
+  @override
+  String get endingClaimRelay => '接管中继站';
+
+  @override
+  String get endingOpenRelay => '开放中继站';
+
+  @override
+  String get endingClaimEpilogue => '一个核心继承Orbit 00，另外三个只作为校验和伤痕存续。';
+
+  @override
+  String get endingOpenEpilogue => '中继站开放。四个不同的核心收到同一份记忆。授权战争结束。';
 }

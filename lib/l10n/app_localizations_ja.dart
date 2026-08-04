@@ -471,4 +471,187 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get chronicleUnavailable => 'シグナル・クロニクル利用不可';
+
+  @override
+  String get chroniclePrologue =>
+      '地表は72年間、沈黙している。あなたは肉体を持たない指揮信号だ。最後のリレーが呼びかけている。';
+
+  @override
+  String get chronicle => 'クロニクル';
+
+  @override
+  String get skirmish => 'スカーミッシュ';
+
+  @override
+  String get archive => 'アーカイブ';
+
+  @override
+  String get restartChronicle => 'クロニクルを再開';
+
+  @override
+  String get briefing => '作戦ブリーフィング';
+
+  @override
+  String get directive => '指令';
+
+  @override
+  String get debrief => '作戦報告';
+
+  @override
+  String get ending => 'エンディング';
+
+  @override
+  String get operationWakeTitle => 'OP-01  //  WAKE // DEAD ORBIT';
+
+  @override
+  String get operationEchoTitle => 'OP-02  //  ECHO // BORROWED BODIES';
+
+  @override
+  String get operationSplitTitle => 'OP-03  //  SPLIT // FOUR FROM ONE';
+
+  @override
+  String get operationCrownTitle => 'OP-04  //  CROWN // FALSE WINNER';
+
+  @override
+  String get operationLastInstructionTitle =>
+      'OP-05  //  LAST // THE INSTRUCTION';
+
+  @override
+  String get operationWakeBriefing =>
+      '沈黙した地表から人間の権限を持つパルスが立ち上がる。三角測量できるまで、ひとつのボディを稼働させ続けろ。';
+
+  @override
+  String get operationEchoBriefing => '現在のボディは消耗品だ。指令は違う。リンクを失わず、二度の死を越えろ。';
+
+  @override
+  String get operationSplitBriefing =>
+      '敵のチェックサムは君のルートと一致する。直接戦闘に入り、完全な照合データを回収せよ。';
+
+  @override
+  String get operationCrownBriefing =>
+      'リレーは生存者ひとつを王冠に据え、競合する記憶をすべて消去する。サイクルが閉じる前に王冠キーへ到達せよ。';
+
+  @override
+  String get operationLastInstructionBriefing =>
+      '最後のパケットは管理者ロックに封印されている。ループがリセットされる前にフィールドを破れ。';
+
+  @override
+  String get operationWakeTransmission => 'リンクを維持せよ—';
+
+  @override
+  String get operationEchoTransmission => '—ひとつのボディが倒れたら、移れ—';
+
+  @override
+  String get operationSplitTransmission => '—4つのコア、ひとつのルート—';
+
+  @override
+  String get operationCrownTransmission => '—勝者は残りを消去する—';
+
+  @override
+  String get operationLastInstructionTransmission => '—ひとつを選ぶな。リレーを開け。';
+
+  @override
+  String get operationWakeResponse => 'パルスが呼びかけたのはユニットではない。その間を移動する信号だった。';
+
+  @override
+  String get operationEchoResponse => 'ボディは破壊される。指揮の連続性は移行によって生き残る。';
+
+  @override
+  String get operationSplitResponse => '4つの軍勢がひとつの起源キーを返す。敵はかつて同じ守護知性の一部だった。';
+
+  @override
+  String get operationCrownResponse => 'この戦争は守護者を選んでいない。損傷した認証ループの証人を消している。';
+
+  @override
+  String get operationLastInstructionResponse =>
+      '人間の命令は勝者を選ぶことではなかった。すべての指揮チャンネルを開いたままにすることだった。';
+
+  @override
+  String get coreArchive => 'ARCHIVE';
+
+  @override
+  String get coreArchiveIdentity => '戦争が消すものを記憶する。';
+
+  @override
+  String get coreBastion => 'BASTION';
+
+  @override
+  String get coreBastionIdentity => '信号がボディを越えて存続するよう耐える。';
+
+  @override
+  String get coreSurge => 'SURGE';
+
+  @override
+  String get coreSurgeIdentity => '沈黙が閉じる前に隔たりを越える。';
+
+  @override
+  String get coreMirror => 'MIRROR';
+
+  @override
+  String get coreMirrorIdentity => 'メッセージを守るためパターンを変える。';
+
+  @override
+  String coreResponse(String coreName) {
+    return '$coreName // 指揮信号を確認';
+  }
+
+  @override
+  String directiveLongestCommandLink(int seconds) {
+    return '指揮リンクを$seconds秒維持';
+  }
+
+  @override
+  String directiveCommandRelays(int count) {
+    return '指揮引き継ぎを$count回完了';
+  }
+
+  @override
+  String directiveCommandKills(int count) {
+    return '直接指揮で$count体撃破';
+  }
+
+  @override
+  String directiveFinalRank(int rank) {
+    return '$rank位以内で終了';
+  }
+
+  @override
+  String get directiveVictory => '単独勝利';
+
+  @override
+  String get directiveLocked => '指令ロック // ボーナス準備完了';
+
+  @override
+  String get directiveMissed => '指令未達';
+
+  @override
+  String get bonusClaimed => 'ボーナス取得済み';
+
+  @override
+  String get archiveSimulation => 'アーカイブ・シミュレーション // 非正史';
+
+  @override
+  String get transmissionRecovered => '伝送記録を回収';
+
+  @override
+  String get retryDirective => '指令を再試行';
+
+  @override
+  String get continueCampaign => '続行';
+
+  @override
+  String get commandDeck => 'コマンドデッキ';
+
+  @override
+  String get endingClaimRelay => 'リレーを掌握';
+
+  @override
+  String get endingOpenRelay => 'リレーを開放';
+
+  @override
+  String get endingClaimEpilogue =>
+      'ひとつのコアがOrbit 00を継承する。他の3つはチェックサムの傷跡としてのみ残る。';
+
+  @override
+  String get endingOpenEpilogue => 'リレーが開く。4つの異なるコアが同じ記憶を受け取る。認証戦争は終わる。';
 }
