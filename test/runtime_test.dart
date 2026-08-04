@@ -187,6 +187,7 @@ void main() {
         ),
       );
       addTearDown(runtime.dispose);
+      _expectNonDefaultPersistedSections(runtime);
       expect(runtime.storyProgress.currentOperation, StoryOperationId.wake);
       expect(
         runtime.rewardLedger.claimedDirectiveBonusIds,
@@ -205,12 +206,36 @@ void main() {
         ),
       );
       addTearDown(runtime.dispose);
+      _expectNonDefaultPersistedSections(runtime);
       expect(
         runtime.storyProgress.concludedOperations,
         contains(StoryOperationId.wake),
       );
       expect(runtime.storyProgress.currentOperation, StoryOperationId.echo);
       expect(runtime.rewardLedger.claimedDirectiveBonusIds, isEmpty);
+    },
+  );
+
+  test(
+    'unknown top-level schema keeps the existing corruption fallback',
+    () async {
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: _MemoryStateStore.withValue(schema99Fixture),
+      );
+      addTearDown(runtime.dispose);
+      expect(runtime.wallet.balance, 0);
+      expect(runtime.wallet.isUnlocked('color_relay_ivory'), isFalse);
+      expect(runtime.preferences.languageCode, 'system');
+      expect(runtime.preferences.lowSpecMode, isFalse);
+      expect(runtime.preferences.forceReducedMotion, isFalse);
+      expect(runtime.preferences.mouseCameraEnabled, isTrue);
+      expect(runtime.preferences.hapticsEnabled, isTrue);
+      expect(runtime.preferences.audioEnabled, isTrue);
+      expect(runtime.analyticsSharingAllowed, isFalse);
+      expect(runtime.adRequestsAllowed, isFalse);
+      expect(runtime.storyProgress, StoryProgress.initial());
+      expect(runtime.rewardLedger, ProfileRewardLedger.empty());
     },
   );
 
@@ -704,10 +729,45 @@ const schema1Fixture =
     '''{"version":1,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory","trail_relay_tape","death_fracture"],"equippedIds":{"factionColor":"color_relay_ivory","movementTrail":"trail_relay_tape","deathEffect":"death_fracture"}},"preferences":{"lowSpecMode":true,"forceReducedMotion":true,"mouseCameraEnabled":false,"hapticsEnabled":false,"audioEnabled":false,"languageCode":"ko"},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true}}''';
 
 const schema2WithMalformedStoryAndWakeClaim =
-    '''{"version":2,"wallet":{"balance":90},"preferences":{},"privacy":{},"story":"malformed","rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
+    '''{"version":2,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory","trail_relay_tape","death_fracture"],"equippedIds":{"factionColor":"color_relay_ivory","movementTrail":"trail_relay_tape","deathEffect":"death_fracture"}},"preferences":{"lowSpecMode":true,"forceReducedMotion":true,"mouseCameraEnabled":false,"hapticsEnabled":false,"audioEnabled":false,"languageCode":"ko"},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true},"story":"malformed","rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
 
 const schema2WithWakeConcludedAndMalformedLedger =
-    '''{"version":2,"wallet":{"balance":90},"preferences":{},"privacy":{},"story":{"campaignFaction":"amethyst","concludedOperations":["wake"],"medals":[],"recoveredTransmissions":["wake"],"ending":null},"rewardLedger":[]}''';
+    '''{"version":2,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory","trail_relay_tape","death_fracture"],"equippedIds":{"factionColor":"color_relay_ivory","movementTrail":"trail_relay_tape","deathEffect":"death_fracture"}},"preferences":{"lowSpecMode":true,"forceReducedMotion":true,"mouseCameraEnabled":false,"hapticsEnabled":false,"audioEnabled":false,"languageCode":"ko"},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true},"story":{"campaignFaction":"amethyst","concludedOperations":["wake"],"medals":[],"recoveredTransmissions":["wake"],"ending":null},"rewardLedger":[]}''';
+
+const schema99Fixture =
+    '''{"version":99,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory"]},"preferences":{"languageCode":"ko","lowSpecMode":true},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true},"story":{"campaignFaction":"amethyst"},"rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
+
+void _expectNonDefaultPersistedSections(TokenfrontRuntime runtime) {
+  expect(runtime.wallet.balance, 275);
+  expect(
+    runtime.wallet.unlockedIds,
+    containsAll(<String>[
+      'color_relay_ivory',
+      'trail_relay_tape',
+      'death_fracture',
+    ]),
+  );
+  expect(
+    runtime.wallet.equippedId(CosmeticCategory.factionColor),
+    'color_relay_ivory',
+  );
+  expect(
+    runtime.wallet.equippedId(CosmeticCategory.movementTrail),
+    'trail_relay_tape',
+  );
+  expect(
+    runtime.wallet.equippedId(CosmeticCategory.deathEffect),
+    'death_fracture',
+  );
+  expect(runtime.preferences.lowSpecMode, isTrue);
+  expect(runtime.preferences.forceReducedMotion, isTrue);
+  expect(runtime.preferences.mouseCameraEnabled, isFalse);
+  expect(runtime.preferences.hapticsEnabled, isFalse);
+  expect(runtime.preferences.audioEnabled, isFalse);
+  expect(runtime.preferences.languageCode, 'ko');
+  expect(runtime.analyticsSharingAllowed, isTrue);
+  expect(runtime.adRequestsAllowed, isTrue);
+}
 
 BattleReport _report({
   ChronicleEndReason reason = ChronicleEndReason.timeLimit,
