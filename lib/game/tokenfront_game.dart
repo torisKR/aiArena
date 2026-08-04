@@ -392,6 +392,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void setTouchInput(Vec2 direction) {
+    if (paused) return;
     _touchInput = direction.lengthSquared > 1
         ? direction.normalized()
         : direction;
@@ -424,13 +425,18 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void beginMouseCameraPan() {
-    if (!mouseCameraEnabled || _handoffElapsed >= 0) return;
+    if (paused || !mouseCameraEnabled || _handoffElapsed >= 0) return;
     _mousePanning = true;
     _followResumeRemaining = 0;
   }
 
   void updateMouseCameraPan(Offset screenDelta) {
-    if (!mouseCameraEnabled || !_mousePanning || _handoffElapsed >= 0) return;
+    if (paused ||
+        !mouseCameraEnabled ||
+        !_mousePanning ||
+        _handoffElapsed >= 0) {
+      return;
+    }
     final zoom = math.max(.01, _lastRenderZoom);
     _cameraCenter =
         (_cameraCenter - Vec2(screenDelta.dx, screenDelta.dy) / zoom).clamp(
@@ -448,13 +454,13 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void beginMinimapCameraPan() {
-    if (_handoffElapsed >= 0) return;
+    if (paused || _handoffElapsed >= 0) return;
     _minimapPanning = true;
     _followResumeRemaining = 0;
   }
 
   void updateMinimapCamera(Vec2 worldPosition) {
-    if (!_minimapPanning || _handoffElapsed >= 0) return;
+    if (paused || !_minimapPanning || _handoffElapsed >= 0) return;
     _cameraCenter = worldPosition.clamp(
       minX: 0,
       maxX: simulation.config.worldWidth,
@@ -470,14 +476,14 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void nudgeMinimapCamera(Vec2 worldDelta) {
-    if (_handoffElapsed >= 0) return;
+    if (paused || _handoffElapsed >= 0) return;
     beginMinimapCameraPan();
     updateMinimapCamera(_cameraCenter + worldDelta);
     endMinimapCameraPan();
   }
 
   void applyMouseWheel(double scrollDeltaY) {
-    if (!mouseCameraEnabled || _handoffElapsed >= 0) return;
+    if (paused || !mouseCameraEnabled || _handoffElapsed >= 0) return;
     final factor = math.exp(-scrollDeltaY * .0015);
     final minimum = lowSpecMode ? .9 : .68;
     _manualZoom = (_manualZoom * factor).clamp(minimum, 1.45);
@@ -496,7 +502,8 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void triggerDash() {
-    if (_handoffElapsed < 0 &&
+    if (!paused &&
+        _handoffElapsed < 0 &&
         _dashCooldownRemaining <= 0 &&
         simulation.controlledUnit != null) {
       _dashRemaining = .24;
@@ -511,6 +518,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     KeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
+    if (paused) return KeyEventResult.ignored;
     final movementResult = onMovementKeyEvent(event, keysPressed);
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space) {
       triggerDash();
@@ -524,6 +532,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     KeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
+    if (paused) return KeyEventResult.ignored;
     _pressedKeys = Set.unmodifiable(keysPressed.where(_isMovementKey));
     return _isMovementKey(event.logicalKey)
         ? KeyEventResult.handled
@@ -531,6 +540,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   KeyEventResult onFocusedMovementKeyEvent(KeyEvent event) {
+    if (paused) return KeyEventResult.ignored;
     if (!_isMovementKey(event.logicalKey)) return KeyEventResult.ignored;
     final pressedKeys = {..._pressedKeys};
     if (event is KeyUpEvent) {

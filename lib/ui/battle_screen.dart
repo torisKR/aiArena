@@ -40,6 +40,8 @@ class _BattleScreenState extends State<BattleScreen>
   bool _userPaused = false;
 
   TokenfrontGame get game => widget.game;
+  bool get _gameplayInputEnabled =>
+      !_lifecyclePaused && !_userPaused && !game.paused;
 
   @override
   void initState() {
@@ -94,7 +96,8 @@ class _BattleScreenState extends State<BattleScreen>
       buttons & (kPrimaryMouseButton | kMiddleMouseButton) != 0;
 
   void _onPointerDown(PointerDownEvent event) {
-    if (event.kind != PointerDeviceKind.mouse ||
+    if (!_gameplayInputEnabled ||
+        event.kind != PointerDeviceKind.mouse ||
         !game.mouseCameraEnabled ||
         !_isMousePanButton(event.buttons)) {
       return;
@@ -104,7 +107,7 @@ class _BattleScreenState extends State<BattleScreen>
   }
 
   void _onPointerMove(PointerMoveEvent event) {
-    if (event.pointer == _mousePanPointer) {
+    if (_gameplayInputEnabled && event.pointer == _mousePanPointer) {
       game.updateMouseCameraPan(event.delta);
     }
   }
@@ -116,7 +119,9 @@ class _BattleScreenState extends State<BattleScreen>
   }
 
   void _onPointerSignal(PointerSignalEvent event) {
-    if (event is PointerScrollEvent && event.kind == PointerDeviceKind.mouse) {
+    if (_gameplayInputEnabled &&
+        event is PointerScrollEvent &&
+        event.kind == PointerDeviceKind.mouse) {
       game.applyMouseWheel(event.scrollDelta.dy);
     }
   }
@@ -135,7 +140,9 @@ class _BattleScreenState extends State<BattleScreen>
     body: Focus(
       canRequestFocus: false,
       skipTraversal: true,
-      onKeyEvent: (_, event) => game.onFocusedMovementKeyEvent(event),
+      onKeyEvent: (_, event) => _gameplayInputEnabled
+          ? game.onFocusedMovementKeyEvent(event)
+          : KeyEventResult.ignored,
       child: FocusTraversalGroup(
         policy: WidgetOrderTraversalPolicy(),
         child: LayoutBuilder(
@@ -239,13 +246,18 @@ class _BattleScreenState extends State<BattleScreen>
                             snapshot: snapshot,
                             joystickSize: joystickSize,
                             compact: compactControls,
+                            enabled: _gameplayInputEnabled,
                           ),
                         ),
                         Align(
                           alignment: Alignment.bottomRight,
                           child: Padding(
                             padding: EdgeInsets.only(right: minimapWidth + 10),
-                            child: _DashControl(game: game, size: dashSize),
+                            child: _DashControl(
+                              game: game,
+                              size: dashSize,
+                              enabled: _gameplayInputEnabled,
+                            ),
                           ),
                         ),
                         Align(
@@ -255,6 +267,7 @@ class _BattleScreenState extends State<BattleScreen>
                             snapshot: snapshot,
                             width: minimapWidth,
                             height: minimapHeight,
+                            enabled: _gameplayInputEnabled,
                           ),
                         ),
                         if (snapshot.handoffProgress case final progress?)
@@ -286,7 +299,9 @@ class _BattleScreenState extends State<BattleScreen>
                             ),
                           ),
                         if (game.paused)
-                          Center(child: _PausedReadout(userPaused: _userPaused)),
+                          Center(
+                            child: _PausedReadout(userPaused: _userPaused),
+                          ),
                       ],
                     ),
                   ),
@@ -752,11 +767,13 @@ class _PlayerControls extends StatelessWidget {
     required this.snapshot,
     required this.joystickSize,
     required this.compact,
+    required this.enabled,
   });
   final TokenfrontGame game;
   final BattleHudSnapshot snapshot;
   final double joystickSize;
   final bool compact;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -791,14 +808,23 @@ class _PlayerControls extends StatelessWidget {
         ),
       ),
       SizedBox(height: compact ? 5 : 8),
-      _VirtualJoystick(size: joystickSize, onChanged: game.setTouchInput),
+      _VirtualJoystick(
+        size: joystickSize,
+        enabled: enabled,
+        onChanged: game.setTouchInput,
+      ),
     ],
   );
 }
 
 class _VirtualJoystick extends StatefulWidget {
-  const _VirtualJoystick({required this.size, required this.onChanged});
+  const _VirtualJoystick({
+    required this.size,
+    required this.enabled,
+    required this.onChanged,
+  });
   final double size;
+  final bool enabled;
   final ValueChanged<Vec2> onChanged;
 
   @override
@@ -840,11 +866,13 @@ class _VirtualJoystickState extends State<_VirtualJoystick> {
     child: Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (event) {
+        if (!widget.enabled) return;
         if (activePointer != null) return;
         activePointer = event.pointer;
         update(event.localPosition);
       },
       onPointerMove: (event) {
+        if (!widget.enabled) return;
         if (event.pointer == activePointer) update(event.localPosition);
       },
       onPointerUp: (event) {
@@ -911,9 +939,14 @@ class _JoystickPainter extends CustomPainter {
 }
 
 class _DashControl extends StatefulWidget {
-  const _DashControl({required this.game, required this.size});
+  const _DashControl({
+    required this.game,
+    required this.size,
+    required this.enabled,
+  });
   final TokenfrontGame game;
   final double size;
+  final bool enabled;
 
   @override
   State<_DashControl> createState() => _DashControlState();
@@ -929,6 +962,7 @@ class _DashControlState extends State<_DashControl> {
       label: context.l10n.dashSemantics,
       hint: context.l10n.dashHint,
       button: true,
+      enabled: widget.enabled,
       child: ExcludeSemantics(
         child: Material(
           color: widget.game.playerFaction.visual.color.withValues(alpha: .88),
@@ -943,7 +977,7 @@ class _DashControlState extends State<_DashControl> {
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: widget.game.triggerDash,
+            onTap: widget.enabled ? widget.game.triggerDash : null,
             canRequestFocus: true,
             focusColor: TokenfrontColors.relayIvory.withValues(alpha: .28),
             onFocusChange: (value) => setState(() => focused = value),
@@ -974,12 +1008,14 @@ class _BattleMinimap extends StatefulWidget {
     required this.snapshot,
     required this.width,
     required this.height,
+    required this.enabled,
   });
 
   final TokenfrontGame game;
   final BattleHudSnapshot snapshot;
   final double width;
   final double height;
+  final bool enabled;
 
   @override
   State<_BattleMinimap> createState() => _BattleMinimapState();
@@ -1024,6 +1060,7 @@ class _BattleMinimapState extends State<_BattleMinimap> {
   }
 
   KeyEventResult handleKey(FocusNode node, KeyEvent event) {
+    if (!widget.enabled) return KeyEventResult.ignored;
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -1064,6 +1101,7 @@ class _BattleMinimapState extends State<_BattleMinimap> {
         child: Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: (event) {
+            if (!widget.enabled) return;
             if (activePointer != null) return;
             focusNode.requestFocus();
             activePointer = event.pointer;
@@ -1071,6 +1109,7 @@ class _BattleMinimapState extends State<_BattleMinimap> {
             updateCamera(event.localPosition);
           },
           onPointerMove: (event) {
+            if (!widget.enabled) return;
             if (event.pointer == activePointer) {
               updateCamera(event.localPosition);
             }

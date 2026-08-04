@@ -358,15 +358,21 @@ void main() {
       tester,
     ) async {
       final announcements = <String>[];
-      final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (message) async {
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (
+        message,
+      ) async {
         if (message is Map && message['type'] == 'announce') {
           announcements.add(message['data']['message'] as String);
         }
         return null;
       });
       addTearDown(
-        () => messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, null),
+        () => messenger.setMockDecodedMessageHandler(
+          SystemChannels.accessibility,
+          null,
+        ),
       );
       final game = TokenfrontGame(
         playerFaction: Faction.amethyst,
@@ -419,7 +425,10 @@ void main() {
       );
       await tester.pump();
       expect(find.text('DIRECTIVE // COMMAND KILLS 2 / 3'), findsOneWidget);
-      expect(announcements.where((message) => message.contains('2 / 3')), isEmpty);
+      expect(
+        announcements.where((message) => message.contains('2 / 3')),
+        isEmpty,
+      );
       expect(
         find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
         findsOneWidget,
@@ -774,6 +783,64 @@ void main() {
       await tester.pump();
       expect(game.paused, isFalse);
       expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsNothing);
+    });
+
+    testWidgets('manual pause rejects every deferred gameplay input', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(844, 390);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final game = _game();
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final pause = find.bySemanticsLabel('Pause or resume battle');
+      await tester.tap(pause);
+      await tester.pump();
+      expect(game.paused, isTrue);
+      final cameraBefore = game.debugCameraCenter;
+
+      game.onFocusedMovementKeyEvent(
+        _keyDown(PhysicalKeyboardKey.keyD, LogicalKeyboardKey.keyD),
+      );
+      game.onKeyEvent(
+        _keyDown(PhysicalKeyboardKey.space, LogicalKeyboardKey.space),
+        {LogicalKeyboardKey.space},
+      );
+      game.setTouchInput(const Vec2(1, 0));
+      game.triggerDash();
+      game.beginMinimapCameraPan();
+      game.updateMinimapCamera(const Vec2(999, 999));
+      final joystick = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'Movement joystick',
+      );
+      final joystickSurface = find.descendant(
+        of: joystick,
+        matching: find.byType(Listener),
+      );
+      final gesture = await tester.startGesture(
+        tester.getRect(joystickSurface).center + const Offset(20, 0),
+      );
+      await tester.pump();
+      await gesture.up();
+      await tester.pump();
+
+      expect(game.debugKeyboardInput, Vec2.zero);
+      expect(game.debugTouchInput, Vec2.zero);
+      expect(game.debugDashActive, isFalse);
+      expect(game.debugCameraCenter, cameraBefore);
+
+      await tester.tap(pause);
+      await tester.pump();
+      expect(game.paused, isFalse);
+      game.update(.3);
+      expect(game.debugKeyboardInput, Vec2.zero);
+      expect(game.debugTouchInput, Vec2.zero);
+      expect(game.debugDashActive, isFalse);
     });
 
     testWidgets('directive completion cue respects normal and reduced motion', (
