@@ -9,10 +9,10 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'Tokenfront：AI竞技场';
+  String get appTitle => 'Tokenfront：轨道信号战';
 
   @override
-  String get lobbyTagline => 'AI竞技场  /  一个信号，四条战线。';
+  String get lobbyTagline => '四个AI核心，最后一座中继站。';
 
   @override
   String factionSignal(String faction) {
@@ -23,7 +23,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get factionBrief => '1,000单位 · Lv.1–10均衡 · 指挥权持续接替';
 
   @override
-  String get deploySignal => '部署信号';
+  String get deploySignal => '部署至轨道';
 
   @override
   String lockerBalance(int balance) {

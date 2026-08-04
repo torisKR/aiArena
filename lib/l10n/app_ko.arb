@@ -1,10 +1,10 @@
 {
   "@@locale": "ko",
-  "appTitle": "Tokenfront: AI 아레나",
-  "lobbyTagline": "AI 아레나  /  하나의 신호. 네 개의 전선.",
+  "appTitle": "Tokenfront: 궤도 신호전",
+  "lobbyTagline": "네 AI 코어. 단 하나의 최후 릴레이.",
   "factionSignal": "{faction} 신호",
   "factionBrief": "1,000 유닛 · Lv.1–10 균형 · 지휘권 연속 유지",
-  "deploySignal": "신호 전개",
+  "deploySignal": "궤도 투입",
   "lockerBalance": "보관소  {balance} WT",
   "tune": "조정",
   "signalSettings": "신호 설정",

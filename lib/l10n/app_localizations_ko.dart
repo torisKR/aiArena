@@ -9,10 +9,10 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get appTitle => 'Tokenfront: AI 아레나';
+  String get appTitle => 'Tokenfront: 궤도 신호전';
 
   @override
-  String get lobbyTagline => 'AI 아레나  /  하나의 신호. 네 개의 전선.';
+  String get lobbyTagline => '네 AI 코어. 단 하나의 최후 릴레이.';
 
   @override
   String factionSignal(String faction) {
@@ -23,7 +23,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get factionBrief => '1,000 유닛 · Lv.1–10 균형 · 지휘권 연속 유지';
 
   @override
-  String get deploySignal => '신호 전개';
+  String get deploySignal => '궤도 투입';
 
   @override
   String lockerBalance(int balance) {

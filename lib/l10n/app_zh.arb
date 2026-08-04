@@ -1,10 +1,10 @@
 {
   "@@locale": "zh",
-  "appTitle": "Tokenfront：AI竞技场",
-  "lobbyTagline": "AI竞技场  /  一个信号，四条战线。",
+  "appTitle": "Tokenfront：轨道信号战",
+  "lobbyTagline": "四个AI核心，最后一座中继站。",
   "factionSignal": "{faction} 信号",
   "factionBrief": "1,000单位 · Lv.1–10均衡 · 指挥权持续接替",
-  "deploySignal": "部署信号",
+  "deploySignal": "部署至轨道",
   "lockerBalance": "装备库  {balance} WT",
   "tune": "调校",
   "signalSettings": "信号设置",

@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 /// The four armies used by the MVP.
-enum Faction { claude, codex, grok, gemini }
+enum Faction { amethyst, cobalt, volt, prism }
 
 extension FactionLabel on Faction {
   String get label => switch (this) {
-    Faction.claude => 'Claude',
-    Faction.codex => 'Codex',
-    Faction.grok => 'Grok',
-    Faction.gemini => 'Gemini',
+    Faction.amethyst => 'AMETHYST',
+    Faction.cobalt => 'COBALT',
+    Faction.volt => 'VOLT',
+    Faction.prism => 'PRISM',
   };
 }
 
@@ -1021,8 +1021,8 @@ class BattleSimulation {
   ({double minX, double maxX, double minY, double maxY}) _spawnZoneFor(
     Faction faction,
   ) {
-    final left = faction == Faction.claude || faction == Faction.grok;
-    final top = faction == Faction.claude || faction == Faction.codex;
+    final left = faction == Faction.amethyst || faction == Faction.volt;
+    final top = faction == Faction.amethyst || faction == Faction.cobalt;
     return (
       minX: config.worldWidth * (left ? 120 / 3600 : 2400 / 3600),
       maxX: config.worldWidth * (left ? 1200 / 3600 : 3480 / 3600),
@@ -1035,10 +1035,10 @@ class BattleSimulation {
     final center = Vec2(config.worldWidth * 0.5, config.worldHeight * 0.5);
     const offset = 72.0;
     return switch (faction) {
-      Faction.claude => center + const Vec2(-offset, -offset),
-      Faction.codex => center + const Vec2(offset, -offset),
-      Faction.grok => center + const Vec2(-offset, offset),
-      Faction.gemini => center + const Vec2(offset, offset),
+      Faction.amethyst => center + const Vec2(-offset, -offset),
+      Faction.cobalt => center + const Vec2(offset, -offset),
+      Faction.volt => center + const Vec2(-offset, offset),
+      Faction.prism => center + const Vec2(offset, offset),
     };
   }
 
@@ -1359,7 +1359,7 @@ class BattleSimulation {
   /// Dependency-free payload for debug replay audits and bug reports. The
   /// caller decides where to persist it; release builds need not expose it.
   Map<String, Object?> exportDebugCombatLog() => <String, Object?>{
-    'schemaVersion': 1,
+    'schemaVersion': 2,
     'matchSeed': seed,
     'playerFaction': playerFaction?.name,
     'matchElapsed': matchElapsed,

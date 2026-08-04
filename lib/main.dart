@@ -95,7 +95,7 @@ class TokenfrontRoot extends StatefulWidget {
 class _TokenfrontRootState extends State<TokenfrontRoot>
     with WidgetsBindingObserver {
   _Screen screen = _Screen.lobby;
-  Faction selectedFaction = Faction.claude;
+  Faction selectedFaction = Faction.amethyst;
   TokenfrontGame? game;
   MatchResult? result;
   int relays = 0;

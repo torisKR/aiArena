@@ -1183,10 +1183,10 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   double _rotation(Unit unit) => switch (unit.faction) {
-    Faction.claude => 0,
-    Faction.codex => math.pi / 4,
-    Faction.grok => -math.pi / 2,
-    Faction.gemini => math.pi / 6,
+    Faction.amethyst => 0,
+    Faction.cobalt => math.pi / 4,
+    Faction.volt => -math.pi / 2,
+    Faction.prism => math.pi / 6,
   };
 
   Rect _unitAtlasSource(Faction faction) => Rect.fromLTWH(

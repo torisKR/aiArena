@@ -9,10 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Tokenfront: AI Arena';
+  String get appTitle => 'Tokenfront: Orbital Signal War';
 
   @override
-  String get lobbyTagline => 'AI ARENA  /  ONE SIGNAL. FOUR FRONTS.';
+  String get lobbyTagline => 'FOUR AI CORES. ONE LAST RELAY.';
 
   @override
   String factionSignal(String faction) {
@@ -24,7 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
       '1,000 units · Lv.1–10 balanced · one continuous command';
 
   @override
-  String get deploySignal => 'DEPLOY SIGNAL';
+  String get deploySignal => 'DEPLOY TO ORBIT';
 
   @override
   String lockerBalance(int balance) {

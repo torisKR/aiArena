@@ -105,13 +105,13 @@ abstract class AppLocalizations {
   /// Application title shown by the operating system and browser.
   ///
   /// In en, this message translates to:
-  /// **'Tokenfront: AI Arena'**
+  /// **'Tokenfront: Orbital Signal War'**
   String get appTitle;
 
   /// Short product tagline on the lobby header.
   ///
   /// In en, this message translates to:
-  /// **'AI ARENA  /  ONE SIGNAL. FOUR FRONTS.'**
+  /// **'FOUR AI CORES. ONE LAST RELAY.'**
   String get lobbyTagline;
 
   /// Selected faction signal heading.
@@ -129,7 +129,7 @@ abstract class AppLocalizations {
   /// Primary button that starts a battle.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY SIGNAL'**
+  /// **'DEPLOY TO ORBIT'**
   String get deploySignal;
 
   /// Lobby locker button with the current War Token balance.

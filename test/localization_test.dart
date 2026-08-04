@@ -68,7 +68,7 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
-    expect(find.text('신호 전개'), findsOneWidget);
+    expect(find.text('궤도 투입'), findsOneWidget);
     expect(find.text('SIGNAL SETTINGS'), findsNothing);
   });
 
@@ -85,7 +85,7 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
-    expect(find.text('シグナル展開'), findsOneWidget);
+    expect(find.text('軌道へ展開'), findsOneWidget);
   });
 
   testWidgets('language selector updates an open settings panel immediately', (
@@ -111,9 +111,9 @@ void main() {
 
   for (final localeCase
       in const <({String code, String deploy, String status, String tune})>[
-        (code: 'ko', deploy: '신호 전개', status: '처치', tune: '조정'),
-        (code: 'ja', deploy: 'シグナル展開', status: '撃破', tune: '調整'),
-        (code: 'zh', deploy: '部署信号', status: '击杀', tune: '调校'),
+        (code: 'ko', deploy: '궤도 투입', status: '처치', tune: '조정'),
+        (code: 'ja', deploy: '軌道へ展開', status: '撃破', tune: '調整'),
+        (code: 'zh', deploy: '部署至轨道', status: '击杀', tune: '调校'),
       ]) {
     testWidgets('${localeCase.code} remains usable on a narrow screen', (
       tester,

@@ -27,7 +27,7 @@ class LobbyScreen extends StatefulWidget {
 }
 
 class _LobbyScreenState extends State<LobbyScreen> {
-  Faction selected = Faction.claude;
+  Faction selected = Faction.amethyst;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -432,8 +432,8 @@ class _Rule extends StatelessWidget {
 }
 
 FactionGlyphKind _glyphFor(Faction faction) => switch (faction) {
-  Faction.claude => FactionGlyphKind.diamond,
-  Faction.codex => FactionGlyphKind.brackets,
-  Faction.grok => FactionGlyphKind.bolt,
-  Faction.gemini => FactionGlyphKind.prism,
+  Faction.amethyst => FactionGlyphKind.diamond,
+  Faction.cobalt => FactionGlyphKind.brackets,
+  Faction.volt => FactionGlyphKind.bolt,
+  Faction.prism => FactionGlyphKind.prism,
 };

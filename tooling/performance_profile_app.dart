@@ -11,7 +11,7 @@ import 'package:tokenfront/ui/battle_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final game = TokenfrontGame(
-    playerFaction: Faction.claude,
+    playerFaction: Faction.amethyst,
     audioEnabled: false,
     hapticsEnabled: false,
     onMatchEnded: (_, _) {},

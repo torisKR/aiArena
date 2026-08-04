@@ -1,4 +1,4 @@
-# Tokenfront: AI Arena — completion audit
+# Tokenfront: Orbital Signal War — completion audit
 
 - Audit date: 2026-07-16 (KST)
 - Requirement source: `pasted-text-1.txt` supplied with the build request

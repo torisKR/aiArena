@@ -23,7 +23,7 @@ void main() {
     expect(find.text('PRISM'), findsOneWidget);
     expect(find.text('1000 UNITS'), findsNWidgets(4));
     expect(find.text('4,000'), findsOneWidget);
-    expect(find.text('DEPLOY SIGNAL'), findsOneWidget);
+    expect(find.text('DEPLOY TO ORBIT'), findsOneWidget);
   });
 
   testWidgets('lobby remains usable on a narrow mobile surface', (
@@ -38,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TOKENFRONT'), findsOneWidget);
-    expect(find.text('DEPLOY SIGNAL'), findsOneWidget);
+    expect(find.text('DEPLOY TO ORBIT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -50,9 +50,9 @@ void main() {
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
+    await tester.ensureVisible(find.text('DEPLOY TO ORBIT'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY SIGNAL'));
+    await tester.tap(find.text('DEPLOY TO ORBIT'));
     await tester.pump();
 
     expect(find.byType(BattleScreen), findsOneWidget);
@@ -74,8 +74,8 @@ void main() {
       await tester.pumpWidget(TokenfrontApp(runtime: runtime));
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
-      await tester.tap(find.text('DEPLOY SIGNAL'));
+      await tester.ensureVisible(find.text('DEPLOY TO ORBIT'));
+      await tester.tap(find.text('DEPLOY TO ORBIT'));
       await tester.pump();
 
       var events = runtime.analytics.pendingEvents
@@ -95,7 +95,7 @@ void main() {
       final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
       final game = battle.game;
       for (final unit in game.simulation.units) {
-        if (unit.faction == Faction.claude) {
+        if (unit.faction == Faction.amethyst) {
           unit.alive = false;
           unit.state = AiState.dead;
         }
@@ -172,25 +172,25 @@ void main() {
   ) async {
     final standings = <FactionStanding>[
       const FactionStanding(
-        faction: Faction.claude,
+        faction: Faction.amethyst,
         survivors: 12,
         levelSum: 72,
         kills: 88,
       ),
       const FactionStanding(
-        faction: Faction.codex,
+        faction: Faction.cobalt,
         survivors: 0,
         levelSum: 0,
         kills: 81,
       ),
       const FactionStanding(
-        faction: Faction.grok,
+        faction: Faction.volt,
         survivors: 0,
         levelSum: 0,
         kills: 77,
       ),
       const FactionStanding(
-        faction: Faction.gemini,
+        faction: Faction.prism,
         survivors: 0,
         levelSum: 0,
         kills: 66,
@@ -203,11 +203,11 @@ void main() {
         home: ResultScreen(
           result: MatchResult(
             reason: MatchEndReason.elimination,
-            winner: Faction.claude,
+            winner: Faction.amethyst,
             standings: standings,
           ),
           matchId: 'match-test',
-          playerFaction: Faction.claude,
+          playerFaction: Faction.amethyst,
           relays: 2,
           elapsed: 90,
           baseReward: 40,

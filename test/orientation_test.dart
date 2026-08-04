@@ -103,7 +103,7 @@ void main() {
       TokenfrontApp(runtime: runtime, orientationController: controller),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY SIGNAL'));
+    await tester.tap(find.text('DEPLOY TO ORBIT'));
     await tester.pump();
     await tester.pump();
 
@@ -141,7 +141,7 @@ void main() {
       TokenfrontApp(runtime: runtime, orientationController: controller),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY SIGNAL'));
+    await tester.tap(find.text('DEPLOY TO ORBIT'));
     await tester.pump();
     await tester.pump();
 

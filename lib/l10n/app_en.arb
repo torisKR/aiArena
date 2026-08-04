@@ -1,8 +1,8 @@
 {
   "@@locale": "en",
-  "appTitle": "Tokenfront: AI Arena",
+  "appTitle": "Tokenfront: Orbital Signal War",
   "@appTitle": {"description": "Application title shown by the operating system and browser."},
-  "lobbyTagline": "AI ARENA  /  ONE SIGNAL. FOUR FRONTS.",
+  "lobbyTagline": "FOUR AI CORES. ONE LAST RELAY.",
   "@lobbyTagline": {"description": "Short product tagline on the lobby header."},
   "factionSignal": "{faction} SIGNAL",
   "@factionSignal": {
@@ -11,7 +11,7 @@
   },
   "factionBrief": "1,000 units · Lv.1–10 balanced · one continuous command",
   "@factionBrief": {"description": "Short description of the selected army."},
-  "deploySignal": "DEPLOY SIGNAL",
+  "deploySignal": "DEPLOY TO ORBIT",
   "@deploySignal": {"description": "Primary button that starts a battle."},
   "lockerBalance": "LOCKER  {balance} WT",
   "@lockerBalance": {

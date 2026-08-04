@@ -24,6 +24,31 @@ void _leaveOnly(BattleSimulation simulation, Iterable<Unit> survivors) {
 }
 
 void main() {
+  test('faction IDs and exported logs are original and schema 2', () {
+    expect(
+      Faction.values.map((faction) => faction.name),
+      orderedEquals(const ['amethyst', 'cobalt', 'volt', 'prism']),
+    );
+    final simulation = BattleSimulation(
+      seed: 2026080501,
+      playerFaction: Faction.amethyst,
+      config: const BattleConfig(unitsPerFaction: 2),
+    );
+    final payload = simulation.exportDebugCombatLog();
+    expect(payload['schemaVersion'], 2);
+    expect(
+      simulation.exportDebugCombatLogJson().toLowerCase(),
+      isNot(
+        anyOf(
+          contains('claude'),
+          contains('codex'),
+          contains('grok'),
+          contains('gemini'),
+        ),
+      ),
+    );
+  });
+
   group('army spawning', () {
     test('spawns four armies of 1000 and exactly 4000 units', () {
       final simulation = BattleSimulation(seed: 20260715);
@@ -59,9 +84,9 @@ void main() {
 
       for (final unit in simulation.units) {
         final isLeft =
-            unit.faction == Faction.claude || unit.faction == Faction.grok;
+            unit.faction == Faction.amethyst || unit.faction == Faction.volt;
         final isTop =
-            unit.faction == Faction.claude || unit.faction == Faction.codex;
+            unit.faction == Faction.amethyst || unit.faction == Faction.cobalt;
         expect(
           unit.position.x,
           isLeft ? inInclusiveRange(120, 1200) : inInclusiveRange(2400, 3480),
@@ -110,7 +135,7 @@ void main() {
     final simulation = BattleSimulation(
       seed: 64,
       config: config,
-      playerFaction: Faction.claude,
+      playerFaction: Faction.amethyst,
     );
     final controlled = simulation.controlledUnit!;
     final start = controlled.position;
@@ -156,9 +181,9 @@ void main() {
         combatLockDuration: 0.4,
         recoverDuration: 0.35,
       );
-      final high = _unit(id: 1, faction: Faction.claude, level: 10);
-      final low = _unit(id: 2, faction: Faction.codex, level: 1);
-      final third = _unit(id: 3, faction: Faction.grok, level: 1);
+      final high = _unit(id: 1, faction: Faction.amethyst, level: 10);
+      final low = _unit(id: 2, faction: Faction.cobalt, level: 1);
+      final third = _unit(id: 3, faction: Faction.volt, level: 1);
 
       final event = resolver.resolve(high, low, timestamp: 2.0);
 
@@ -177,19 +202,19 @@ void main() {
       final grid = SpatialGrid(cellSize: 50);
       final source = _unit(
         id: 1,
-        faction: Faction.claude,
+        faction: Faction.amethyst,
         level: 5,
         position: const Vec2(49, 25),
       );
       final adjacent = _unit(
         id: 2,
-        faction: Faction.codex,
+        faction: Faction.cobalt,
         level: 5,
         position: const Vec2(51, 25),
       );
       final distant = _unit(
         id: 3,
-        faction: Faction.grok,
+        faction: Faction.volt,
         level: 5,
         position: const Vec2(400, 25),
       );
@@ -219,7 +244,7 @@ void main() {
     final grid = SpatialGrid(cellSize: 100);
     final source = _unit(
       id: 0,
-      faction: Faction.claude,
+      faction: Faction.amethyst,
       level: 5,
       position: const Vec2(50, 50),
     );
@@ -227,14 +252,14 @@ void main() {
       1000,
       (index) => _unit(
         id: index + 1,
-        faction: Faction.claude,
+        faction: Faction.amethyst,
         level: 5,
         position: const Vec2(55, 55),
       ),
     );
     final enemy = _unit(
       id: 2000,
-      faction: Faction.codex,
+      faction: Faction.cobalt,
       level: 5,
       position: const Vec2(60, 60),
     );
@@ -306,13 +331,13 @@ void main() {
       final simulation = BattleSimulation(
         seed: 304,
         config: config,
-        playerFaction: Faction.claude,
+        playerFaction: Faction.amethyst,
       );
       final controlled = simulation.controlledUnit!;
       final allies = simulation.units
           .where(
             (unit) =>
-                unit.faction == Faction.claude && unit.id != controlled.id,
+                unit.faction == Faction.amethyst && unit.id != controlled.id,
           )
           .take(3)
           .toList();
@@ -320,7 +345,7 @@ void main() {
       final farIdle = allies[1];
       final farTactical = allies[2];
       final target = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.codex,
+        (unit) => unit.faction == Faction.cobalt,
       );
       _leaveOnly(simulation, [
         controlled,
@@ -377,12 +402,12 @@ void main() {
     final first = BattleSimulation(
       seed: 0x5eed,
       config: config,
-      playerFaction: Faction.claude,
+      playerFaction: Faction.amethyst,
     );
     final second = BattleSimulation(
       seed: 0x5eed,
       config: config,
-      playerFaction: Faction.claude,
+      playerFaction: Faction.amethyst,
     );
 
     for (var frame = 0; frame < 6 * 30; frame++) {
@@ -421,10 +446,10 @@ void main() {
     const config = BattleConfig(lowLevelFleeChance: 1, separationStrength: 0);
     final simulation = BattleSimulation(seed: 44, config: config);
     final weak = simulation.units.firstWhere(
-      (unit) => unit.faction == Faction.claude && unit.level == 1,
+      (unit) => unit.faction == Faction.amethyst && unit.level == 1,
     );
     final strong = simulation.units.firstWhere(
-      (unit) => unit.faction == Faction.codex && unit.level == 10,
+      (unit) => unit.faction == Faction.cobalt && unit.level == 10,
     );
     for (final unit in simulation.units) {
       unit.alive = unit.id == weak.id || unit.id == strong.id;
@@ -449,11 +474,11 @@ void main() {
     );
     final simulation = BattleSimulation(seed: 54, config: config);
     final allies = simulation.units
-        .where((unit) => unit.faction == Faction.claude)
+        .where((unit) => unit.faction == Faction.amethyst)
         .take(2)
         .toList();
     final distantEnemy = simulation.units.firstWhere(
-      (unit) => unit.faction == Faction.codex,
+      (unit) => unit.faction == Faction.cobalt,
     );
     _leaveOnly(simulation, [...allies, distantEnemy]);
     for (final ally in allies) {
@@ -465,7 +490,7 @@ void main() {
     simulation.step(1 / 30);
 
     final rallyDirection =
-        simulation.rallyPointFor(Faction.claude) - const Vec2(500, 500);
+        simulation.rallyPointFor(Faction.amethyst) - const Vec2(500, 500);
     for (final ally in allies) {
       final dot =
           ally.velocity.x * rallyDirection.x +
@@ -480,12 +505,12 @@ void main() {
     final first = BattleSimulation(
       seed: 777,
       config: config,
-      playerFaction: Faction.claude,
+      playerFaction: Faction.amethyst,
     );
     final second = BattleSimulation(
       seed: 777,
       config: config,
-      playerFaction: Faction.claude,
+      playerFaction: Faction.amethyst,
     );
 
     for (var i = 0; i < first.units.length; i++) {
@@ -529,7 +554,7 @@ void main() {
 
   group('player handoff', () {
     test('weights level 50%, safety 30%, and non-combat 20%', () {
-      final candidate = _unit(id: 9, faction: Faction.claude, level: 10);
+      final candidate = _unit(id: 9, faction: Faction.amethyst, level: 10);
       expect(
         HandoffCandidateScore(
           unit: candidate,
@@ -564,7 +589,7 @@ void main() {
       () {
         final simulation = BattleSimulation(
           seed: 101,
-          playerFaction: Faction.gemini,
+          playerFaction: Faction.prism,
         );
         final fallen = simulation.controlledUnit!;
         fallen.alive = false;
@@ -587,16 +612,16 @@ void main() {
     test('returns null immediately when the faction has no survivor', () {
       final simulation = BattleSimulation(
         seed: 102,
-        playerFaction: Faction.grok,
+        playerFaction: Faction.volt,
       );
       for (final unit in simulation.units) {
-        if (unit.faction == Faction.grok) {
+        if (unit.faction == Faction.volt) {
           unit.alive = false;
           unit.state = AiState.dead;
         }
       }
 
-      expect(simulation.selectHandoff(faction: Faction.grok), isNull);
+      expect(simulation.selectHandoff(faction: Faction.volt), isNull);
     });
 
     test('combat hands control off in the same tick, under 1.5 seconds', () {
@@ -604,25 +629,25 @@ void main() {
       final simulation = BattleSimulation(
         seed: 180,
         config: config,
-        playerFaction: Faction.claude,
+        playerFaction: Faction.amethyst,
       );
       final fallen = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.claude && unit.level == 1,
+        (unit) => unit.faction == Faction.amethyst && unit.level == 1,
       );
       final successor = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.claude && unit.level == 10,
+        (unit) => unit.faction == Faction.amethyst && unit.level == 10,
       );
       final attacker = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.codex && unit.level == 10,
+        (unit) => unit.faction == Faction.cobalt && unit.level == 10,
       );
-      final grok = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.grok,
+      final volt = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.volt,
       );
-      _leaveOnly(simulation, [fallen, successor, attacker, grok]);
+      _leaveOnly(simulation, [fallen, successor, attacker, volt]);
       fallen.position = const Vec2(500, 500);
       attacker.position = const Vec2(500, 500);
       successor.position = const Vec2(100, 100);
-      grok.position = const Vec2(1800, 1100);
+      volt.position = const Vec2(1800, 1100);
       simulation.setControlledUnit(fallen.id);
 
       simulation.step(1 / 30);
@@ -644,25 +669,25 @@ void main() {
         final simulation = BattleSimulation(
           seed: 181,
           config: config,
-          playerFaction: Faction.claude,
+          playerFaction: Faction.amethyst,
         );
         final fallen = simulation.units.firstWhere(
-          (unit) => unit.faction == Faction.claude && unit.level == 1,
+          (unit) => unit.faction == Faction.amethyst && unit.level == 1,
         );
         final attacker = simulation.units.firstWhere(
-          (unit) => unit.faction == Faction.codex && unit.level == 10,
+          (unit) => unit.faction == Faction.cobalt && unit.level == 10,
         );
-        final grok = simulation.units.firstWhere(
-          (unit) => unit.faction == Faction.grok,
+        final volt = simulation.units.firstWhere(
+          (unit) => unit.faction == Faction.volt,
         );
-        final gemini = simulation.units.firstWhere(
-          (unit) => unit.faction == Faction.gemini,
+        final prism = simulation.units.firstWhere(
+          (unit) => unit.faction == Faction.prism,
         );
-        _leaveOnly(simulation, [fallen, attacker, grok, gemini]);
+        _leaveOnly(simulation, [fallen, attacker, volt, prism]);
         fallen.position = const Vec2(500, 500);
         attacker.position = const Vec2(500, 500);
-        grok.position = const Vec2(1700, 1100);
-        gemini.position = const Vec2(200, 1100);
+        volt.position = const Vec2(1700, 1100);
+        prism.position = const Vec2(200, 1100);
         simulation.setControlledUnit(fallen.id);
 
         simulation.step(1 / 30);
@@ -695,37 +720,37 @@ void main() {
 
     test('survivor count is the first tie-break', () {
       final simulation = emptySimulation();
-      final claude = simulation.units
-          .where((unit) => unit.faction == Faction.claude && unit.level == 1)
+      final amethyst = simulation.units
+          .where((unit) => unit.faction == Faction.amethyst && unit.level == 1)
           .take(2)
           .toList();
-      final codex = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.codex && unit.level == 10,
+      final cobalt = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.cobalt && unit.level == 10,
       );
-      for (final unit in claude) {
+      for (final unit in amethyst) {
         unit.alive = true;
       }
-      codex
+      cobalt
         ..alive = true
         ..kills = 100;
 
       expect(
         simulation.evaluateResult(forceTimeLimit: true).winner,
-        Faction.claude,
+        Faction.amethyst,
       );
     });
 
     test('level sum is the second tie-break', () {
       final simulation = emptySimulation();
-      final claude = simulation.units
-          .where((unit) => unit.faction == Faction.claude)
+      final amethyst = simulation.units
+          .where((unit) => unit.faction == Faction.amethyst)
           .toList();
-      final codex = simulation.units
-          .where((unit) => unit.faction == Faction.codex)
+      final cobalt = simulation.units
+          .where((unit) => unit.faction == Faction.cobalt)
           .toList();
-      claude.firstWhere((unit) => unit.level == 10).alive = true;
-      claude.firstWhere((unit) => unit.level == 1).alive = true;
-      codex
+      amethyst.firstWhere((unit) => unit.level == 10).alive = true;
+      amethyst.firstWhere((unit) => unit.level == 1).alive = true;
+      cobalt
           .where((unit) => unit.level == 5)
           .take(2)
           .forEach((unit) => unit.alive = true);
@@ -733,39 +758,40 @@ void main() {
       final result = simulation.evaluateResult(forceTimeLimit: true);
 
       expect(result.reason, MatchEndReason.timeLimit);
-      expect(result.winner, Faction.claude);
+      expect(result.winner, Faction.amethyst);
       expect(result.standings.first.survivors, 2);
       expect(result.standings.first.levelSum, 11);
     });
 
     test('cumulative kills, including dead units, are the final tie-break', () {
       final simulation = emptySimulation();
-      final claudeAlive = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.claude && unit.level == 5,
+      final amethystAlive = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.amethyst && unit.level == 5,
       );
-      final codexAlive = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.codex && unit.level == 5,
+      final cobaltAlive = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.cobalt && unit.level == 5,
       );
-      claudeAlive.alive = true;
-      codexAlive.alive = true;
+      amethystAlive.alive = true;
+      cobaltAlive.alive = true;
       simulation.units
               .firstWhere(
                 (unit) =>
-                    unit.faction == Faction.claude && unit.id != claudeAlive.id,
+                    unit.faction == Faction.amethyst &&
+                    unit.id != amethystAlive.id,
               )
               .kills =
           8;
       simulation.units
               .firstWhere(
                 (unit) =>
-                    unit.faction == Faction.codex && unit.id != codexAlive.id,
+                    unit.faction == Faction.cobalt && unit.id != cobaltAlive.id,
               )
               .kills =
           9;
 
       expect(
         simulation.evaluateResult(forceTimeLimit: true).winner,
-        Faction.codex,
+        Faction.cobalt,
       );
     });
 
@@ -778,13 +804,13 @@ void main() {
         separationStrength: 0,
       );
       final simulation = BattleSimulation(seed: 88, config: config);
-      final claude = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.claude,
+      final amethyst = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.amethyst,
       );
-      final codex = simulation.units.firstWhere(
-        (unit) => unit.faction == Faction.codex,
+      final cobalt = simulation.units.firstWhere(
+        (unit) => unit.faction == Faction.cobalt,
       );
-      _leaveOnly(simulation, [claude, codex]);
+      _leaveOnly(simulation, [amethyst, cobalt]);
 
       simulation.step(1);
 

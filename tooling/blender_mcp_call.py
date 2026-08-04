@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Call the locally cached Blender MCP server without registering it in Codex.
-
-Examples:
-  python3 tooling/blender_mcp_call.py --list-tools
-  python3 tooling/blender_mcp_call.py get_scene_info '{"user_prompt":"inspect"}'
-  python3 tooling/blender_mcp_call.py --code 'print(bpy.context.scene.name)'
-  python3 tooling/blender_mcp_call.py --code-file tooling/build_scene.py
-
-MCP server logs go to stderr. This wrapper writes exactly one JSON document to
-stdout, making it suitable for use by another program.
-"""
-
 from __future__ import annotations
 
 import argparse

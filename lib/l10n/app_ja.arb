@@ -1,10 +1,10 @@
 {
   "@@locale": "ja",
-  "appTitle": "Tokenfront: AIアリーナ",
-  "lobbyTagline": "AIアリーナ  /  ひとつのシグナル。四つの戦線。",
+  "appTitle": "Tokenfront: 軌道信号戦",
+  "lobbyTagline": "4つのAIコア。最後のリレーは1つ。",
   "factionSignal": "{faction} シグナル",
   "factionBrief": "1,000ユニット · Lv.1–10均衡 · 指揮権を連続維持",
-  "deploySignal": "シグナル展開",
+  "deploySignal": "軌道へ展開",
   "lockerBalance": "ロッカー  {balance} WT",
   "tune": "調整",
   "signalSettings": "シグナル設定",

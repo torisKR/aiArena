@@ -1,8 +1,8 @@
-# Tokenfront: AI Arena
+# Tokenfront: Orbital Signal War
 
 Flutter + Flame으로 만든 오프라인 싱글플레이 전쟁 시뮬레이션입니다. Amethyst, Cobalt, Volt, Prism 네 진영이 각각 1,000개 유닛으로 시작해 총 4,000개 유닛이 실시간으로 싸웁니다. 플레이어가 조종하던 유닛이 쓰러져도 같은 진영이 생존해 있으면 지휘권과 카메라가 다음 유닛으로 이어집니다.
 
-상용 화면에는 타사 상표와 혼동되지 않는 중립 진영명을 사용합니다. 결정론적 시뮬레이션의 내부 enum은 최초 기획의 Claude, Codex, Grok, Gemini 명칭을 유지합니다.
+상용 화면과 결정론적 시뮬레이션 모두 타사 상표와 혼동되지 않는 중립 진영명을 사용합니다.
 
 ## 구현 범위
 

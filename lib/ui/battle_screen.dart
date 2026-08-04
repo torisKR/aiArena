@@ -929,10 +929,10 @@ class _MinimapPainter extends CustomPainter {
           ..strokeWidth = game.lowSpecMode
               ? 1.5
               : switch (faction) {
-                  Faction.claude => 2.0,
-                  Faction.codex => 2.2,
-                  Faction.grok => 1.25,
-                  Faction.gemini => 3.0,
+                  Faction.amethyst => 2.0,
+                  Faction.cobalt => 2.2,
+                  Faction.volt => 1.25,
+                  Faction.prism => 3.0,
                 }
           ..strokeCap = faction.index.isEven
               ? StrokeCap.square

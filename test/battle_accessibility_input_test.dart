@@ -18,7 +18,7 @@ TokenfrontGame _game({
   bool mouseCameraEnabled = true,
   BattleConfig config = const BattleConfig(unitsPerFaction: 20),
 }) => TokenfrontGame(
-  playerFaction: Faction.claude,
+  playerFaction: Faction.amethyst,
   config: config,
   reduceMotion: reduceMotion,
   lowSpecMode: lowSpecMode,
@@ -59,7 +59,7 @@ void main() {
       final game = _game();
 
       expect(game.simulation.units, hasLength(80));
-      expect(game.hud.value.aliveByFaction[Faction.claude], 20);
+      expect(game.hud.value.aliveByFaction[Faction.amethyst], 20);
     });
 
     test('WASD and arrows normalize movement while Tab remains available', () {
@@ -194,7 +194,7 @@ void main() {
       _advance(game, .15);
       expect(game.handoffStage, isNull);
       expect(game.simulation.controlledUnit, isNotNull);
-      expect(game.simulation.controlledUnit!.faction, Faction.claude);
+      expect(game.simulation.controlledUnit!.faction, Faction.amethyst);
     });
   });
 
@@ -325,7 +325,7 @@ void main() {
         final game = _game(reduceMotion: true);
         final controlled = game.simulation.controlledUnit!;
         final distant = game.simulation.units.firstWhere(
-          (unit) => unit.faction == Faction.gemini,
+          (unit) => unit.faction == Faction.prism,
         );
         for (final unit in game.simulation.units) {
           unit.alive = unit.id == controlled.id || unit.id == distant.id;

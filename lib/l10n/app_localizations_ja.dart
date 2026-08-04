@@ -9,10 +9,10 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'Tokenfront: AIアリーナ';
+  String get appTitle => 'Tokenfront: 軌道信号戦';
 
   @override
-  String get lobbyTagline => 'AIアリーナ  /  ひとつのシグナル。四つの戦線。';
+  String get lobbyTagline => '4つのAIコア。最後のリレーは1つ。';
 
   @override
   String factionSignal(String faction) {
@@ -23,7 +23,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get factionBrief => '1,000ユニット · Lv.1–10均衡 · 指揮権を連続維持';
 
   @override
-  String get deploySignal => 'シグナル展開';
+  String get deploySignal => '軌道へ展開';
 
   @override
   String lockerBalance(int balance) {

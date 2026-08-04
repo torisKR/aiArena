@@ -19,25 +19,25 @@ class FactionVisual {
 
 extension FactionVisuals on Faction {
   FactionVisual get visual => switch (this) {
-    Faction.claude => const FactionVisual(
+    Faction.amethyst => const FactionVisual(
       name: 'AMETHYST',
       mark: '◆',
       color: TokenfrontColors.amethyst,
       sides: 4,
     ),
-    Faction.codex => const FactionVisual(
+    Faction.cobalt => const FactionVisual(
       name: 'COBALT',
       mark: '[ ]',
       color: TokenfrontColors.cobalt,
       sides: 4,
     ),
-    Faction.grok => const FactionVisual(
+    Faction.volt => const FactionVisual(
       name: 'VOLT',
       mark: 'ϟ',
       color: TokenfrontColors.volt,
       sides: 3,
     ),
-    Faction.gemini => const FactionVisual(
+    Faction.prism => const FactionVisual(
       name: 'PRISM',
       mark: '✣',
       color: TokenfrontColors.prism,

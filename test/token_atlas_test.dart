@@ -42,7 +42,7 @@ void main() {
     'game loads and samples the runtime atlas instead of whole-sheet draw',
     () async {
       final game = TokenfrontGame(
-        playerFaction: Faction.claude,
+        playerFaction: Faction.amethyst,
         audioEnabled: false,
         hapticsEnabled: false,
         onMatchEnded: (_, _) {},
