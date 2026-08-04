@@ -492,6 +492,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void resetCameraView() {
+    if (paused) return;
     _manualZoom = 1;
     _followResumeRemaining = 0;
     _mousePanning = false;

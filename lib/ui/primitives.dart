@@ -239,12 +239,13 @@ class TacticalToggle extends StatelessWidget {
   final String label;
   final String semanticLabel;
   final bool? selected;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) => Semantics(
     label: semanticLabel,
     button: true,
+    enabled: onPressed != null,
     selected: selected,
     child: ExcludeSemantics(
       child: SizedBox(

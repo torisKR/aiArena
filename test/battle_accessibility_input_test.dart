@@ -1089,5 +1089,66 @@ void main() {
       await tester.pump();
       expect(game.debugManualZoom, greaterThan(zoomBefore));
     });
+
+    testWidgets(
+      'paused camera reset actions are inert for manual and lifecycle pause',
+      (tester) async {
+        tester.view.physicalSize = const Size(844, 390);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final game = _game();
+        await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+        await tester.pump(const Duration(milliseconds: 50));
+
+        void offsetCamera() {
+          game.beginMinimapCameraPan();
+          game.updateMinimapCamera(const Vec2(100, 100));
+          game.endMinimapCameraPan();
+          game.applyMouseWheel(-120);
+        }
+
+        offsetCamera();
+        final pause = find.bySemanticsLabel('Pause or resume battle');
+        await tester.tap(pause);
+        await tester.pump();
+        final manualCenter = game.debugCameraCenter;
+        final manualZoom = game.debugManualZoom;
+
+        game.resetCameraView();
+        await tester.tap(
+          find.bySemanticsLabel('Reset camera to controlled unit'),
+        );
+        await tester.tap(find.bySemanticsLabel('Tactical map'));
+        await tester.pump();
+        expect(game.debugCameraCenter, manualCenter);
+        expect(game.debugManualZoom, manualZoom);
+
+        await tester.tap(pause);
+        await tester.pump();
+        offsetCamera();
+        final lifecycleCenter = game.debugCameraCenter;
+        final lifecycleZoom = game.debugManualZoom;
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        await tester.pump();
+        expect(game.paused, isTrue);
+
+        game.resetCameraView();
+        await tester.tap(
+          find.bySemanticsLabel('Reset camera to controlled unit'),
+        );
+        await tester.tap(find.bySemanticsLabel('Tactical map'));
+        await tester.pump();
+        expect(game.debugCameraCenter, lifecycleCenter);
+        expect(game.debugManualZoom, lifecycleZoom);
+
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+      },
+    );
   });
 }

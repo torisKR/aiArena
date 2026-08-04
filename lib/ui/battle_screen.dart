@@ -236,6 +236,7 @@ class _BattleScreenState extends State<BattleScreen>
                               snapshot: snapshot,
                               vertical: compact,
                               preferences: widget.preferences,
+                              enabled: _gameplayInputEnabled,
                             ),
                           ),
                         ),
@@ -631,12 +632,14 @@ class _ViewRail extends StatelessWidget {
     required this.snapshot,
     required this.vertical,
     required this.preferences,
+    required this.enabled,
   });
 
   final TokenfrontGame game;
   final BattleHudSnapshot snapshot;
   final bool vertical;
   final GamePreferences? preferences;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -645,27 +648,31 @@ class _ViewRail extends StatelessWidget {
         label: context.l10n.cameraShort,
         semanticLabel: context.l10n.mouseCameraSemantics,
         selected: snapshot.mouseCameraEnabled,
-        onPressed: () {
-          final enabled = !snapshot.mouseCameraEnabled;
-          game.setMouseCameraEnabled(enabled);
-          preferences?.setMouseCameraEnabled(enabled);
-        },
+        onPressed: enabled
+            ? () {
+                final cameraEnabled = !snapshot.mouseCameraEnabled;
+                game.setMouseCameraEnabled(cameraEnabled);
+                preferences?.setMouseCameraEnabled(cameraEnabled);
+              }
+            : null,
       ),
       TacticalToggle(
         label: context.l10n.ecoShort,
         semanticLabel: context.l10n.lowPowerModeSemantics,
         selected: snapshot.lowSpecMode,
-        onPressed: () {
-          final enabled = !snapshot.lowSpecMode;
-          game.setLowSpecMode(enabled);
-          preferences?.setLowSpecMode(enabled);
-        },
+        onPressed: enabled
+            ? () {
+                final lowSpecEnabled = !snapshot.lowSpecMode;
+                game.setLowSpecMode(lowSpecEnabled);
+                preferences?.setLowSpecMode(lowSpecEnabled);
+              }
+            : null,
       ),
       TacticalToggle(
         label: context.l10n.lockShort,
         semanticLabel: context.l10n.resetCameraSemantics,
         selected: null,
-        onPressed: game.resetCameraView,
+        onPressed: enabled ? game.resetCameraView : null,
       ),
     ];
     return TacticalPanel(
@@ -1090,7 +1097,8 @@ class _BattleMinimapState extends State<_BattleMinimap> {
     label: context.l10n.tacticalMapSemantics,
     hint: context.l10n.tacticalMapHint,
     button: true,
-    onTap: widget.game.resetCameraView,
+    enabled: widget.enabled,
+    onTap: widget.enabled ? widget.game.resetCameraView : null,
     child: Focus(
       focusNode: focusNode,
       onKeyEvent: handleKey,
