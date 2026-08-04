@@ -223,6 +223,12 @@
   "@battlePausedSemantics": {"description": "Screen-reader lifecycle pause notice."},
   "battlePaused": "SIGNAL HELD  /  BATTLE PAUSED",
   "@battlePaused": {"description": "Visible lifecycle pause notice."},
+  "pauseBattle": "PAUSE",
+  "@pauseBattle": {"description": "Compact battle pause action."},
+  "resumeBattle": "RESUME",
+  "@resumeBattle": {"description": "Compact battle resume action."},
+  "pauseBattleSemantics": "Pause or resume battle",
+  "@pauseBattleSemantics": {"description": "Screen-reader label for battle pause action."},
   "controlledUnitStatus": "Controlled unit level {level}, {killCount} kills, {relayCount} relays",
   "@controlledUnitStatus": {
     "description": "Screen-reader status for the currently controlled unit.",

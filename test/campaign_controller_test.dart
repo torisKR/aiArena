@@ -142,6 +142,54 @@ void main() {
     expect(duplicate.nextProgress.currentOperation, StoryOperationId.echo);
   });
 
+  test(
+    'successful replay restores a missing medal and unclaimed bonus only',
+    () {
+      final first = controller.conclude(
+        progress: StoryProgress.initial().lockCore(Faction.amethyst),
+        ledger: ProfileRewardLedger.empty(),
+        operationId: StoryOperationId.wake,
+        report: report(link: 44.999),
+        replay: false,
+      );
+      final replay = controller.conclude(
+        progress: first.nextProgress,
+        ledger: first.nextLedger,
+        operationId: StoryOperationId.wake,
+        report: report(link: 45),
+        replay: true,
+      );
+      expect(replay.directiveSucceeded, isTrue);
+      expect(replay.directiveBonusCredit, 15);
+      expect(replay.firstConclusion, isFalse);
+      expect(replay.nextProgress.currentOperation, StoryOperationId.echo);
+      expect(
+        replay.nextProgress.concludedOperations,
+        first.nextProgress.concludedOperations,
+      );
+      expect(
+        replay.nextProgress.recoveredTransmissions,
+        first.nextProgress.recoveredTransmissions,
+      );
+      expect(replay.nextProgress.ending, first.nextProgress.ending);
+      expect(replay.nextProgress.medals, contains(StoryOperationId.wake));
+      expect(replay.nextLedger.claimedDirectiveBonusIds, {
+        'chronicle-directive-wake',
+      });
+
+      final failedReplay = controller.conclude(
+        progress: replay.nextProgress,
+        ledger: replay.nextLedger,
+        operationId: StoryOperationId.wake,
+        report: report(link: 44.999),
+        replay: true,
+      );
+      expect(failedReplay.nextProgress, replay.nextProgress);
+      expect(failedReplay.nextLedger, replay.nextLedger);
+      expect(failedReplay.directiveBonusCredit, 0);
+    },
+  );
+
   test('first-run conclusion rejects an operation that is not unlocked', () {
     expect(
       () => controller.conclude(

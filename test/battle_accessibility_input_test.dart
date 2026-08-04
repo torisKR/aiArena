@@ -11,15 +11,19 @@ import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/game/tokenfront_game.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/story/story_models.dart';
+import 'package:tokenfront/story/story_catalog.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 
 TokenfrontGame _game({
+  StoryOperation? operation,
   bool reduceMotion = false,
   bool lowSpecMode = false,
   bool mouseCameraEnabled = true,
   BattleConfig config = const BattleConfig(unitsPerFaction: 20),
 }) => TokenfrontGame(
   playerFaction: Faction.amethyst,
+  mode: operation == null ? GameMode.skirmish : GameMode.chronicle,
+  operation: operation,
   config: config,
   reduceMotion: reduceMotion,
   lowSpecMode: lowSpecMode,
@@ -353,6 +357,17 @@ void main() {
     testWidgets('directive rail announces milestones without tick spam', (
       tester,
     ) async {
+      final announcements = <String>[];
+      final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (message) async {
+        if (message is Map && message['type'] == 'announce') {
+          announcements.add(message['data']['message'] as String);
+        }
+        return null;
+      });
+      addTearDown(
+        () => messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, null),
+      );
       final game = TokenfrontGame(
         playerFaction: Faction.amethyst,
         mode: GameMode.chronicle,
@@ -372,6 +387,7 @@ void main() {
       );
       await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
       await tester.pump(const Duration(milliseconds: 50));
+      expect(announcements, contains('DIRECTIVE // COMMAND KILLS 0 / 3'));
       game.pauseEngine();
 
       game.hud.value = BattleHudSnapshot.initial(
@@ -385,6 +401,7 @@ void main() {
       );
       await tester.pump();
       expect(find.text('DIRECTIVE // COMMAND KILLS 1 / 3'), findsOneWidget);
+      expect(announcements, contains('DIRECTIVE // COMMAND KILLS 1 / 3'));
       await tester.pump();
       expect(
         find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
@@ -402,6 +419,7 @@ void main() {
       );
       await tester.pump();
       expect(find.text('DIRECTIVE // COMMAND KILLS 2 / 3'), findsOneWidget);
+      expect(announcements.where((message) => message.contains('2 / 3')), isEmpty);
       expect(
         find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
         findsOneWidget,
@@ -422,6 +440,8 @@ void main() {
         find.bySemanticsLabel('DIRECTIVE LOCKED // BONUS READY'),
         findsOneWidget,
       );
+      expect(announcements, contains('DIRECTIVE LOCKED // BONUS READY'));
+      expect(announcements, hasLength(3));
       await tester.pump(const Duration(seconds: 2));
       expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsOneWidget);
     });
@@ -659,6 +679,151 @@ void main() {
       expect(joystickRect.overlaps(minimapRect), isFalse);
       expect(dashRect.overlaps(minimapRect), isFalse);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('chronicle HUD controls fit both supported short landscapes', (
+      tester,
+    ) async {
+      for (final size in const [Size(568, 320), Size(844, 390)]) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        final game = _game(
+          operation: StoryCatalog.byId(StoryOperationId.split),
+          reduceMotion: true,
+        );
+        await tester.pumpWidget(
+          _localizedBattle(BattleScreen(game: game, requireLandscape: true)),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final joystick = find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Movement joystick',
+        );
+        final joystickRect = tester.getRect(
+          find.descendant(of: joystick, matching: find.byType(Listener)),
+        );
+        final dashRect = tester.getRect(find.bySemanticsLabel('Dash'));
+        final minimapRect = tester.getRect(
+          find.byKey(const Key('battle-minimap')),
+        );
+        final directiveRect = tester.getRect(
+          find.byKey(const Key('directive-rail')),
+        );
+        final pauseRect = tester.getRect(find.byKey(const Key('battle-pause')));
+
+        expect(joystickRect.width, greaterThanOrEqualTo(104));
+        expect(joystickRect.height, greaterThanOrEqualTo(104));
+        expect(dashRect.width, greaterThanOrEqualTo(72));
+        expect(dashRect.height, greaterThanOrEqualTo(72));
+        for (final pair in [
+          (joystickRect, dashRect),
+          (joystickRect, minimapRect),
+          (joystickRect, directiveRect),
+          (joystickRect, pauseRect),
+          (dashRect, minimapRect),
+          (dashRect, directiveRect),
+          (dashRect, pauseRect),
+          (minimapRect, directiveRect),
+          (minimapRect, pauseRect),
+          (directiveRect, pauseRect),
+        ]) {
+          expect(pair.$1.overlaps(pair.$2), isFalse);
+        }
+        for (final rect in [
+          joystickRect,
+          dashRect,
+          minimapRect,
+          directiveRect,
+          pauseRect,
+        ]) {
+          expect(rect.left, greaterThanOrEqualTo(0));
+          expect(rect.top, greaterThanOrEqualTo(0));
+          expect(rect.right, lessThanOrEqualTo(size.width));
+          expect(rect.bottom, lessThanOrEqualTo(size.height));
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('pause button toggles a localized overlay and clears input', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(844, 390);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final game = _game();
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+      await tester.pump(const Duration(milliseconds: 50));
+      game.setTouchInput(const Vec2(1, 0));
+      await tester.pump();
+
+      final pause = find.bySemanticsLabel('Pause or resume battle');
+      expect(pause, findsOneWidget);
+      await tester.tap(pause);
+      await tester.pump();
+      expect(game.paused, isTrue);
+      expect(game.debugTouchInput, Vec2.zero);
+      expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsOneWidget);
+
+      await tester.tap(pause);
+      await tester.pump();
+      expect(game.paused, isFalse);
+      expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsNothing);
+    });
+
+    testWidgets('directive completion cue respects normal and reduced motion', (
+      tester,
+    ) async {
+      Future<void> complete(TokenfrontGame game) async {
+        game.pauseEngine();
+        game.hud.value = BattleHudSnapshot.initial(
+          unitsPerFaction: 20,
+          matchLimitSeconds: 180,
+          directiveProgress: const DirectiveProgress(
+            kind: DirectiveKind.commandKills,
+            current: 3,
+            target: 3,
+          ),
+        );
+        await tester.pump();
+      }
+
+      final normal = _game(
+        operation: StoryCatalog.byId(StoryOperationId.split),
+      );
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: normal)));
+      await tester.pump(const Duration(milliseconds: 50));
+      await complete(normal);
+      AnimatedContainer rail() => tester.widget<AnimatedContainer>(
+        find.byKey(const Key('directive-rail')),
+      );
+      BoxDecoration decoration() => rail().decoration! as BoxDecoration;
+      expect(decoration().border!.top.color, TokenfrontColors.volt);
+      await tester.pump(const Duration(seconds: 1));
+      expect(decoration().border!.top.color, TokenfrontColors.volt);
+      await tester.pump(const Duration(seconds: 1, milliseconds: 100));
+      expect(
+        decoration().border!.top.color,
+        TokenfrontColors.relayIvory.withValues(alpha: .32),
+      );
+
+      final reduced = _game(
+        operation: StoryCatalog.byId(StoryOperationId.split),
+        reduceMotion: true,
+      );
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: reduced)));
+      await tester.pump(const Duration(milliseconds: 50));
+      await complete(reduced);
+      expect(rail().duration, Duration.zero);
+      expect(
+        (rail().decoration! as BoxDecoration).border!.top.color,
+        TokenfrontColors.volt,
+      );
     });
 
     testWidgets('landscape HUD has a right-side draggable tactical minimap', (

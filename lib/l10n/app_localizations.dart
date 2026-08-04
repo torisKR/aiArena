@@ -672,6 +672,24 @@ abstract class AppLocalizations {
   /// **'SIGNAL HELD  /  BATTLE PAUSED'**
   String get battlePaused;
 
+  /// Compact battle pause action.
+  ///
+  /// In en, this message translates to:
+  /// **'PAUSE'**
+  String get pauseBattle;
+
+  /// Compact battle resume action.
+  ///
+  /// In en, this message translates to:
+  /// **'RESUME'**
+  String get resumeBattle;
+
+  /// Screen-reader label for battle pause action.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause or resume battle'**
+  String get pauseBattleSemantics;
+
   /// Screen-reader status for the currently controlled unit.
   ///
   /// In en, this message translates to:

@@ -313,6 +313,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get battlePaused => '신호 대기  /  전투 일시정지';
 
   @override
+  String get pauseBattle => '일시정지';
+
+  @override
+  String get resumeBattle => '재개';
+
+  @override
+  String get pauseBattleSemantics => '전투 일시정지 또는 재개';
+
+  @override
   String controlledUnitStatus(int level, int killCount, int relayCount) {
     return '조종 유닛 레벨 $level, 처치 $killCount, 지휘 인계 $relayCount';
   }

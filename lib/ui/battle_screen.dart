@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/game.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/services.dart';
 
 import '../design/tokens.dart';
@@ -36,6 +37,7 @@ class _BattleScreenState extends State<BattleScreen>
     with WidgetsBindingObserver {
   int? _mousePanPointer;
   bool _lifecyclePaused = false;
+  bool _userPaused = false;
 
   TokenfrontGame get game => widget.game;
 
@@ -65,11 +67,26 @@ class _BattleScreenState extends State<BattleScreen>
       game.endMinimapCameraPan();
       _mousePanPointer = null;
       if (!game.paused) game.pauseEngine();
-    } else if (game.paused) {
+    } else if (!_userPaused && game.paused) {
       game.resumeEngine();
     }
     if (mounted && paused != _lifecyclePaused) {
       setState(() => _lifecyclePaused = paused);
+    }
+  }
+
+  void _toggleUserPause() {
+    if (_lifecyclePaused) return;
+    if (_userPaused) {
+      game.resumeEngine();
+      setState(() => _userPaused = false);
+    } else {
+      game.clearInputs();
+      game.endMouseCameraPan();
+      game.endMinimapCameraPan();
+      _mousePanPointer = null;
+      game.pauseEngine();
+      setState(() => _userPaused = true);
     }
   }
 
@@ -173,6 +190,20 @@ class _BattleScreenState extends State<BattleScreen>
                             compact: compact,
                           ),
                         ),
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: compact ? (short ? 6 : 10) : 10,
+                              left: 10,
+                            ),
+                            child: _PauseButton(
+                              paused: _userPaused,
+                              enabled: !_lifecyclePaused,
+                              onPressed: _toggleUserPause,
+                            ),
+                          ),
+                        ),
                         if (snapshot.directiveProgress != null)
                           Align(
                             alignment: Alignment.topCenter,
@@ -254,8 +285,8 @@ class _BattleScreenState extends State<BattleScreen>
                               ),
                             ),
                           ),
-                        if (_lifecyclePaused && game.paused)
-                          const Center(child: _PausedReadout()),
+                        if (game.paused)
+                          Center(child: _PausedReadout(userPaused: _userPaused)),
                       ],
                     ),
                   ),
@@ -370,7 +401,6 @@ class _CommandRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
-    liveRegion: true,
     label: semanticsLabel(context),
     child: ExcludeSemantics(
       child: TacticalPanel(
@@ -439,12 +469,15 @@ class _DirectiveRail extends StatefulWidget {
 class _DirectiveRailState extends State<_DirectiveRail> {
   Timer? _cueTimer;
   bool _cueActive = false;
+  int _announcedMilestone = -1;
 
   DirectiveProgress get progress => widget.snapshot.directiveProgress!;
 
   @override
   void initState() {
     super.initState();
+    _announcedMilestone = _milestoneFor(progress);
+    _queueAnnouncement(progress, _announcedMilestone);
     if (progress.completed) _startCueIfNeeded();
   }
 
@@ -455,11 +488,30 @@ class _DirectiveRailState extends State<_DirectiveRail> {
         progress.completed) {
       _startCueIfNeeded();
     }
+    final nextMilestone = _milestoneFor(progress);
+    if (nextMilestone != _announcedMilestone) {
+      _announcedMilestone = nextMilestone;
+      _queueAnnouncement(progress, nextMilestone);
+    }
     if (widget.game.reduceMotion || widget.game.lowSpecMode) {
       _cueTimer?.cancel();
       _cueTimer = null;
       _cueActive = false;
     }
+  }
+
+  void _queueAnnouncement(DirectiveProgress value, int milestone) {
+    final label = _labelFor(value, milestone);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          label,
+          Directionality.of(context),
+        ),
+      );
+    });
   }
 
   int _milestoneFor(DirectiveProgress value) {
@@ -509,7 +561,6 @@ class _DirectiveRailState extends State<_DirectiveRail> {
       child: Semantics(
         key: Key('directive-rail-semantics-$milestone'),
         container: true,
-        liveRegion: true,
         label: _labelFor(value, milestone),
         child: ExcludeSemantics(
           child: AnimatedContainer(
@@ -524,7 +575,11 @@ class _DirectiveRailState extends State<_DirectiveRail> {
             decoration: BoxDecoration(
               color: TokenfrontColors.deepField.withValues(alpha: .9),
               border: Border.all(
-                color: completed || _cueActive
+                color:
+                    _cueActive ||
+                        (completed &&
+                            (widget.game.reduceMotion ||
+                                widget.game.lowSpecMode))
                     ? TokenfrontColors.volt
                     : TokenfrontColors.relayIvory.withValues(alpha: .32),
                 width: completed || _cueActive ? 1.5 : 1,
@@ -624,13 +679,41 @@ class _ViewRail extends StatelessWidget {
   }
 }
 
-class _PausedReadout extends StatelessWidget {
-  const _PausedReadout();
+class _PauseButton extends StatelessWidget {
+  const _PauseButton({
+    required this.paused,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool paused;
+  final bool enabled;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    label: context.l10n.battlePausedSemantics,
+    key: const Key('battle-pause'),
+    button: true,
+    enabled: enabled,
+    label: context.l10n.pauseBattleSemantics,
+    child: TacticalButton(
+      label: paused ? context.l10n.resumeBattle : context.l10n.pauseBattle,
+      onPressed: enabled ? onPressed : null,
+      color: TokenfrontColors.relayIvory,
+    ),
+  );
+}
+
+class _PausedReadout extends StatelessWidget {
+  const _PausedReadout({required this.userPaused});
+
+  final bool userPaused;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: userPaused
+        ? context.l10n.pauseBattleSemantics
+        : context.l10n.battlePausedSemantics,
     child: TacticalPanel(
       borderColor: TokenfrontColors.relayIvory,
       color: TokenfrontColors.deepField.withValues(alpha: .94),
@@ -682,7 +765,6 @@ class _PlayerControls extends StatelessWidget {
     children: [
       Semantics(
         container: true,
-        liveRegion: true,
         label: context.l10n.controlledUnitStatus(
           snapshot.currentLevel,
           snapshot.currentKills,
@@ -1168,7 +1250,6 @@ class _RelayReadout extends StatelessWidget {
     final percent = (progress * 100).round();
     return IgnorePointer(
       child: Semantics(
-        liveRegion: true,
         label: context.l10n.commandHandoff(stageLabel, percent),
         child: Opacity(
           opacity: reduceMotion

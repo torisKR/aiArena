@@ -178,6 +178,51 @@ void main() {
   });
 
   test(
+    'successful replay mastery credits and persists a missing directive bonus',
+    () async {
+      final store = _MemoryStateStore();
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(runtime.dispose);
+      runtime.lockChronicleCore(Faction.amethyst);
+      final before = runtime.wallet.balance;
+      final first = runtime.concludeChronicle(
+        operationId: StoryOperationId.wake,
+        report: _report(link: 44.999),
+        replay: false,
+      );
+      final replay = runtime.concludeChronicle(
+        operationId: StoryOperationId.wake,
+        report: _report(link: 45),
+        replay: true,
+      );
+      await runtime.flushLocalState();
+      expect(first.directiveBonusCredit, 0);
+      expect(replay.directiveBonusCredit, 15);
+      expect(runtime.wallet.balance, before + 15);
+      expect(runtime.storyProgress.currentOperation, StoryOperationId.echo);
+      expect(runtime.storyProgress.medals, contains(StoryOperationId.wake));
+      expect(
+        runtime.rewardLedger.claimedDirectiveBonusIds,
+        contains('chronicle-directive-wake'),
+      );
+      final restored = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(restored.dispose);
+      expect(restored.wallet.balance, before + 15);
+      expect(restored.storyProgress.medals, contains(StoryOperationId.wake));
+      expect(
+        restored.rewardLedger.claimedDirectiveBonusIds,
+        contains('chronicle-directive-wake'),
+      );
+    },
+  );
+
+  test(
     'malformed story preserves a separately valid lifetime ledger',
     () async {
       final runtime = await TokenfrontRuntime.restore(
@@ -262,8 +307,6 @@ void main() {
     }
     runtime.chooseChronicleEnding(EndingChoice.openRelay);
     await runtime.flushLocalState();
-    runtime.dispose();
-
     final restored = await TokenfrontRuntime.restore(
       platform: ClientPlatform.web,
       stateStore: store,

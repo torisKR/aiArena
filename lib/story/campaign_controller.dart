@@ -39,14 +39,37 @@ final class CampaignController {
             campaignFaction: campaignFaction,
           );
 
-    // Replay and duplicate delivery are observational only. In particular,
-    // they cannot append canonical story state or claim a lifetime bonus.
-    if (replay || alreadyConcluded) {
+    // Duplicate non-replay delivery is observational only. A successful
+    // replay may restore mastery for a concluded operation, without moving
+    // the sequential campaign pointer or changing transmissions/ending.
+    if (alreadyConcluded && (!replay || !succeeded)) {
       return CampaignTransition(
         nextProgress: progress,
         nextLedger: ledger,
         directiveSucceeded: succeeded,
         directiveBonusCredit: 0,
+        firstConclusion: false,
+      );
+    }
+
+    if (alreadyConcluded) {
+      final medals = {...progress.medals, operationId};
+      final hasClaim = ledger.claimedDirectiveBonusIds.contains(
+        operation.bonusClaimId,
+      );
+      final paysBonus = !hasClaim;
+      return CampaignTransition(
+        nextProgress: progress.copyWith(medals: medals),
+        nextLedger: paysBonus
+            ? ProfileRewardLedger(
+                claimedDirectiveBonusIds: {
+                  ...ledger.claimedDirectiveBonusIds,
+                  operation.bonusClaimId,
+                },
+              )
+            : ledger,
+        directiveSucceeded: true,
+        directiveBonusCredit: paysBonus ? operation.oneTimeBonus : 0,
         firstConclusion: false,
       );
     }

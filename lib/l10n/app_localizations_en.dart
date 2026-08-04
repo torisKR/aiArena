@@ -352,6 +352,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get battlePaused => 'SIGNAL HELD  /  BATTLE PAUSED';
 
   @override
+  String get pauseBattle => 'PAUSE';
+
+  @override
+  String get resumeBattle => 'RESUME';
+
+  @override
+  String get pauseBattleSemantics => 'Pause or resume battle';
+
+  @override
   String controlledUnitStatus(int level, int killCount, int relayCount) {
     return 'Controlled unit level $level, $killCount kills, $relayCount relays';
   }

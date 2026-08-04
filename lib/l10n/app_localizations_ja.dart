@@ -313,6 +313,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get battlePaused => 'シグナル待機  /  戦闘一時停止';
 
   @override
+  String get pauseBattle => '一時停止';
+
+  @override
+  String get resumeBattle => '再開';
+
+  @override
+  String get pauseBattleSemantics => 'バトルを一時停止または再開';
+
+  @override
   String controlledUnitStatus(int level, int killCount, int relayCount) {
     return '操作ユニット レベル$level、撃破$killCount、指揮継承$relayCount';
   }

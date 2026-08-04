@@ -312,6 +312,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get battlePaused => '信号保持  /  战斗暂停';
 
   @override
+  String get pauseBattle => '暂停';
+
+  @override
+  String get resumeBattle => '继续';
+
+  @override
+  String get pauseBattleSemantics => '暂停或继续战斗';
+
+  @override
   String controlledUnitStatus(int level, int killCount, int relayCount) {
     return '受控单位等级$level，击杀$killCount，指挥接替$relayCount';
   }
