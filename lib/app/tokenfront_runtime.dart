@@ -12,6 +12,7 @@ import '../services/analytics/analytics_service.dart';
 import '../services/privacy/privacy_state.dart';
 import '../settings/game_preferences.dart';
 import '../story/campaign_controller.dart';
+import '../story/story_catalog.dart';
 import '../story/story_models.dart';
 import 'tokenfront_state_store.dart';
 
@@ -493,6 +494,11 @@ final class _TokenfrontLocalState {
           state: decode(await store.read()),
           canWrite: true,
         );
+      } on _UnsupportedSchemaVersion {
+        return _TokenfrontLocalStateLoad(
+          state: _TokenfrontLocalState.defaults(),
+          canWrite: false,
+        );
       } catch (error) {
         lastError = error;
       }
@@ -512,6 +518,9 @@ final class _TokenfrontLocalState {
         return _TokenfrontLocalState.defaults();
       }
       final version = decoded['version'];
+      if (version is int && version > _version) {
+        throw _UnsupportedSchemaVersion(version);
+      }
       if (version is! int || (version != 1 && version != _version)) {
         return _TokenfrontLocalState.defaults();
       }
@@ -521,9 +530,10 @@ final class _TokenfrontLocalState {
       final story = version == 1
           ? StoryProgress.initial()
           : _decodeStory(decoded['story']);
-      final rewardLedger = version == 1
+      final decodedRewardLedger = version == 1
           ? ProfileRewardLedger.empty()
           : _decodeRewardLedger(decoded['rewardLedger']);
+      final rewardLedger = _reconcileRewardLedger(decodedRewardLedger, story);
       return _TokenfrontLocalState(
         walletBalance: wallet.balance,
         unlockedIds: wallet.unlockedIds,
@@ -539,10 +549,30 @@ final class _TokenfrontLocalState {
         storyProgress: story,
         rewardLedger: rewardLedger,
       );
+    } on _UnsupportedSchemaVersion {
+      rethrow;
     } catch (error) {
       debugPrint('Tokenfront local state decode failed: $error');
       return _TokenfrontLocalState.defaults();
     }
+  }
+
+  static ProfileRewardLedger _reconcileRewardLedger(
+    ProfileRewardLedger ledger,
+    StoryProgress story,
+  ) {
+    final impliedClaims = story.medals
+        .map((operationId) => StoryCatalog.byId(operationId).bonusClaimId)
+        .toSet();
+    if (ledger.claimedDirectiveBonusIds.containsAll(impliedClaims)) {
+      return ledger;
+    }
+    return ProfileRewardLedger(
+      claimedDirectiveBonusIds: {
+        ...ledger.claimedDirectiveBonusIds,
+        ...impliedClaims,
+      },
+    );
   }
 
   static _DecodedWallet _decodeWallet(Object? value) {
@@ -694,6 +724,12 @@ final class _TokenfrontLocalStateLoad {
 
   final _TokenfrontLocalState state;
   final bool canWrite;
+}
+
+final class _UnsupportedSchemaVersion implements Exception {
+  const _UnsupportedSchemaVersion(this.version);
+
+  final int version;
 }
 
 final class _DecodedWallet {

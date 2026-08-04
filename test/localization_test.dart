@@ -86,6 +86,20 @@ void main() {
               expect(context.l10n.appTitle, contract.$1);
               expect(context.l10n.lobbyTagline, contract.$2);
               expect(context.l10n.deploySignal, contract.$3);
+              for (final privacyCopy in <String>[
+                context.l10n.privacyPolicyTitle,
+                context.l10n.privacyPolicyIntro,
+                context.l10n.privacyDataStoredBody,
+                context.l10n.privacyAnalyticsBody,
+                context.l10n.privacyAdvertisingBody,
+                context.l10n.privacyAccountsBody,
+                context.l10n.privacyHostingBody,
+                context.l10n.privacyChildrenBody,
+                context.l10n.privacyChangesBody,
+                context.l10n.releaseServicesUnavailable,
+              ]) {
+                expect(privacyCopy, isNotEmpty);
+              }
               return const SizedBox.shrink();
             },
           ),
@@ -369,6 +383,38 @@ void main() {
                 ),
                 expected[locale.languageCode]!.$3,
               );
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
+  testWidgets('restart and reward disclosures stay truthful in every locale', (
+    tester,
+  ) async {
+    const expected = <String, (String, String)>{
+      'en': (
+        'RESTART CHRONICLE',
+        'Previously awarded operation bonuses cannot be earned again.',
+      ),
+      'ko': ('크로니클 재시작', '이전에 지급된 작전 보너스는 다시 받을 수 없습니다.'),
+      'ja': ('クロニクルをリセット', '以前に付与された作戦ボーナスは再獲得できません。'),
+      'zh': ('重启编年史', '此前已发放的作战奖励无法再次获得。'),
+    };
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final values = expected[locale.languageCode]!;
+              expect(context.l10n.restartChronicle, values.$1);
+              expect(context.l10n.restartDisclosure, contains(values.$2));
               return const SizedBox.shrink();
             },
           ),

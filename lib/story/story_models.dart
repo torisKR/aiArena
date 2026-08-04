@@ -216,7 +216,7 @@ final class StoryProgress {
   bool get isSemanticallyValid {
     if (!_isPrefix(concludedOperations)) return false;
     if (!concludedOperations.containsAll(medals)) return false;
-    if (!concludedOperations.containsAll(recoveredTransmissions)) return false;
+    if (!setEquals(concludedOperations, recoveredTransmissions)) return false;
     if (concludedOperations.isNotEmpty && campaignFaction == null) return false;
     if (ending == null) return true;
     return campaignFaction != null &&

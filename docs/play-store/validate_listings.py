@@ -58,6 +58,16 @@ def main() -> int:
             f"{locale}: title={len(title)}, short={len(short)}, "
             f"full={len(full)}, release_notes={len(notes)}"
         )
+    metadata = (ROOT / "store-metadata.md").read_text(encoding="utf-8")
+    alt_texts = re.findall(r"^[1-5]\. (.+)$", metadata, re.MULTILINE)
+    assert len(alt_texts) == 5, ("screenshot alt text count", len(alt_texts))
+    assert all(len(value) <= 140 for value in alt_texts), (
+        "screenshot alt text exceeds 140 characters",
+        [len(value) for value in alt_texts],
+    )
+    lines.append(
+        "screenshot_alt_text=" + ",".join(str(len(value)) for value in alt_texts)
+    )
     lines.append("PASS: all four locales satisfy 30/80/4000 listing limits and consistency checks")
     print("\n".join(lines))
     return 0

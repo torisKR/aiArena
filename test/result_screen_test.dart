@@ -141,6 +141,7 @@ Widget _resultApp(
       baseReward: 40,
       warTokenBalance: 40,
       bannerVisible: false,
+      rewardedAdsAvailable: true,
       onDoubleReward: _unavailableReward,
       onOpenSettings: _noop,
       onOpenLocker: _noop,

@@ -14,6 +14,28 @@ Future<({int width, int height})> dimensions(String path) async {
   return result;
 }
 
+Future<void> expectOpaqueJpeg(String path) async {
+  final file = File(path);
+  final bytes = await file.readAsBytes();
+  expect(bytes.take(2), <int>[0xff, 0xd8], reason: '$path must be JPEG');
+  expect(bytes.skip(bytes.length - 2), <int>[
+    0xff,
+    0xd9,
+  ], reason: '$path must have a complete JPEG trailer');
+  expect(await dimensions(path), (width: 1920, height: 1080));
+
+  final codec = await ui.instantiateImageCodec(bytes);
+  final frame = await codec.getNextFrame();
+  final rgba = await frame.image.toByteData(format: ui.ImageByteFormat.rawRgba);
+  expect(rgba, isNotNull, reason: '$path must decode to RGBA pixels');
+  final pixels = rgba!.buffer.asUint8List();
+  for (var offset = 3; offset < pixels.length; offset += 4) {
+    expect(pixels[offset], 255, reason: '$path must be opaque');
+  }
+  frame.image.dispose();
+  codec.dispose();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -32,6 +54,18 @@ void main() {
     expect(bytes.take(2), <int>[0xff, 0xd8]);
     expect(bytes.skip(bytes.length - 2), <int>[0xff, 0xd9]);
     expect(await dimensions(file.path), (width: 1024, height: 500));
+  });
+
+  test('five Play phone screenshots are opaque 1920 by 1080 JPEGs', () async {
+    for (final name in <String>[
+      'phone-01-command-deck-1920x1080.jpg',
+      'phone-02-live-directive-1920x1080.jpg',
+      'phone-03-command-handoff-1920x1080.jpg',
+      'phone-04-chronicle-debrief-1920x1080.jpg',
+      'phone-05-archive-1920x1080.jpg',
+    ]) {
+      await expectOpaqueJpeg('store-assets/android/$name');
+    }
   });
 
   test('graphics contract binds source and output hashes', () async {

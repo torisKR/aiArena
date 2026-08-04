@@ -28,12 +28,16 @@ final class _MemoryStateStore implements TokenfrontStateStore {
   _MemoryStateStore.withValue(this.value);
 
   String? value;
+  int writeCalls = 0;
 
   @override
   Future<String?> read() async => value;
 
   @override
-  Future<void> write(String value) async => this.value = value;
+  Future<void> write(String value) async {
+    writeCalls += 1;
+    this.value = value;
+  }
 
   Future<void> waitForValue(bool Function(String value) predicate) async {
     for (var attempt = 0; attempt < 100; attempt++) {
@@ -264,6 +268,74 @@ void main() {
   );
 
   test(
+    'missing or malformed ledger recovers claims implied by persisted medals',
+    () async {
+      for (final rewardLedger in <Object?>[null, <Object?>[]]) {
+        final store = _MemoryStateStore.withValue(
+          _schema2Fixture(
+            story: const <String, Object?>{
+              'campaignFaction': 'amethyst',
+              'concludedOperations': ['wake'],
+              'medals': ['wake'],
+              'recoveredTransmissions': ['wake'],
+              'ending': null,
+            },
+            rewardLedger: rewardLedger,
+          ),
+        );
+        final runtime = await TokenfrontRuntime.restore(
+          platform: ClientPlatform.web,
+          stateStore: store,
+        );
+        addTearDown(runtime.dispose);
+
+        final before = runtime.wallet.balance;
+        final replay = runtime.concludeChronicle(
+          operationId: StoryOperationId.wake,
+          report: _report(link: 45),
+          replay: true,
+        );
+        await runtime.flushLocalState();
+
+        expect(replay.directiveBonusCredit, 0);
+        expect(runtime.wallet.balance, before);
+        expect(
+          runtime.rewardLedger.claimedDirectiveBonusIds,
+          contains('chronicle-directive-wake'),
+        );
+      }
+    },
+  );
+
+  test(
+    'mismatched recovered transmissions reject only impossible story state',
+    () async {
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: _MemoryStateStore.withValue(
+          _schema2Fixture(
+            story: const <String, Object?>{
+              'campaignFaction': 'amethyst',
+              'concludedOperations': ['wake'],
+              'medals': <String>[],
+              'recoveredTransmissions': <String>[],
+              'ending': null,
+            },
+          ),
+        ),
+      );
+      addTearDown(runtime.dispose);
+
+      _expectNonDefaultPersistedSections(runtime);
+      expect(runtime.storyProgress, StoryProgress.initial());
+      expect(
+        runtime.storyProgress.recoveredTransmissions,
+        runtime.storyProgress.concludedOperations,
+      );
+    },
+  );
+
+  test(
     'semantically impossible story resets only story while preserving ledger',
     () async {
       final invalidStories = <String, Map<String, Object?>>{
@@ -360,7 +432,13 @@ void main() {
               'lastInstruction',
             ],
             'medals': <String>[],
-            'recoveredTransmissions': <String>[],
+            'recoveredTransmissions': [
+              'wake',
+              'echo',
+              'split',
+              'crown',
+              'lastInstruction',
+            ],
             'ending': null,
           },
         ),
@@ -383,11 +461,11 @@ void main() {
   test(
     'unknown top-level schema keeps the existing corruption fallback',
     () async {
+      final store = _MemoryStateStore.withValue(schema99Fixture);
       final runtime = await TokenfrontRuntime.restore(
         platform: ClientPlatform.web,
-        stateStore: _MemoryStateStore.withValue(schema99Fixture),
+        stateStore: store,
       );
-      addTearDown(runtime.dispose);
       expect(runtime.wallet.balance, 0);
       expect(runtime.wallet.isUnlocked('color_relay_ivory'), isFalse);
       expect(runtime.preferences.languageCode, 'system');
@@ -400,6 +478,11 @@ void main() {
       expect(runtime.adRequestsAllowed, isFalse);
       expect(runtime.storyProgress, StoryProgress.initial());
       expect(runtime.rewardLedger, ProfileRewardLedger.empty());
+      await runtime.flushLocalState();
+      runtime.dispose();
+      await Future<void>.delayed(Duration.zero);
+      expect(store.writeCalls, 0);
+      expect(store.value, schema99Fixture);
     },
   );
 
@@ -916,39 +999,37 @@ const schema2WithWakeConcludedAndMalformedLedger =
 const schema99Fixture =
     '''{"version":99,"wallet":{"balance":275,"unlockedIds":["color_relay_ivory"]},"preferences":{"languageCode":"ko","lowSpecMode":true},"privacy":{"analyticsSharingAllowed":true,"adRequestsAllowed":true},"story":{"campaignFaction":"amethyst"},"rewardLedger":{"claimedDirectiveBonusIds":["chronicle-directive-wake"]}}''';
 
-String _schema2Fixture({required Map<String, Object?> story}) =>
-    jsonEncode(<String, Object?>{
-      'version': 2,
-      'wallet': <String, Object?>{
-        'balance': 275,
-        'unlockedIds': [
-          'color_relay_ivory',
-          'trail_relay_tape',
-          'death_fracture',
-        ],
-        'equippedIds': <String, String>{
-          'factionColor': 'color_relay_ivory',
-          'movementTrail': 'trail_relay_tape',
-          'deathEffect': 'death_fracture',
-        },
-      },
-      'preferences': <String, Object?>{
-        'lowSpecMode': true,
-        'forceReducedMotion': true,
-        'mouseCameraEnabled': false,
-        'hapticsEnabled': false,
-        'audioEnabled': false,
-        'languageCode': 'ko',
-      },
-      'privacy': <String, bool>{
-        'analyticsSharingAllowed': true,
-        'adRequestsAllowed': true,
-      },
-      'story': story,
-      'rewardLedger': <String, Object?>{
-        'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
-      },
-    });
+String _schema2Fixture({
+  required Map<String, Object?> story,
+  Object? rewardLedger = const <String, Object?>{
+    'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
+  },
+}) => jsonEncode(<String, Object?>{
+  'version': 2,
+  'wallet': <String, Object?>{
+    'balance': 275,
+    'unlockedIds': ['color_relay_ivory', 'trail_relay_tape', 'death_fracture'],
+    'equippedIds': <String, String>{
+      'factionColor': 'color_relay_ivory',
+      'movementTrail': 'trail_relay_tape',
+      'deathEffect': 'death_fracture',
+    },
+  },
+  'preferences': <String, Object?>{
+    'lowSpecMode': true,
+    'forceReducedMotion': true,
+    'mouseCameraEnabled': false,
+    'hapticsEnabled': false,
+    'audioEnabled': false,
+    'languageCode': 'ko',
+  },
+  'privacy': <String, bool>{
+    'analyticsSharingAllowed': true,
+    'adRequestsAllowed': true,
+  },
+  'story': story,
+  'rewardLedger': ?rewardLedger,
+});
 
 void _expectNonDefaultPersistedSections(TokenfrontRuntime runtime) {
   expect(runtime.wallet.balance, 275);

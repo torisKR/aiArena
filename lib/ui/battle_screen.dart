@@ -52,6 +52,16 @@ class BattleScreenState extends State<BattleScreen>
   void initState() {
     super.initState();
     if (widget.observeLifecycle) WidgetsBinding.instance.addObserver(this);
+    final initialLifecycleState = widget.observeLifecycle
+        ? WidgetsBinding.instance.lifecycleState ?? widget.lifecycleState
+        : widget.lifecycleState;
+    _lifecyclePaused = initialLifecycleState != AppLifecycleState.resumed;
+    if (_lifecyclePaused) {
+      game.clearInputs();
+      game.endMouseCameraPan();
+      game.endMinimapCameraPan();
+      game.pauseEngine();
+    }
   }
 
   @override
@@ -608,7 +618,7 @@ class _DirectiveRailState extends State<_DirectiveRail> {
               target,
             );
     }
-    if (milestone == 2) return context.l10n.directiveLocked;
+    if (milestone == 2) return context.l10n.directiveComplete;
     final current = milestone == 1
         ? (value.target / 2).floor().clamp(1, target)
         : 0;
@@ -647,11 +657,11 @@ class _DirectiveRailState extends State<_DirectiveRail> {
     final value = progress;
     final milestone = _milestoneFor(value);
     final completed = _isBattleComplete(value);
-    final current = value.current.round().clamp(0, value.target.round());
+    final current = value.current.floor().clamp(0, value.target.round());
     final target = value.target.round();
     final name = _directiveName(context, value.kind);
     final text = completed
-        ? context.l10n.directiveLocked
+        ? context.l10n.directiveComplete
         : value.kind == DirectiveKind.finalRank
         ? value.current <= value.target
               ? context.l10n.directiveOnTrack(
@@ -821,6 +831,7 @@ class _PauseButton extends StatelessWidget {
     excludeSemantics: true,
     label: paused ? context.l10n.resumeBattle : context.l10n.pauseBattle,
     hint: context.l10n.pauseBattleSemantics,
+    onTap: enabled ? onPressed : null,
     child: TacticalButton(
       label: paused ? context.l10n.resumeBattle : context.l10n.pauseBattle,
       onPressed: enabled ? onPressed : null,
@@ -836,16 +847,20 @@ class _PausedReadout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    container: true,
     label: userPaused
-        ? context.l10n.pauseBattleSemantics
+        ? context.l10n.battleUserPausedSemantics
         : context.l10n.battlePausedSemantics,
-    child: TacticalPanel(
-      borderColor: TokenfrontColors.relayIvory,
-      color: TokenfrontColors.deepField.withValues(alpha: .94),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      child: Text(
-        context.l10n.battlePaused,
-        style: TokenfrontType.instrument.copyWith(fontSize: 11),
+    child: ExcludeSemantics(
+      child: TacticalPanel(
+        borderColor: TokenfrontColors.relayIvory,
+        color: TokenfrontColors.deepField.withValues(alpha: .94),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        child: Text(
+          context.l10n.battlePaused,
+          style: TokenfrontType.instrument.copyWith(fontSize: 11),
+        ),
       ),
     ),
   );

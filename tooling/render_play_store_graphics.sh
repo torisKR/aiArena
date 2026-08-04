@@ -3,11 +3,17 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 CHROME_BIN=${CHROME_BIN:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}
+FFMPEG_BIN=${FFMPEG_BIN:-ffmpeg}
 SOURCE_DIR="$ROOT/store-assets/source"
 OUTPUT_DIR="$ROOT/store-assets/android"
 
 if [ ! -x "$CHROME_BIN" ]; then
   echo "Chrome executable not found: $CHROME_BIN" >&2
+  exit 1
+fi
+
+if ! command -v "$FFMPEG_BIN" >/dev/null 2>&1; then
+  echo "ffmpeg executable not found: $FFMPEG_BIN" >&2
   exit 1
 fi
 
@@ -18,6 +24,10 @@ mkdir -p "$OUTPUT_DIR"
   --force-device-scale-factor=1 --window-size=512,512 \
   --screenshot="$OUTPUT_DIR/icon-512.png" \
   "file://$SOURCE_DIR/icon-render.html"
+
+"$FFMPEG_BIN" -y -loglevel error -i "$OUTPUT_DIR/icon-512.png" \
+  -vf format=rgba -frames:v 1 "$OUTPUT_DIR/icon-512-rgba.png"
+mv "$OUTPUT_DIR/icon-512-rgba.png" "$OUTPUT_DIR/icon-512.png"
 
 sips -z 192 192 "$OUTPUT_DIR/icon-512.png" \
   --out "$ROOT/web/icons/Icon-192.png" >/dev/null

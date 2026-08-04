@@ -15,7 +15,7 @@ Lead 1,000 units inside a 4,000-unit real-time battlefield. Move freely, transfe
 • Five deterministic story operations and optional directives
 • Command handoffs, tactical map, keyboard, mouse, and touch controls
 • English, Korean, Japanese, and Simplified Chinese
-• No account required and no user data sent off device in this release
+• No account required; no cloud save or Android backup; this release keeps user data on device
 
 Every battle advances the signal. Your final choice decides whether one core claims the relay or all four receive the recovered memory.
 

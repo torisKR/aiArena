@@ -16,6 +16,7 @@ class LobbyScreen extends StatefulWidget {
     required this.selectedMode,
     required this.storyProgress,
     required this.rewardLedger,
+    required this.selectedChronicleFaction,
     required this.selectedSkirmishFaction,
     required this.onSelectChronicleCore,
     required this.onSelectSkirmishFaction,
@@ -35,6 +36,7 @@ class LobbyScreen extends StatefulWidget {
   final GameMode selectedMode;
   final StoryProgress storyProgress;
   final ProfileRewardLedger rewardLedger;
+  final Faction selectedChronicleFaction;
   final Faction selectedSkirmishFaction;
   final ValueChanged<Faction> onSelectChronicleCore;
   final ValueChanged<Faction> onSelectSkirmishFaction;
@@ -56,7 +58,6 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   late GameMode mode = widget.selectedMode;
-  Faction? chronicleSelection;
 
   @override
   void didUpdateWidget(covariant LobbyScreen oldWidget) {
@@ -73,7 +74,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final dense = viewport.height < 700;
     final copy = StoryLocalizations(context.l10n);
     final lockedCore = widget.storyProgress.campaignFaction;
-    final selectedCore = lockedCore ?? chronicleSelection ?? Faction.amethyst;
+    final selectedCore = lockedCore ?? widget.selectedChronicleFaction;
     final operation = widget.storyProgress.currentOperation;
     final pendingEnding =
         operation == null &&
@@ -159,7 +160,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           compact: compact || dense,
                           onSelected: (faction) {
                             if (lockedCore != null) return;
-                            setState(() => chronicleSelection = faction);
                             widget.onSelectChronicleCore(faction);
                           },
                         ),
@@ -495,7 +495,7 @@ class _CoreCard extends StatelessWidget {
     );
     return Semantics(
       label: locked
-          ? '${visual.name} // ${context.l10n.directiveLocked}'
+          ? context.l10n.chronicleCoreLocked(visual.name)
           : context.l10n.chooseFaction(visual.name),
       button: !locked,
       enabled: !locked,

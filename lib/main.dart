@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app/release_capabilities.dart';
 import 'app/tokenfront_runtime.dart';
 import 'design/tokens.dart';
 import 'economy/cosmetic_catalog.dart';
@@ -16,6 +17,7 @@ import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
 import 'services/analytics/analytics_event.dart';
 import 'services/battle_orientation_controller.dart';
+import 'services/privacy/privacy_link_actions.dart';
 import 'ui/armory_sheet.dart';
 import 'ui/archive_sheet.dart';
 import 'ui/battle_screen.dart';
@@ -37,12 +39,16 @@ class TokenfrontApp extends StatefulWidget {
     this.disposeRuntime = false,
     this.orientationController,
     this.storyOperationsProvider,
+    this.capabilities = playReleaseCapabilities,
+    this.privacyLinkActions = const PlatformPrivacyLinkActions(),
   });
 
   final TokenfrontRuntime? runtime;
   final bool disposeRuntime;
   final BattleOrientationController? orientationController;
   final StoryOperationsProvider? storyOperationsProvider;
+  final ReleaseCapabilities capabilities;
+  final PrivacyLinkActions privacyLinkActions;
 
   @override
   State<TokenfrontApp> createState() => _TokenfrontAppState();
@@ -78,6 +84,8 @@ class _TokenfrontAppState extends State<TokenfrontApp> {
         runtime: runtime,
         orientationController: orientationController,
         storyOperationsProvider: widget.storyOperationsProvider,
+        capabilities: widget.capabilities,
+        privacyLinkActions: widget.privacyLinkActions,
       ),
     ),
   );
@@ -109,11 +117,15 @@ class TokenfrontRoot extends StatefulWidget {
     required this.runtime,
     required this.orientationController,
     this.storyOperationsProvider,
+    required this.capabilities,
+    required this.privacyLinkActions,
   });
 
   final TokenfrontRuntime runtime;
   final BattleOrientationController orientationController;
   final StoryOperationsProvider? storyOperationsProvider;
+  final ReleaseCapabilities capabilities;
+  final PrivacyLinkActions privacyLinkActions;
 
   @override
   State<TokenfrontRoot> createState() => _TokenfrontRootState();
@@ -152,6 +164,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   void initState() {
     super.initState();
+    _lifecycleState =
+        WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     try {
       storyOperations = List<StoryOperation>.unmodifiable(
         (widget.storyOperationsProvider ?? () => StoryCatalog.operations)(),
@@ -224,6 +238,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   }
 
   Future<void> _requestBanner() async {
+    if (!widget.capabilities.adInventoryAvailable) {
+      if (mounted && bannerVisible) setState(() => bannerVisible = false);
+      return;
+    }
     final surface = screen == _Screen.result
         ? AdSurface.result
         : AdSurface.lobby;
@@ -245,6 +263,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       adRequestsAllowed: runtime.adRequestsAllowed,
       onAnalyticsChanged: runtime.setAnalyticsSharingAllowed,
       onAdRequestsChanged: runtime.setAdRequestsAllowed,
+      capabilities: widget.capabilities,
+      privacyLinkActions: widget.privacyLinkActions,
     );
   }
 
@@ -575,6 +595,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       selectedMode: chronicleAvailable ? GameMode.chronicle : GameMode.skirmish,
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
+      selectedChronicleFaction: chronicleFaction,
       selectedSkirmishFaction: skirmishFaction,
       onSelectChronicleCore: (faction) {
         setState(() => chronicleFaction = faction);
@@ -599,6 +620,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       selectedMode: GameMode.chronicle,
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
+      selectedChronicleFaction: chronicleFaction,
       selectedSkirmishFaction: skirmishFaction,
       onSelectChronicleCore: (faction) {
         setState(() => chronicleFaction = faction);
@@ -659,6 +681,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       baseReward: baseReward,
       warTokenBalance: runtime.wallet.balance,
       bannerVisible: bannerVisible,
+      rewardedAdsAvailable: widget.capabilities.adInventoryAvailable,
       onDoubleReward: () => runtime.claimRewardedBonus(
         matchId: currentMatchId,
         baseAmount: baseReward,

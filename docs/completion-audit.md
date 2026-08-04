@@ -60,8 +60,8 @@ The remaining work is launch integration and acceptance work, not missing core g
 | iOS simulator app | `build/ios/Debug-iphonesimulator/Runner.app/Runner` and `build/ios/iphonesimulator/Runner.app/Runner` from the 2026-07-15 prior build | **Historical prior-build artifact** |
 | Default web build | `build/web/main.dart.js`; standard Flutter web path uses CanvasKit | **Verified build and runtime path** |
 | Optional Wasm build | `build/web_wasm/main.dart.wasm` plus compatibility JavaScript from the 2026-07-15 prior build; Wasm-capable path uses Skwasm | **Historical optional-build artifact** |
-| Blender scene/key art | Arena `.blend`, GLB 2.0 export, and 1440×900 key art under `assets/blender/` | **Verified artifacts** |
-| Blender MCP runtime generation | A live BlenderMCP server v1.28.1 session successfully ran `execute_blender_code`, generated the runtime atlas/source artifacts, and was cleanly stopped | **Verified live MCP execution** |
+| Blender scene/key art | Arena `.blend`, a GLB 2.0 file, and 1440×900 key art under `assets/blender/` | **Artifact presence only; no committed generation receipt ties these files to a specific current runtime** |
+| Blender generation provenance | Historical developer-local environment metadata distinguishes BlenderMCP distribution 1.6.4, MCP SDK 1.28.1, and Blender 5.1.2. No committed MCP invocation/response or clean-shutdown proof is retained. | **Historical environment metadata only** |
 | Blender runtime atlas | 256×64 PNG, JSON manifest, editable `.blend`, base PNG/`.blend`, generation scripts, runtime loading, and source-cell sampling tests | **Verified artifact and runtime integration** |
 
 ## Requirement-to-evidence matrix
@@ -128,8 +128,8 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| B-01 | Editable Blender arena/key-art source and export. | **Verified** | `assets/blender/tokenfront_arena.blend`, `tokenfront_arena.glb`, `tokenfront_keyart.png`, and `tooling/build_tokenfront_scene.py`. |
-| B-02 | Runtime sprite atlas authored through Blender MCP. | **Verified in a live MCP session** | BlenderMCP server v1.28.1 successfully executed `execute_blender_code` and produced `assets/images/tokenfront_token_atlas.png`, its JSON manifest, `assets/blender/tokenfront_token_atlas.blend`, the base PNG/`.blend`, and the arena/key-art artifacts. The MCP server was cleanly stopped after completion. Generation scripts and the MCP request are retained under `tooling/`. |
+| B-01 | Editable Blender arena/key-art source and export. | **Artifacts present; regeneration receipt required for provenance** | `assets/blender/tokenfront_arena.blend`, `tokenfront_arena.glb`, `tokenfront_keyart.png`, and `tooling/build_tokenfront_scene.py` are tracked. Existing editable blends may retain historical developer-local paths. Portable tooling applies to future regeneration, not retroactive proof for these files. |
+| B-02 | Runtime sprite atlas authored through Blender MCP. | **Artifacts and scripts present; live invocation unproven** | The atlas PNG/manifest, editable `.blend` files, and scripts are present. Historical local metadata records BlenderMCP distribution 1.6.4, MCP SDK 1.28.1, and Blender 5.1.2, but no committed MCP request/response, clean-shutdown record, or per-artifact generation receipt is retained. |
 | B-03 | Atlas dimensions/cells and runtime use. | **Verified by tests** | `test/token_atlas_test.dart` verifies the exact 256×64 image, four 64×64 cells ordered Amethyst/Cobalt/Volt/Prism, successful game loading, and per-faction source rectangles. |
 | B-04 | Asset fallback safety. | **Verified in implementation** | Atlas load failure falls back to the procedural token renderer without blocking a match. |
 
@@ -145,7 +145,7 @@ The remaining work is launch integration and acceptance work, not missing core g
 | E-06 | Privacy and ATT model blocks tracking identifiers before authorization. | **Verified as app-layer gate** | Privacy/service/runtime tests cover consent denial, ATT denial/not-determined, and null identifiers. Native ATT UI remains a launch integration item. |
 | N-01 | Typed launch analytics and offline bounded buffer. | **Verified** | Typed event coverage, D1/D7 validation, bounded buffering, consent/offline gates, retry retention, and successful-flush tests. |
 | N-02 | Production ad/analytics providers. | **Pending launch integration** | The default remains NoOp; live SDKs, IDs, credentials, and production receipt verification are intentionally not represented as complete. |
-| N-03 | Settings, wallet, and cosmetic state survive restart. | **Verified locally** | A versioned snapshot restores War Tokens, unlock/equip state, five preferences, and analytics/ad choices. Runtime recreation, transient I/O, overwrite protection, real Chrome storage, and browser reload checks pass. This is device-local soft-currency state, not an account or purchase ledger. |
+| N-03 | Settings, wallet, and cosmetic state survive restart. | **Verified locally** | A versioned snapshot restores War Tokens, unlock/equip state, five preferences, and analytics/ad choices. Runtime recreation, transient I/O, overwrite protection, and a real-Chrome localStorage round trip across store-instance recreation pass. A full page-reload browser scenario remains a separate manual release check. This is device-local soft-currency state, not an account or purchase ledger. |
 
 ## Automated test inventory
 

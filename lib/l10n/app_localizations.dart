@@ -414,6 +414,150 @@ abstract class AppLocalizations {
   /// **'Both choices start off. Offline matches and rewards work when either choice is off.'**
   String get privacyDefaultNote;
 
+  /// No description provided for @privacyPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PRIVACY POLICY'**
+  String get privacyPolicyTitle;
+
+  /// No description provided for @privacyPolicyEffectiveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective date: 2026-08-05'**
+  String get privacyPolicyEffectiveDate;
+
+  /// No description provided for @privacyPolicyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokenfront: Orbital Signal War is an offline single-player game. This release does not collect or share user data off your device.'**
+  String get privacyPolicyIntro;
+
+  /// No description provided for @privacyDataStoredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DATA STORED ON YOUR DEVICE'**
+  String get privacyDataStoredTitle;
+
+  /// No description provided for @privacyDataStoredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokenfront stores War Token balance, cosmetic unlocks and equipment, language, accessibility, audio, camera, haptic and privacy choices, and Signal Chronicle progress in app-private local storage. It is not uploaded and is removed when app storage is cleared or the app is uninstalled.'**
+  String get privacyDataStoredBody;
+
+  /// No description provided for @privacyAnalyticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ANALYTICS'**
+  String get privacyAnalyticsTitle;
+
+  /// No description provided for @privacyAnalyticsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Gameplay and performance events can exist in a temporary memory buffer of up to 500 entries. This release uses no analytics transport, sends no events, and discards the buffer when the process ends.'**
+  String get privacyAnalyticsBody;
+
+  /// No description provided for @privacyAdvertisingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ADVERTISING'**
+  String get privacyAdvertisingTitle;
+
+  /// No description provided for @privacyAdvertisingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This release has no advertising SDK, live ad request, impression, rewarded-ad network call, or advertising identifier access.'**
+  String get privacyAdvertisingBody;
+
+  /// No description provided for @privacyAccountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNTS, PERMISSIONS, AND THIRD PARTIES'**
+  String get privacyAccountsTitle;
+
+  /// No description provided for @privacyAccountsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokenfront has no account, login, cloud sync, purchase system, user-submitted content, or social feature. It requests no location, camera, microphone, contacts, photos, files, calendar, health, financial, or messaging access.'**
+  String get privacyAccountsBody;
+
+  /// No description provided for @privacyHostingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PUBLIC POLICY HOSTING'**
+  String get privacyHostingTitle;
+
+  /// No description provided for @privacyHostingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The public copy is hosted on Cloudflare Pages. Opening it uses your external browser, where Cloudflare may process ordinary web-request data under its terms. The Android app does not embed the public page or send gameplay or local-state data to it.'**
+  String get privacyHostingBody;
+
+  /// No description provided for @privacyChildrenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHILDREN'**
+  String get privacyChildrenTitle;
+
+  /// No description provided for @privacyChildrenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information.'**
+  String get privacyChildrenBody;
+
+  /// No description provided for @privacyChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHANGES'**
+  String get privacyChangesTitle;
+
+  /// No description provided for @privacyChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a future release adds analytics transport, advertising, accounts, cloud services, or another off-device data flow, this policy and Google Play Data Safety declaration will be updated.'**
+  String get privacyChangesBody;
+
+  /// No description provided for @privacyContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTACT'**
+  String get privacyContactTitle;
+
+  /// No description provided for @privacyPublicUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PUBLIC POLICY URL'**
+  String get privacyPublicUrlLabel;
+
+  /// No description provided for @privacyOpenPublicPage.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN PUBLIC PAGE'**
+  String get privacyOpenPublicPage;
+
+  /// No description provided for @privacyCopyUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY URL'**
+  String get privacyCopyUrl;
+
+  /// No description provided for @privacyUrlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy URL copied.'**
+  String get privacyUrlCopied;
+
+  /// No description provided for @privacyOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The public policy page could not be opened. The full policy remains available here.'**
+  String get privacyOpenFailed;
+
+  /// No description provided for @releaseServicesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT AVAILABLE IN THIS RELEASE'**
+  String get releaseServicesUnavailable;
+
   /// Button that closes a bottom sheet.
   ///
   /// In en, this message translates to:
@@ -665,6 +809,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Battle paused while the app is inactive'**
   String get battlePausedSemantics;
+
+  /// Screen-reader manual pause status.
+  ///
+  /// In en, this message translates to:
+  /// **'Battle paused by player'**
+  String get battleUserPausedSemantics;
 
   /// Visible lifecycle pause notice.
   ///
@@ -1246,6 +1396,12 @@ abstract class AppLocalizations {
   /// **'DIRECTIVE LOCKED // BONUS READY'**
   String get directiveLocked;
 
+  /// Neutral in-battle directive completion status that makes no reward eligibility claim.
+  ///
+  /// In en, this message translates to:
+  /// **'DIRECTIVE COMPLETE'**
+  String get directiveComplete;
+
   /// No description provided for @directiveMissed.
   ///
   /// In en, this message translates to:
@@ -1321,6 +1477,12 @@ abstract class AppLocalizations {
   /// **'BONUS CLAIMED'**
   String get bonusClaimed;
 
+  /// Screen-reader status for a Chronicle core that can no longer be selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{faction} // CHRONICLE CORE LOCKED'**
+  String chronicleCoreLocked(String faction);
+
   /// No description provided for @archiveSimulation.
   ///
   /// In en, this message translates to:
@@ -1378,7 +1540,7 @@ abstract class AppLocalizations {
   /// No description provided for @restartDisclosure.
   ///
   /// In en, this message translates to:
-  /// **'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Paid operation bonuses cannot be earned again.'**
+  /// **'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.'**
   String get restartDisclosure;
 
   /// No description provided for @endingClaimRelay.

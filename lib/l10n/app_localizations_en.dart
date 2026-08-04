@@ -189,6 +189,87 @@ class AppLocalizationsEn extends AppLocalizations {
       'Both choices start off. Offline matches and rewards work when either choice is off.';
 
   @override
+  String get privacyPolicyTitle => 'PRIVACY POLICY';
+
+  @override
+  String get privacyPolicyEffectiveDate => 'Effective date: 2026-08-05';
+
+  @override
+  String get privacyPolicyIntro =>
+      'Tokenfront: Orbital Signal War is an offline single-player game. This release does not collect or share user data off your device.';
+
+  @override
+  String get privacyDataStoredTitle => 'DATA STORED ON YOUR DEVICE';
+
+  @override
+  String get privacyDataStoredBody =>
+      'Tokenfront stores War Token balance, cosmetic unlocks and equipment, language, accessibility, audio, camera, haptic and privacy choices, and Signal Chronicle progress in app-private local storage. It is not uploaded and is removed when app storage is cleared or the app is uninstalled.';
+
+  @override
+  String get privacyAnalyticsTitle => 'ANALYTICS';
+
+  @override
+  String get privacyAnalyticsBody =>
+      'Gameplay and performance events can exist in a temporary memory buffer of up to 500 entries. This release uses no analytics transport, sends no events, and discards the buffer when the process ends.';
+
+  @override
+  String get privacyAdvertisingTitle => 'ADVERTISING';
+
+  @override
+  String get privacyAdvertisingBody =>
+      'This release has no advertising SDK, live ad request, impression, rewarded-ad network call, or advertising identifier access.';
+
+  @override
+  String get privacyAccountsTitle => 'ACCOUNTS, PERMISSIONS, AND THIRD PARTIES';
+
+  @override
+  String get privacyAccountsBody =>
+      'Tokenfront has no account, login, cloud sync, purchase system, user-submitted content, or social feature. It requests no location, camera, microphone, contacts, photos, files, calendar, health, financial, or messaging access.';
+
+  @override
+  String get privacyHostingTitle => 'PUBLIC POLICY HOSTING';
+
+  @override
+  String get privacyHostingBody =>
+      'The public copy is hosted on Cloudflare Pages. Opening it uses your external browser, where Cloudflare may process ordinary web-request data under its terms. The Android app does not embed the public page or send gameplay or local-state data to it.';
+
+  @override
+  String get privacyChildrenTitle => 'CHILDREN';
+
+  @override
+  String get privacyChildrenBody =>
+      'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information.';
+
+  @override
+  String get privacyChangesTitle => 'CHANGES';
+
+  @override
+  String get privacyChangesBody =>
+      'Before a future release adds analytics transport, advertising, accounts, cloud services, or another off-device data flow, this policy and Google Play Data Safety declaration will be updated.';
+
+  @override
+  String get privacyContactTitle => 'CONTACT';
+
+  @override
+  String get privacyPublicUrlLabel => 'PUBLIC POLICY URL';
+
+  @override
+  String get privacyOpenPublicPage => 'OPEN PUBLIC PAGE';
+
+  @override
+  String get privacyCopyUrl => 'COPY URL';
+
+  @override
+  String get privacyUrlCopied => 'Privacy policy URL copied.';
+
+  @override
+  String get privacyOpenFailed =>
+      'The public policy page could not be opened. The full policy remains available here.';
+
+  @override
+  String get releaseServicesUnavailable => 'NOT AVAILABLE IN THIS RELEASE';
+
+  @override
   String get closePanel => 'CLOSE PANEL';
 
   @override
@@ -347,6 +428,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get battlePausedSemantics => 'Battle paused while the app is inactive';
+
+  @override
+  String get battleUserPausedSemantics => 'Battle paused by player';
 
   @override
   String get battlePaused => 'SIGNAL HELD  /  BATTLE PAUSED';
@@ -705,6 +789,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get directiveLocked => 'DIRECTIVE LOCKED // BONUS READY';
 
   @override
+  String get directiveComplete => 'DIRECTIVE COMPLETE';
+
+  @override
   String get directiveMissed => 'DIRECTIVE MISSED';
 
   @override
@@ -756,6 +843,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bonusClaimed => 'BONUS CLAIMED';
 
   @override
+  String chronicleCoreLocked(String faction) {
+    return '$faction // CHRONICLE CORE LOCKED';
+  }
+
+  @override
   String get archiveSimulation => 'ARCHIVE SIMULATION // NON-CANONICAL';
 
   @override
@@ -788,7 +880,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Paid operation bonuses cannot be earned again.';
+      'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.';
 
   @override
   String get endingClaimRelay => 'CLAIM THE RELAY';

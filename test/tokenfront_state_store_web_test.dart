@@ -3,16 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_state_store.dart';
 
 void main() {
-  test(
-    'web platform store round-trips before the app widget is mounted',
-    () async {
-      final store = createTokenfrontStateStore();
-      const payload = '{"qa":"web-bootstrap"}';
+  test('web localStorage survives state-store recreation', () async {
+    final firstStore = createTokenfrontStateStore();
+    final payload =
+        '{"qa":"web-store-recreation","run":${DateTime.now().microsecondsSinceEpoch}}';
 
-      await store.write(payload);
+    await firstStore.write(payload);
 
-      expect(await store.read(), payload);
-    },
-    skip: !kIsWeb,
-  );
+    final recreatedStore = createTokenfrontStateStore();
+
+    expect(recreatedStore, isNot(same(firstStore)));
+    expect(await recreatedStore.read(), payload);
+  }, skip: !kIsWeb);
 }

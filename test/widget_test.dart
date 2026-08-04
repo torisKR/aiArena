@@ -154,7 +154,9 @@ void main() {
       await tester.pumpWidget(TokenfrontApp(runtime: runtime));
       await tester.pumpAndSettle();
       expect(find.textContaining('OP-01'), findsWidgets);
-      final lockedCards = find.bySemanticsLabel(RegExp('DIRECTIVE LOCKED'));
+      final lockedCards = find.bySemanticsLabel(
+        RegExp('CHRONICLE CORE LOCKED'),
+      );
       expect(lockedCards, findsNWidgets(4));
       for (var index = 0; index < lockedCards.evaluate().length; index++) {
         final semantics = tester.getSemantics(lockedCards.at(index));
@@ -204,6 +206,47 @@ void main() {
     expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
   });
 
+  testWidgets(
+    'Chronicle core display and deployment stay aligned after Skirmish return',
+    (tester) async {
+      final runtime = TokenfrontRuntime(
+        platform: ClientPlatform.web,
+        preferences: GamePreferences(
+          audioEnabled: false,
+          hapticsEnabled: false,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('COBALT').first);
+      await tester.tap(find.byKey(const Key('skirmish-mode')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PRISM').first);
+      await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+      await tester.tap(find.byKey(const Key('skirmish-deploy')));
+      await tester.pump();
+      final skirmish = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      skirmish.game.simulation.finalizeAtTimeLimit();
+      skirmish.game.update(1 / 30);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('LOBBY'));
+      await tester.pumpAndSettle();
+
+      final cobalt = tester.getSemantics(
+        find.bySemanticsLabel('Choose COBALT faction'),
+      );
+      expect(_hasSemanticsFlag(cobalt, SemanticsFlag.isSelected), isTrue);
+      await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
+      await tester.tap(find.byKey(const Key('chronicle-deploy')));
+      await tester.pump();
+      final chronicle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      expect(chronicle.game.playerFaction, Faction.cobalt);
+      expect(runtime.storyProgress.campaignFaction, Faction.cobalt);
+    },
+  );
+
   testWidgets('Archive restart resets story while preserving wallet', (
     tester,
   ) async {
@@ -223,6 +266,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(runtime.storyProgress, StoryProgress.initial());
     expect(runtime.wallet.balance, before);
+    final amethyst = tester.getSemantics(
+      find.bySemanticsLabel('Choose AMETHYST faction'),
+    );
+    expect(_hasSemanticsFlag(amethyst, SemanticsFlag.isSelected), isTrue);
   });
 
   testWidgets('ending Archive exposes the non-canonical replay disclosure', (
@@ -707,9 +754,9 @@ void main() {
     await tester.tap(find.text('SIGNAL SETTINGS'));
     await tester.pumpAndSettle();
     expect(find.text('SIGNAL CONDITIONING'), findsOneWidget);
-    expect(find.text('SHARE ANALYTICS'), findsOneWidget);
-    expect(find.text('AD REQUESTS'), findsOneWidget);
-    expect(find.textContaining('Both choices start off'), findsOneWidget);
+    expect(find.byKey(const Key('analytics-sharing-toggle')), findsNothing);
+    expect(find.byKey(const Key('ad-requests-toggle')), findsNothing);
+    expect(find.byKey(const Key('privacy-policy-button')), findsOneWidget);
 
     await tester.tap(find.byTooltip('Close settings'));
     await tester.pumpAndSettle();
@@ -770,6 +817,7 @@ void main() {
           baseReward: 40,
           warTokenBalance: 40,
           bannerVisible: false,
+          rewardedAdsAvailable: true,
           onDoubleReward: () async => const RewardedClaim(
             adResult: AdResult(AdStatus.rewardEarned),
             credited: 40,
@@ -834,6 +882,7 @@ void main() {
           baseReward: 40,
           warTokenBalance: 40,
           bannerVisible: false,
+          rewardedAdsAvailable: true,
           onDoubleReward: () async => const RewardedClaim(
             adResult: AdResult(AdStatus.unavailable),
             credited: 0,
@@ -899,6 +948,7 @@ void main() {
           baseReward: 40,
           warTokenBalance: 40,
           bannerVisible: false,
+          rewardedAdsAvailable: true,
           onDoubleReward: () async => const RewardedClaim(
             adResult: AdResult(AdStatus.unavailable),
             credited: 0,

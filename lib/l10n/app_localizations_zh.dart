@@ -173,6 +173,86 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privacyDefaultNote => '两项默认关闭。关闭任一项都不影响离线对局和奖励。';
 
   @override
+  String get privacyPolicyTitle => '隐私政策';
+
+  @override
+  String get privacyPolicyEffectiveDate => '生效日期：2026-08-05';
+
+  @override
+  String get privacyPolicyIntro =>
+      'Tokenfront: Orbital Signal War 是一款离线单人游戏。此版本不会在设备外收集或共享用户数据。';
+
+  @override
+  String get privacyDataStoredTitle => '存储在设备上的数据';
+
+  @override
+  String get privacyDataStoredBody =>
+      'War Token 余额、外观解锁与装备、语言、无障碍、音频、镜头、触觉与隐私选项以及 Signal Chronicle 进度仅保存在应用专用本地存储中，不会上传；清除应用数据或卸载应用即可删除。';
+
+  @override
+  String get privacyAnalyticsTitle => '分析';
+
+  @override
+  String get privacyAnalyticsBody =>
+      '游戏与性能事件可能暂存在最多 500 条的内存缓冲区中。此版本未启用分析传输，不发送事件，并会在进程结束时丢弃缓冲区。';
+
+  @override
+  String get privacyAdvertisingTitle => '广告';
+
+  @override
+  String get privacyAdvertisingBody =>
+      '此版本不含广告 SDK、真实广告请求、展示、激励广告网络调用，也不会访问广告标识符。';
+
+  @override
+  String get privacyAccountsTitle => '账户、权限与第三方';
+
+  @override
+  String get privacyAccountsBody =>
+      'Tokenfront 没有账户、登录、云同步、购买系统、用户提交内容或社交功能，也不会请求位置、相机、麦克风、联系人、照片、文件、日历、健康、金融或消息权限。';
+
+  @override
+  String get privacyHostingTitle => '公开政策托管';
+
+  @override
+  String get privacyHostingBody =>
+      '公开版本由 Cloudflare Pages 托管。通过外部浏览器打开时，Cloudflare 可能依据其条款处理常规网络请求数据。Android 应用不会嵌入公开页面，也不会向其发送游戏或本地状态数据。';
+
+  @override
+  String get privacyChildrenTitle => '儿童';
+
+  @override
+  String get privacyChildrenBody =>
+      'Tokenfront 面向 13 岁及以上玩家，并非为 13 岁以下儿童设计。此版本不收集个人信息。';
+
+  @override
+  String get privacyChangesTitle => '变更';
+
+  @override
+  String get privacyChangesBody =>
+      '未来版本在加入分析传输、广告、账户、云服务或其他设备外数据流之前，会更新本政策与 Google Play 数据安全声明。';
+
+  @override
+  String get privacyContactTitle => '联系';
+
+  @override
+  String get privacyPublicUrlLabel => '公开政策网址';
+
+  @override
+  String get privacyOpenPublicPage => '打开公开页面';
+
+  @override
+  String get privacyCopyUrl => '复制网址';
+
+  @override
+  String get privacyUrlCopied => '已复制隐私政策网址。';
+
+  @override
+  String get privacyOpenFailed => '无法打开公开政策页面。你仍可在此屏幕阅读完整政策。';
+
+  @override
+  String get releaseServicesUnavailable => '此版本不可用';
+
+  @override
   String get closePanel => '关闭面板';
 
   @override
@@ -307,6 +387,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get battlePausedSemantics => '应用未激活，战斗已暂停';
+
+  @override
+  String get battleUserPausedSemantics => '玩家已暂停战斗';
 
   @override
   String get battlePaused => '信号保持  /  战斗暂停';
@@ -637,6 +720,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get directiveLocked => '指令锁定 // 奖励就绪';
 
   @override
+  String get directiveComplete => '指令已完成';
+
+  @override
   String get directiveMissed => '指令未完成';
 
   @override
@@ -688,6 +774,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bonusClaimed => '奖励已领取';
 
   @override
+  String chronicleCoreLocked(String faction) {
+    return '$faction // 编年史核心已锁定';
+  }
+
+  @override
   String get archiveSimulation => '档案模拟 // 非正史';
 
   @override
@@ -720,7 +811,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      '战役核心、进度、传输、奖章和结局将重置。钱包、设置和外观保留。付费作战奖励无法再次获得。';
+      '战役核心、进度、传输、奖章和结局将重置。钱包、设置和外观保留。此前已发放的作战奖励无法再次获得。';
 
   @override
   String get endingClaimRelay => '接管中继站';

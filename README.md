@@ -171,7 +171,7 @@ Samsung SM A175N · `RFKYB09D9TL` · Android 16의 기존 400-unit 성공 실행
 
 ## Blender MCP 자산
 
-저장소에는 로컬 Blender MCP 작업으로 만든 키 아트, 런타임 스프라이트 아틀라스와 재현 스크립트가 함께 들어 있습니다. 기록된 BlenderMCP v1.28.1 세션에서 `execute_blender_code` 호출이 성공해 아틀라스 PNG, 프레임 manifest와 `.blend` 원본을 생성했으며, 작업 뒤 MCP 서버를 정상 종료했습니다. 이 저장소에는 BlenderMCP 서버나 Blender 애드온을 vendoring하지 않습니다.
+저장소에는 키 아트, 런타임 스프라이트 아틀라스와 향후 재생성용 스크립트가 함께 들어 있습니다. 개발자 로컬 환경에서 사용한 것으로 기록된 구성요소는 **BlenderMCP 배포판 1.6.4**, **MCP SDK 1.28.1**, **Blender 5.1.2**입니다. 이 세 값은 서로 다른 구성요소의 버전이며 `1.28.1`을 BlenderMCP 버전으로 부르지 않습니다. 저장소에는 해당 실행의 커밋된 MCP 요청/응답, 서버 종료 확인, 또는 현재 바이너리를 이 환경이 생성했다는 영수증이 없습니다. 이 저장소에는 BlenderMCP 서버나 Blender 애드온을 vendoring하지 않습니다.
 
 ```text
 assets/blender/
@@ -188,7 +188,7 @@ tooling/
   blender_mcp_call.py           로컬 Blender MCP stdio ↔ socket 호출 도우미
 ```
 
-BlenderMCP의 소스·애드온·서버·라이선스는 이 저장소에 포함되지 않는 외부 prerequisite입니다. 생성 당시 사용한 로컬 checkout은 `.gitignore`로 제외되어 있으므로 fresh clone에서 자동으로 제공된다고 가정하지 마세요. upstream BlenderMCP는 별도로 설치·검토해야 하며, 이 프로젝트가 그 파일을 재배포한다고 주장하지 않습니다. 이미 커밋된 결과물은 BlenderMCP를 실행하지 않아도 사용할 수 있습니다.
+BlenderMCP의 소스·애드온·서버·라이선스는 이 저장소에 포함되지 않는 외부 prerequisite입니다. 생성 당시 사용한 로컬 checkout은 `.gitignore`로 제외되어 있으므로 fresh clone에서 자동으로 제공된다고 가정하지 마세요. upstream BlenderMCP는 별도로 설치·검토해야 하며, 이 프로젝트가 그 파일을 재배포한다고 주장하지 않습니다. 이미 커밋된 결과물은 BlenderMCP를 실행하지 않아도 사용할 수 있습니다. 기존 편집 가능한 `.blend` 파일은 과거 개발자 로컬 경로를 보존할 수 있으므로 이식 가능성의 증거로 취급하지 마세요. 경로를 하드코딩하지 않는 `tooling/` 스크립트는 **향후 재생성**에만 적용됩니다.
 
 생성 스크립트는 외부 모델, 텍스처, 생성형 3D API를 내려받지 않고 Blender 기본 메시와 자체 머티리얼만 사용합니다. 호출 도우미는 `DISABLE_TELEMETRY=true`와 `PYTHONDONTWRITEBYTECODE=1`을 적용합니다.
 
@@ -212,7 +212,9 @@ python3 tooling/blender_mcp_call.py \
   --user-prompt "Rebuild Tokenfront runtime token atlas"
 ```
 
-`BLENDER_MCP_CACHE_ENV`에는 `bin/python`과 MCP 의존성이 있어야 합니다. `BLENDER_MCP_EXECUTABLE`은 그 환경의 `bin/blender-mcp` 또는 외부 설치의 절대 경로를 가리켜야 합니다. `--code-file` 경로를 사용하면 호출 도우미가 자신의 위치에서 저장소 루트를 계산해 Blender 코드에 전달하므로 복제 경로를 소스에 하드코딩하지 않습니다. Blender MCP는 임의 Python 코드를 실행할 수 있으므로 신뢰하는 로컬 스크립트만 사용하고 실행 전에 장면을 저장하세요.
+`BLENDER_MCP_CACHE_ENV`에는 `bin/python`과 MCP 의존성이 있어야 합니다. `BLENDER_MCP_EXECUTABLE`은 그 환경의 `bin/blender-mcp` 또는 외부 설치의 절대 경로를 가리켜야 합니다. `--code-file` 경로를 사용하면 호출 도우미가 자신의 위치에서 저장소 루트를 계산해 Blender 코드와 모듈 경로에 전달하므로 복제 경로를 소스에 하드코딩하지 않습니다. Blender MCP는 임의 Python 코드를 실행할 수 있으므로 신뢰하는 로컬 스크립트만 사용하고 실행 전에 장면을 저장하세요.
+
+장면 생성은 `.tokenfront_arena.pending.glb`로 먼저 내보내고 GLB 2.0 컨테이너·길이·JSON 문서를 검증한 뒤 `tokenfront_arena.glb`로 원자적으로 승격합니다. 내보내기나 검증이 실패하면 예외가 MCP 도구 결과로 전달되고 `TOKENFRONT_SCENE_READY`는 출력되지 않습니다. 성공한 응답 안의 ready JSON은 [receipt schema](docs/blender-generation-receipt.schema.json)를 따르며 파일명, GLB 바이트 길이, SHA-256, 청크 정보와 객체 수만 포함합니다. 이 응답을 실행 당시 별도 보관해야 생성 실행 증거가 되며, 현재 커밋에는 그러한 실행 영수증이 없습니다.
 
 ## 주요 구조
 

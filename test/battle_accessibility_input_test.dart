@@ -419,105 +419,125 @@ void main() {
       },
     );
 
-    testWidgets('directive rail announces milestones without tick spam', (
+    testWidgets(
+      'directive rail announces neutral completion without bonus eligibility',
+      (tester) async {
+        final announcements = <String>[];
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (
+          message,
+        ) async {
+          if (message is Map && message['type'] == 'announce') {
+            announcements.add(message['data']['message'] as String);
+          }
+          return null;
+        });
+        addTearDown(
+          () => messenger.setMockDecodedMessageHandler(
+            SystemChannels.accessibility,
+            null,
+          ),
+        );
+        final game = TokenfrontGame(
+          playerFaction: Faction.amethyst,
+          mode: GameMode.chronicle,
+          operation: const StoryOperation(
+            id: StoryOperationId.split,
+            seed: 2026080503,
+            duration: Duration(seconds: 180),
+            directive: Directive(kind: DirectiveKind.commandKills, target: 3),
+            oneTimeBonus: 25,
+          ),
+          config: const BattleConfig(unitsPerFaction: 20),
+          reduceMotion: true,
+          lowSpecMode: true,
+          hapticsEnabled: false,
+          audioEnabled: false,
+          onBattleConcluded: (_) {},
+        );
+        await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(announcements, contains('DIRECTIVE // COMMAND KILLS 0 / 3'));
+        game.pauseEngine();
+
+        game.hud.value = BattleHudSnapshot.initial(
+          unitsPerFaction: 20,
+          matchLimitSeconds: 180,
+          directiveProgress: const DirectiveProgress(
+            kind: DirectiveKind.commandKills,
+            current: 1,
+            target: 3,
+          ),
+        );
+        await tester.pump();
+        expect(find.text('DIRECTIVE // COMMAND KILLS 1 / 3'), findsOneWidget);
+        expect(announcements, contains('DIRECTIVE // COMMAND KILLS 1 / 3'));
+        await tester.pump();
+        expect(
+          find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
+          findsOneWidget,
+        );
+
+        game.hud.value = BattleHudSnapshot.initial(
+          unitsPerFaction: 20,
+          matchLimitSeconds: 180,
+          directiveProgress: const DirectiveProgress(
+            kind: DirectiveKind.commandKills,
+            current: 2,
+            target: 3,
+          ),
+        );
+        await tester.pump();
+        expect(find.text('DIRECTIVE // COMMAND KILLS 2 / 3'), findsOneWidget);
+        expect(
+          announcements.where((message) => message.contains('2 / 3')),
+          isEmpty,
+        );
+        expect(
+          find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
+          findsOneWidget,
+        );
+
+        game.hud.value = BattleHudSnapshot.initial(
+          unitsPerFaction: 20,
+          matchLimitSeconds: 180,
+          directiveProgress: const DirectiveProgress(
+            kind: DirectiveKind.commandKills,
+            current: 3,
+            target: 3,
+          ),
+        );
+        await tester.pump();
+        expect(find.text('DIRECTIVE COMPLETE'), findsOneWidget);
+        expect(find.bySemanticsLabel('DIRECTIVE COMPLETE'), findsOneWidget);
+        expect(announcements, contains('DIRECTIVE COMPLETE'));
+        expect(announcements, hasLength(3));
+        await tester.pump(const Duration(seconds: 2));
+        expect(find.text('DIRECTIVE COMPLETE'), findsOneWidget);
+      },
+    );
+
+    testWidgets('incomplete command link floors visible progress', (
       tester,
     ) async {
-      final announcements = <String>[];
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      messenger.setMockDecodedMessageHandler(SystemChannels.accessibility, (
-        message,
-      ) async {
-        if (message is Map && message['type'] == 'announce') {
-          announcements.add(message['data']['message'] as String);
-        }
-        return null;
-      });
-      addTearDown(
-        () => messenger.setMockDecodedMessageHandler(
-          SystemChannels.accessibility,
-          null,
-        ),
-      );
-      final game = TokenfrontGame(
-        playerFaction: Faction.amethyst,
-        mode: GameMode.chronicle,
-        operation: const StoryOperation(
-          id: StoryOperationId.split,
-          seed: 2026080503,
-          duration: Duration(seconds: 180),
-          directive: Directive(kind: DirectiveKind.commandKills, target: 3),
-          oneTimeBonus: 25,
-        ),
-        config: const BattleConfig(unitsPerFaction: 20),
-        reduceMotion: true,
-        lowSpecMode: true,
-        hapticsEnabled: false,
-        audioEnabled: false,
-        onBattleConcluded: (_) {},
-      );
+      final game = _game(operation: StoryCatalog.byId(StoryOperationId.wake));
       await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
       await tester.pump(const Duration(milliseconds: 50));
-      expect(announcements, contains('DIRECTIVE // COMMAND KILLS 0 / 3'));
       game.pauseEngine();
-
       game.hud.value = BattleHudSnapshot.initial(
         unitsPerFaction: 20,
         matchLimitSeconds: 180,
         directiveProgress: const DirectiveProgress(
-          kind: DirectiveKind.commandKills,
-          current: 1,
-          target: 3,
+          kind: DirectiveKind.longestCommandLink,
+          current: 44.9,
+          target: 45,
         ),
       );
       await tester.pump();
-      expect(find.text('DIRECTIVE // COMMAND KILLS 1 / 3'), findsOneWidget);
-      expect(announcements, contains('DIRECTIVE // COMMAND KILLS 1 / 3'));
-      await tester.pump();
-      expect(
-        find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
-        findsOneWidget,
-      );
 
-      game.hud.value = BattleHudSnapshot.initial(
-        unitsPerFaction: 20,
-        matchLimitSeconds: 180,
-        directiveProgress: const DirectiveProgress(
-          kind: DirectiveKind.commandKills,
-          current: 2,
-          target: 3,
-        ),
-      );
-      await tester.pump();
-      expect(find.text('DIRECTIVE // COMMAND KILLS 2 / 3'), findsOneWidget);
-      expect(
-        announcements.where((message) => message.contains('2 / 3')),
-        isEmpty,
-      );
-      expect(
-        find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
-        findsOneWidget,
-      );
-
-      game.hud.value = BattleHudSnapshot.initial(
-        unitsPerFaction: 20,
-        matchLimitSeconds: 180,
-        directiveProgress: const DirectiveProgress(
-          kind: DirectiveKind.commandKills,
-          current: 3,
-          target: 3,
-        ),
-      );
-      await tester.pump();
-      expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsOneWidget);
-      expect(
-        find.bySemanticsLabel('DIRECTIVE LOCKED // BONUS READY'),
-        findsOneWidget,
-      );
-      expect(announcements, contains('DIRECTIVE LOCKED // BONUS READY'));
-      expect(announcements, hasLength(3));
-      await tester.pump(const Duration(seconds: 2));
-      expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsOneWidget);
+      expect(find.text('DIRECTIVE // COMMAND LINK 44 / 45'), findsOneWidget);
+      expect(find.textContaining('45 / 45'), findsNothing);
     });
 
     testWidgets('releasing movement after minimap focus stops the unit', (
@@ -861,12 +881,49 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
         final context = tester.element(find.byKey(const Key('battle-pause')));
         final l10n = context.l10n;
-        expect(find.bySemanticsLabel(l10n.pauseBattle), findsOneWidget);
+        final pause = find.bySemanticsLabel(l10n.pauseBattle);
+        expect(pause, findsOneWidget);
+        expect(
+          tester
+              .getSemantics(pause)
+              .getSemanticsData()
+              .hasAction(ui.SemanticsAction.tap),
+          isTrue,
+        );
         await tester.tap(find.bySemanticsLabel(l10n.pauseBattle));
         await tester.pump();
         expect(find.bySemanticsLabel(l10n.resumeBattle), findsOneWidget);
         expect(find.bySemanticsLabel(l10n.pauseBattle), findsNothing);
+        final overlay = find.bySemanticsLabel(l10n.battleUserPausedSemantics);
+        expect(overlay, findsOneWidget);
+        expect(
+          tester
+              .getSemantics(overlay)
+              .getSemanticsData()
+              .flagsCollection
+              .isLiveRegion,
+          isTrue,
+        );
       }
+    });
+
+    testWidgets('initially inactive battle pauses before its first frame', (
+      tester,
+    ) async {
+      final game = _game();
+      addTearDown(() {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+      });
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+
+      expect(game.paused, isTrue);
+      expect(
+        find.bySemanticsLabel('Battle paused while the app is inactive'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('manual pause rejects every deferred gameplay input', (

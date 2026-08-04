@@ -15,23 +15,53 @@
   },
   "imageGeneration": {
     "mode": "built-in image_gen edit/reference",
-    "reference": "assets/blender/tokenfront_keyart.png",
+    "reference": {
+      "path": "assets/blender/tokenfront_keyart.png",
+      "sha256": "b3269a0e02a1f99530d6c8f18b16b7735a923ac9c91d722efc1bb23b57cb565b"
+    },
     "promptSummary": "Wide 2:1 Blender-like orbital command-table backdrop; exactly four abstract faction fleets converge on one white relay; dark left 36 percent reserved for deterministic text; no people, logos, company names, text, or watermark."
   },
   "sources": {
-    "feature-backdrop-v1.png": "925042a40554d7e1b110afff4bc1d280dde7d99aa19cbfec59810c727b0369da",
-    "tokenfront-store-icon.svg": "0c035a9c5fc4a551dc66147541fd36cdb2b63fa03140a5af7c7cccb645f2591e",
-    "feature-render.html": "27f5557d8d0747c7040226898b7c1080d1ae6cadd71aa141b95618b6ccbd0ae6"
+    "feature-backdrop-v1.png": {
+      "path": "store-assets/source/feature-backdrop-v1.png",
+      "sha256": "925042a40554d7e1b110afff4bc1d280dde7d99aa19cbfec59810c727b0369da"
+    },
+    "tokenfront-store-icon.svg": {
+      "path": "store-assets/source/tokenfront-store-icon.svg",
+      "sha256": "cb1060dbb4df5780f6f72caab9baa7718a950db819cf36f4c0b501c2b22e7eb9"
+    },
+    "icon-render.html": {
+      "path": "store-assets/source/icon-render.html",
+      "sha256": "4c078155f64b349a88dd0238af82f79852e4e79732b29812497087ff554e5e69"
+    },
+    "feature-render.html": {
+      "path": "store-assets/source/feature-render.html",
+      "sha256": "27f5557d8d0747c7040226898b7c1080d1ae6cadd71aa141b95618b6ccbd0ae6"
+    },
+    "render_play_store_graphics.sh": {
+      "path": "tooling/render_play_store_graphics.sh",
+      "sha256": "8668744447cd7ec87aa9757aa148cc6c6da626c4d15fbbdd6a87fe34944f7f37"
+    }
   },
   "outputs": {
     "icon-512.png": {
+      "path": "store-assets/android/icon-512.png",
       "width": 512,
       "height": 512,
-      "sha256": "f05e9b3ff2d20dc67627a3ac199cc73a95cc1f78d5cbb9b49baa575604a4ac64"
+      "format": "png",
+      "colorType": "rgba",
+      "opaque": true,
+      "maxBytes": 1048576,
+      "sha256": "04f6c2cd5ebd59dccb409d17ca4729f54cef32b78e90d6f98765c7b74c77928c"
     },
     "feature-graphic-1024x500.jpg": {
+      "path": "store-assets/android/feature-graphic-1024x500.jpg",
       "width": 1024,
       "height": 500,
+      "format": "jpeg",
+      "colorType": "rgb",
+      "opaque": true,
+      "maxBytes": 1048576,
       "sha256": "d55db2545b5ee03a8bdcc6413a9c70acd54a8d5099f3001fe00ce04a528ccafa"
     }
   }

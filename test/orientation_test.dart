@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -120,6 +122,53 @@ void main() {
     expect(find.byKey(const Key('landscape-required')), findsOneWidget);
     expect(find.byKey(const Key('battle-game-surface')), findsNothing);
   });
+
+  testWidgets(
+    'lifecycle pause during orientation await pauses battle on mount',
+    (tester) async {
+      tester.view.display.size = const Size(390, 844);
+      tester.view.display.devicePixelRatio = 1;
+      addTearDown(tester.view.display.reset);
+      addTearDown(() {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+      });
+      final orientationRequest = Completer<void>();
+      final controller = BattleOrientationController(
+        platform: ClientPlatform.web,
+        setter: (_) => orientationRequest.future,
+      );
+      final runtime = TokenfrontRuntime(
+        platform: ClientPlatform.web,
+        preferences: GamePreferences(
+          audioEnabled: false,
+          hapticsEnabled: false,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      await tester.pumpWidget(
+        TokenfrontApp(runtime: runtime, orientationController: controller),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('skirmish-mode')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+      await tester.tap(find.byKey(const Key('skirmish-deploy')));
+      await tester.pump();
+      expect(find.byType(BattleScreen), findsNothing);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      orientationRequest.complete();
+      await tester.pump();
+      await tester.pump();
+
+      final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      expect(battle.lifecycleState, AppLifecycleState.inactive);
+      expect(battle.game.paused, isTrue);
+    },
+  );
 
   testWidgets('battle entry locks a phone and match end restores it', (
     tester,

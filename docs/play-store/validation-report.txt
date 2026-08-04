@@ -1,6 +1,7 @@
 Play listing validation (Unicode code-point counts)
-en: title=30, short=65, full=860, release_notes=160
-ko: title=18, short=41, full=456, release_notes=67
-ja: title=17, short=34, full=399, release_notes=61
-zh: title=16, short=30, full=308, release_notes=48
+en: title=30, short=65, full=884, release_notes=160
+ko: title=18, short=41, full=474, release_notes=67
+ja: title=17, short=34, full=419, release_notes=61
+zh: title=16, short=30, full=323, release_notes=48
+screenshot_alt_text=111,119,119,110,115
 PASS: all four locales satisfy 30/80/4000 listing limits and consistency checks

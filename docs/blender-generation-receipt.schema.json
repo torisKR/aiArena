@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tokenfront.example/schemas/blender-generation-receipt-v1.json",
+  "title": "Tokenfront Blender generation receipt",
+  "description": "Portable receipt emitted only after the staged GLB validates and is atomically promoted. Do not include absolute paths, credentials, or an inferred MCP shutdown result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generator", "artifacts", "glb", "objectCount"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "generator": {"const": "build_tokenfront_scene.py"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blend", "render", "glb"],
+      "properties": {
+        "blend": {"const": "tokenfront_arena.blend"},
+        "render": {"const": "tokenfront_keyart.png"},
+        "glb": {"const": "tokenfront_arena.glb"}
+      }
+    },
+    "glb": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["byteLength", "sha256", "chunkCount", "hasBinChunk"],
+      "properties": {
+        "byteLength": {"type": "integer", "minimum": 20},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "chunkCount": {"type": "integer", "minimum": 1},
+        "hasBinChunk": {"type": "boolean"}
+      }
+    },
+    "objectCount": {"type": "integer", "minimum": 1}
+  }
+}

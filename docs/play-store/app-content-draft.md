@@ -44,14 +44,14 @@ Use the current IARC wording in the Play Console and record the returned result 
 ## Data Safety
 
 - Collection/sharing top-level answer for the current source/default build: **No data collected; no data shared**.
-- On-device-only state: local wallet/cosmetics, language, accessibility/audio/input settings, consent choices, Chronicle progress, and reward ledger. Native storage is SharedPreferences; web storage is localStorage. This state is not sent off device.
+- On-device-only state: local wallet/cosmetics, language, accessibility/audio/input settings, consent choices, Chronicle progress, and reward ledger. Native storage is SharedPreferences; web storage is localStorage. This state is not sent off device. Android automatic cloud backup is disabled, and Android 12+ rules exclude all app storage from cloud backup and device-to-device transfer.
 - Volatile analytics: typed events may be buffered locally (maximum 500); consent starts off; the default adapter is `NoOpAnalyticsAdapter`; no transport endpoint or analytics SDK is connected; the process-local buffer is discarded on exit.
 - Advertising data: none in this build because `NoOpAdService` makes no network request and no advertising identifier is accessed.
 - Accounts/cloud sync: none.
 - Personal or sensitive data, user-generated content, contacts, location, camera, microphone, and other sensitive permissions: none in the current release inventory.
 - Account deletion: **Not applicable — no account exists**.
 - Exact-AAB audit: **PENDING — Task 7/exact release audit must pass before submitting Data Safety**. A source review or passing test is not an AAB/network observation.
-- Owner confirmation required: confirm the exact AAB, dependency graph, merged permissions, release flavor, and network observation still match this no-collection/no-sharing draft. Any SDK, permission, endpoint, account, cloud, crash-reporting, purchase, or live-ad change requires a new declaration.
+- Owner confirmation required: confirm the exact AAB, dependency graph, merged permissions, packaged backup/data-extraction rules, release flavor, and network observation still match this no-collection/no-sharing draft. Any SDK, permission, endpoint, account, cloud, crash-reporting, purchase, live-ad, or backup behavior change requires a new declaration.
 
 ## Other owner/store confirmations
 

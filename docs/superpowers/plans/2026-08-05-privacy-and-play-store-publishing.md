@@ -1715,7 +1715,7 @@ flutter gen-l10n
 dart format --output=none --set-exit-if-changed lib test integration_test tooling
 flutter analyze
 flutter test --reporter expanded
-CHROME_EXECUTABLE="/Applications/Brave Browser.app/Contents/MacOS/Brave Browser" flutter test test/tokenfront_state_store_web_test.dart -p chrome --reporter expanded
+flutter test --platform chrome test/tokenfront_state_store_web_test.dart --reporter expanded
 flutter build web --release
 find build/web -type f -print0 | sort -z | xargs -0 shasum -a 256 > /tmp/tokenfront-orbital-war-build.sha256
 WEB_BUILD_TREE_SHA="$(shasum -a 256 /tmp/tokenfront-orbital-war-build.sha256 | awk '{print $1}')"

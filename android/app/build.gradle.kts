@@ -1,16 +1,9 @@
 import java.io.File
-import java.util.Properties
 
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-}
-
-val releaseKeyProperties = Properties()
-val releaseKeyPropertiesFile = rootProject.file("key.properties")
-if (releaseKeyPropertiesFile.isFile) {
-    releaseKeyPropertiesFile.inputStream().use(releaseKeyProperties::load)
 }
 
 val environmentSigningValues = mapOf(
@@ -19,32 +12,29 @@ val environmentSigningValues = mapOf(
     "keyAlias" to providers.environmentVariable("TOKENFRONT_UPLOAD_KEY_ALIAS").orNull,
     "keyPassword" to providers.environmentVariable("TOKENFRONT_UPLOAD_KEY_PASSWORD").orNull,
 )
-val keyPropertiesSigningValues = mapOf(
-    "storeFile" to releaseKeyProperties.getProperty("storeFile"),
-    "storePassword" to releaseKeyProperties.getProperty("storePassword"),
-    "keyAlias" to releaseKeyProperties.getProperty("keyAlias"),
-    "keyPassword" to releaseKeyProperties.getProperty("keyPassword"),
-)
 
 fun completeSigningValues(values: Map<String, String?>): Map<String, String>? {
     if (values.values.any { it.isNullOrBlank() }) return null
     return values.mapValues { it.value!! }
 }
 
-// Environment variables are preferred; an ignored android/key.properties file is
-// supported for local builds. A release task always fails before compilation when
-// neither source contains all four values.
 val releaseSigningValues = completeSigningValues(environmentSigningValues)
-    ?: completeSigningValues(keyPropertiesSigningValues)
-val releaseTaskRequested = gradle.startParameter.taskNames.any {
-    it.contains("release", ignoreCase = true)
-}
-if (releaseTaskRequested && releaseSigningValues == null) {
-    throw GradleException(
-        "Release signing requires TOKENFRONT_UPLOAD_STORE_FILE, " +
-            "TOKENFRONT_UPLOAD_STORE_PASSWORD, TOKENFRONT_UPLOAD_KEY_ALIAS, " +
-            "and TOKENFRONT_UPLOAD_KEY_PASSWORD, or a complete android/key.properties file.",
-    )
+val releaseSigningError =
+    "Release signing requires TOKENFRONT_UPLOAD_STORE_FILE, " +
+        "TOKENFRONT_UPLOAD_STORE_PASSWORD, TOKENFRONT_UPLOAD_KEY_ALIAS, " +
+        "and TOKENFRONT_UPLOAD_KEY_PASSWORD."
+
+// Resolve task abbreviations (for example assembleRel) before enforcing release signing.
+// The task graph is ready before any task executes, so this catches every app release
+// artifact task while leaving debug-only graphs available without credentials.
+gradle.taskGraph.whenReady {
+    val appReleaseTaskInGraph = allTasks.any { task ->
+        task.path.startsWith("${project.path}:") &&
+            task.name.contains("release", ignoreCase = true)
+    }
+    if (appReleaseTaskInGraph && releaseSigningValues == null) {
+        throw GradleException(releaseSigningError)
+    }
 }
 
 android {

@@ -174,6 +174,87 @@ class AppLocalizationsKo extends AppLocalizations {
       '두 옵션은 기본 꺼짐입니다. 어느 옵션을 꺼도 오프라인 매치와 보상은 정상 작동합니다.';
 
   @override
+  String get privacyPolicyTitle => '개인정보처리방침';
+
+  @override
+  String get privacyPolicyEffectiveDate => '시행일: 2026-08-05';
+
+  @override
+  String get privacyPolicyIntro =>
+      'Tokenfront: Orbital Signal War는 오프라인 싱글 플레이 게임입니다. 이 출시 버전은 사용자 데이터를 기기 밖으로 수집하거나 공유하지 않습니다.';
+
+  @override
+  String get privacyDataStoredTitle => '기기에 저장되는 데이터';
+
+  @override
+  String get privacyDataStoredBody =>
+      'Tokenfront는 War Token 잔액, 코스메틱 잠금 해제 및 장착 상태, 언어, 접근성, 오디오, 카메라, 햅틱 및 개인정보 선택, Signal Chronicle 진행 상태를 앱 전용 로컬 저장소에 보관합니다. 외부로 업로드하지 않으며 앱 저장공간을 삭제하거나 앱을 제거하면 지워집니다.';
+
+  @override
+  String get privacyAnalyticsTitle => '분석';
+
+  @override
+  String get privacyAnalyticsBody =>
+      '게임 플레이 및 성능 이벤트는 최대 500개의 임시 메모리 버퍼에 존재할 수 있습니다. 이 출시 버전은 분석 전송 기능을 사용하지 않고 이벤트를 전송하지 않으며 프로세스 종료 시 버퍼를 삭제합니다.';
+
+  @override
+  String get privacyAdvertisingTitle => '광고';
+
+  @override
+  String get privacyAdvertisingBody =>
+      '이 출시 버전에는 광고 SDK, 실제 광고 요청, 노출, 보상형 광고 네트워크 호출, 광고 식별자 접근이 없습니다.';
+
+  @override
+  String get privacyAccountsTitle => '계정·권한·제3자';
+
+  @override
+  String get privacyAccountsBody =>
+      'Tokenfront에는 계정, 로그인, 클라우드 동기화, 구매 시스템, 사용자 제출 콘텐츠, 소셜 기능이 없습니다. 위치, 카메라, 마이크, 연락처, 사진, 파일, 캘린더, 건강, 금융, 메시지 권한을 요청하지 않습니다.';
+
+  @override
+  String get privacyHostingTitle => '공개 정책 페이지 호스팅';
+
+  @override
+  String get privacyHostingBody =>
+      '공개 정책은 Cloudflare Pages에서 호스팅됩니다. 외부 브라우저로 열면 Cloudflare가 자체 조건에 따라 일반적인 웹 요청 데이터를 처리할 수 있습니다. Android 앱은 공개 페이지를 내장하지 않으며 게임 플레이나 로컬 상태 데이터를 보내지 않습니다.';
+
+  @override
+  String get privacyChildrenTitle => '아동';
+
+  @override
+  String get privacyChildrenBody =>
+      'Tokenfront는 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 이 출시 버전은 개인정보를 수집하지 않습니다.';
+
+  @override
+  String get privacyChangesTitle => '변경';
+
+  @override
+  String get privacyChangesBody =>
+      '향후 버전에 분석 전송, 광고, 계정, 클라우드 서비스 또는 다른 기기 외부 데이터 흐름을 추가하기 전에 이 정책과 Google Play 데이터 보안 선언을 갱신합니다.';
+
+  @override
+  String get privacyContactTitle => '문의';
+
+  @override
+  String get privacyPublicUrlLabel => '공개 정책 URL';
+
+  @override
+  String get privacyOpenPublicPage => '공개 페이지 열기';
+
+  @override
+  String get privacyCopyUrl => 'URL 복사';
+
+  @override
+  String get privacyUrlCopied => '개인정보처리방침 URL을 복사했습니다.';
+
+  @override
+  String get privacyOpenFailed =>
+      '공개 정책 페이지를 열 수 없습니다. 전체 정책은 이 화면에서 계속 읽을 수 있습니다.';
+
+  @override
+  String get releaseServicesUnavailable => '이 출시 버전에서는 사용할 수 없음';
+
+  @override
   String get closePanel => '패널 닫기';
 
   @override
@@ -308,6 +389,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get battlePausedSemantics => '앱이 비활성 상태라 전투가 일시정지됨';
+
+  @override
+  String get battleUserPausedSemantics => '사용자가 전투를 일시정지함';
 
   @override
   String get battlePaused => '신호 대기  /  전투 일시정지';
@@ -651,6 +735,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get directiveLocked => '지령 잠금 // 보너스 준비';
 
   @override
+  String get directiveComplete => '지령 완료';
+
+  @override
   String get directiveMissed => '지령 실패';
 
   @override
@@ -702,6 +789,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bonusClaimed => '보너스 수령 완료';
 
   @override
+  String chronicleCoreLocked(String faction) {
+    return '$faction // 크로니클 코어 잠금';
+  }
+
+  @override
   String get archiveSimulation => '아카이브 시뮬레이션 // 비정사';
 
   @override
@@ -734,7 +826,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      '캠페인 코어, 진행도, 전송, 메달, 결말이 초기화됩니다. 지갑, 설정, 꾸미기는 유지됩니다. 유료 작전 보너스는 다시 받을 수 없습니다.';
+      '캠페인 코어, 진행도, 전송, 메달, 결말이 초기화됩니다. 지갑, 설정, 꾸미기는 유지됩니다. 이전에 지급된 작전 보너스는 다시 받을 수 없습니다.';
 
   @override
   String get endingClaimRelay => '릴레이 장악';

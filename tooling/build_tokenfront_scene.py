@@ -4,12 +4,14 @@ This file is executed inside Blender through the Blender MCP
 `execute_blender_code` tool. It intentionally uses no network assets.
 """
 
+import json
 import math
 import os
 import random
 
 import bpy
 from mathutils import Vector
+from tooling.glb_validation import promote_validated_glb
 
 
 ROOT = os.environ.get("TOKENFRONT_REPO_ROOT")
@@ -22,6 +24,7 @@ OUTPUT_DIR = os.path.join(ROOT, "assets", "blender")
 BLEND_PATH = os.path.join(OUTPUT_DIR, "tokenfront_arena.blend")
 RENDER_PATH = os.path.join(OUTPUT_DIR, "tokenfront_keyart.png")
 GLB_PATH = os.path.join(OUTPUT_DIR, "tokenfront_arena.glb")
+GLB_STAGING_PATH = os.path.join(OUTPUT_DIR, ".tokenfront_arena.pending.glb")
 
 PALETTE = {
     "field": (0.009, 0.019, 0.022, 1.0),
@@ -320,11 +323,29 @@ def build_scene():
     scene.render.filepath = RENDER_PATH
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
     bpy.ops.render.render(write_still=True)
-    try:
-        bpy.ops.export_scene.gltf(filepath=GLB_PATH, export_format="GLB", export_cameras=False, export_lights=False)
-    except Exception as exc:
-        print(f"GLB export skipped: {exc}")
-    print(f"TOKENFRONT_SCENE_READY blend={BLEND_PATH} render={RENDER_PATH} objects={len(bpy.data.objects)}")
+    if os.path.exists(GLB_STAGING_PATH):
+        os.unlink(GLB_STAGING_PATH)
+    export_result = bpy.ops.export_scene.gltf(
+        filepath=GLB_STAGING_PATH,
+        export_format="GLB",
+        export_cameras=False,
+        export_lights=False,
+    )
+    if "FINISHED" not in export_result:
+        raise RuntimeError(f"GLB export did not finish: {export_result}")
+    glb_receipt = promote_validated_glb(GLB_STAGING_PATH, GLB_PATH)
+    receipt = {
+        "schemaVersion": 1,
+        "generator": "build_tokenfront_scene.py",
+        "artifacts": {
+            "blend": os.path.basename(BLEND_PATH),
+            "render": os.path.basename(RENDER_PATH),
+            "glb": os.path.basename(GLB_PATH),
+        },
+        "glb": glb_receipt,
+        "objectCount": len(bpy.data.objects),
+    }
+    print(f"TOKENFRONT_SCENE_READY {json.dumps(receipt, sort_keys=True)}")
 
 
 build_scene()

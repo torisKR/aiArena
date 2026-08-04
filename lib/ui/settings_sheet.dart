@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../app/release_capabilities.dart';
 import '../design/tokens.dart';
 import '../l10n/l10n.dart';
+import '../services/privacy/privacy_link_actions.dart';
 import '../settings/game_preferences.dart';
+import 'privacy_policy_sheet.dart';
 import 'primitives.dart';
 
 Future<void> showSignalSettings({
@@ -12,6 +15,8 @@ Future<void> showSignalSettings({
   required bool adRequestsAllowed,
   required ValueChanged<bool> onAnalyticsChanged,
   required ValueChanged<bool> onAdRequestsChanged,
+  required ReleaseCapabilities capabilities,
+  required PrivacyLinkActions privacyLinkActions,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -24,6 +29,8 @@ Future<void> showSignalSettings({
     adRequestsAllowed: adRequestsAllowed,
     onAnalyticsChanged: onAnalyticsChanged,
     onAdRequestsChanged: onAdRequestsChanged,
+    capabilities: capabilities,
+    privacyLinkActions: privacyLinkActions,
   ),
 );
 
@@ -34,6 +41,8 @@ class _SignalSettingsSheet extends StatefulWidget {
     required this.adRequestsAllowed,
     required this.onAnalyticsChanged,
     required this.onAdRequestsChanged,
+    required this.capabilities,
+    required this.privacyLinkActions,
   });
 
   final GamePreferences preferences;
@@ -41,6 +50,8 @@ class _SignalSettingsSheet extends StatefulWidget {
   final bool adRequestsAllowed;
   final ValueChanged<bool> onAnalyticsChanged;
   final ValueChanged<bool> onAdRequestsChanged;
+  final ReleaseCapabilities capabilities;
+  final PrivacyLinkActions privacyLinkActions;
 
   @override
   State<_SignalSettingsSheet> createState() => _SignalSettingsSheetState();
@@ -141,23 +152,50 @@ class _SignalSettingsSheetState extends State<_SignalSettingsSheet> {
                     ),
                     const SizedBox(height: 22),
                     _SectionLabel(context.l10n.privacySection),
-                    _SignalToggle(
-                      label: context.l10n.shareAnalytics,
-                      detail: context.l10n.shareAnalyticsDetail,
-                      value: analyticsSharingAllowed,
-                      onChanged: (value) {
-                        setState(() => analyticsSharingAllowed = value);
-                        widget.onAnalyticsChanged(value);
-                      },
-                    ),
-                    _SignalToggle(
-                      label: context.l10n.adRequests,
-                      detail: context.l10n.adRequestsDetail,
-                      value: adRequestsAllowed,
-                      onChanged: (value) {
-                        setState(() => adRequestsAllowed = value);
-                        widget.onAdRequestsChanged(value);
-                      },
+                    if (widget.capabilities.analyticsTransportAvailable)
+                      _SignalToggle(
+                        key: const Key('analytics-sharing-toggle'),
+                        label: context.l10n.shareAnalytics,
+                        detail: context.l10n.shareAnalyticsDetail,
+                        value: analyticsSharingAllowed,
+                        onChanged: (value) {
+                          setState(() => analyticsSharingAllowed = value);
+                          widget.onAnalyticsChanged(value);
+                        },
+                      ),
+                    if (widget.capabilities.adInventoryAvailable)
+                      _SignalToggle(
+                        key: const Key('ad-requests-toggle'),
+                        label: context.l10n.adRequests,
+                        detail: context.l10n.adRequestsDetail,
+                        value: adRequestsAllowed,
+                        onChanged: (value) {
+                          setState(() => adRequestsAllowed = value);
+                          widget.onAdRequestsChanged(value);
+                        },
+                      ),
+                    if (!widget.capabilities.analyticsTransportAvailable ||
+                        !widget.capabilities.adInventoryAvailable)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          context.l10n.releaseServicesUnavailable,
+                          key: const Key('release-services-unavailable'),
+                          style: TokenfrontType.instrument.copyWith(
+                            color: TokenfrontColors.quietText,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    OutlinedButton.icon(
+                      key: const Key('privacy-policy-button'),
+                      onPressed: () => showPrivacyPolicySheet(
+                        context: context,
+                        capabilities: widget.capabilities,
+                        linkActions: widget.privacyLinkActions,
+                      ),
+                      icon: const Icon(Icons.privacy_tip_outlined),
+                      label: Text(context.l10n.privacyPolicyTitle),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -291,6 +329,7 @@ class _SectionLabel extends StatelessWidget {
 
 class _SignalToggle extends StatelessWidget {
   const _SignalToggle({
+    super.key,
     required this.label,
     required this.detail,
     required this.value,

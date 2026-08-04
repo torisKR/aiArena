@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:tokenfront/app/release_capabilities.dart';
 import 'package:tokenfront/app/tokenfront_state_store.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/game/simulation.dart';
@@ -38,6 +39,19 @@ void main() {
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
     expect(find.text('SIGNAL CONDITIONING'), findsOneWidget);
+    expect(find.byKey(const Key('analytics-sharing-toggle')), findsNothing);
+    expect(find.byKey(const Key('ad-requests-toggle')), findsNothing);
+    expect(find.text('NOT AVAILABLE IN THIS RELEASE'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('privacy-policy-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('privacy-policy-content')), findsOneWidget);
+    expect(find.text(playReleaseCapabilities.privacyPolicyUrl), findsOneWidget);
+    final closePrivacy = find.byKey(const Key('close-privacy-policy'));
+    await tester.ensureVisible(closePrivacy);
+    await tester.tap(closePrivacy);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byTooltip('Close settings'));
     await tester.pumpAndSettle();
 

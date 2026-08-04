@@ -148,7 +148,11 @@ def load_call(ns: argparse.Namespace) -> tuple[str, dict[str, Any]] | None:
             repository_root = Path(__file__).resolve().parents[1]
             code = (
                 "import os\n"
-                f"os.environ['TOKENFRONT_REPO_ROOT'] = {str(repository_root)!r}\n"
+                "import sys\n"
+                f"repository_root = {str(repository_root)!r}\n"
+                "os.environ['TOKENFRONT_REPO_ROOT'] = repository_root\n"
+                "if repository_root not in sys.path:\n"
+                "    sys.path.insert(0, repository_root)\n"
                 + code
             )
         else:

@@ -22,6 +22,7 @@ class ResultScreen extends StatefulWidget {
     required this.baseReward,
     required this.warTokenBalance,
     required this.bannerVisible,
+    this.rewardedAdsAvailable = true,
     required this.onDoubleReward,
     required this.onOpenSettings,
     required this.onOpenLocker,
@@ -45,6 +46,7 @@ class ResultScreen extends StatefulWidget {
   final int baseReward;
   final int warTokenBalance;
   final bool bannerVisible;
+  final bool rewardedAdsAvailable;
   final Future<RewardedClaim> Function() onDoubleReward;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLocker;
@@ -261,17 +263,30 @@ class _ResultScreenState extends State<ResultScreen> {
                                   onPressed: widget.onContinue,
                                   color: TokenfrontColors.relayIvory,
                                 ),
-                              TacticalButton(
-                                label: requestingReward
-                                    ? l10n.requestingAd
-                                    : doubled
-                                    ? l10n.rewardDoubled
-                                    : l10n.doubleReward,
-                                onPressed: doubled || requestingReward
-                                    ? null
-                                    : _doubleReward,
-                                color: TokenfrontColors.volt,
-                              ),
+                              if (widget.rewardedAdsAvailable)
+                                TacticalButton(
+                                  key: const Key('double-reward-button'),
+                                  label: requestingReward
+                                      ? l10n.requestingAd
+                                      : doubled
+                                      ? l10n.rewardDoubled
+                                      : l10n.doubleReward,
+                                  onPressed: doubled || requestingReward
+                                      ? null
+                                      : _doubleReward,
+                                  color: TokenfrontColors.volt,
+                                )
+                              else
+                                Text(
+                                  l10n.releaseServicesUnavailable,
+                                  key: const Key(
+                                    'release-services-unavailable',
+                                  ),
+                                  style: TokenfrontType.instrument.copyWith(
+                                    color: TokenfrontColors.quietText,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               if (!chronicle)
                                 TacticalButton(
                                   label: l10n.rematch,

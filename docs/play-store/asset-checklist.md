@@ -20,7 +20,7 @@ Official references (checked 2026-08-05):
 - [ ] App icon: **512 × 512 px**, **32-bit PNG with alpha**, maximum **1,024 KB**. No badges or misleading price/ranking/store text.
 - [ ] Feature graphic: **1,024 × 500 px**, **JPEG or 24-bit PNG**, **no alpha**. Keep important branding inside the center safe area; no Play badge, price, ranking, or call to action.
 - [ ] Phone screenshots: at least **2 screenshots** to publish; each **JPEG or 24-bit PNG**, **no alpha**, minimum dimension **320 px**, maximum dimension **3,840 px**, and maximum dimension no more than **2×** the minimum dimension.
-- [ ] Game recommendation-quality set: at least **3 landscape screenshots at 1,920 × 1,080 px** (or 3 portrait screenshots at 1,080 × 1,920 px). Proposed set: five 1,920 × 1,080 landscape captures covering Command Deck, Directive, Handoff, Debrief, and Archive.
+- [x] Game recommendation-quality set: five opaque **1,920 × 1,080 px** landscape JPEG captures of the current Flutter UI: Command Deck, live Directive, command Handoff, Chronicle Debrief, and Signal Archive. Recreate them with `tooling/capture_play_store_screenshots.sh` on `emulator-5554`; rerun the asset test before upload.
 - [ ] Maximum **8 screenshots per supported device type**. Add only device types actually supported; do not claim TV, Wear OS, Automotive, tablet, Chromebook, or XR support without matching captures.
 - [ ] Each uploaded screenshot/graphic has alt text of **140 characters or fewer**, describing the important visible experience without “photo of”/“image of”.
 

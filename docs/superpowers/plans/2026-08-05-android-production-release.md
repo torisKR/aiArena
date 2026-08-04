@@ -606,8 +606,7 @@ flutter analyze
 flutter test test/battle_accessibility_input_test.dart \
   --plain-name 'battle pauses and clears movement while app is inactive'
 flutter test --reporter expanded
-CHROME_EXECUTABLE="/Applications/Brave Browser.app/Contents/MacOS/Brave Browser" \
-  flutter test test/tokenfront_state_store_web_test.dart -p chrome --reporter expanded
+flutter test --platform chrome test/tokenfront_state_store_web_test.dart --reporter expanded
 ```
 
 Expected: every command exits 0. The lifecycle regression delivered by Signal Chronicle Task 10 passes without any Android-plan code edit, the VM suite has no failures, and the browser-only test passes separately rather than remaining skipped. Stop on any warning promoted by `flutter analyze` or any test failure.
