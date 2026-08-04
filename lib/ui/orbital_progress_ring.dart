@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../design/tokens.dart';
+import '../l10n/l10n.dart';
+import '../story/story_localizations.dart';
 import '../story/story_models.dart';
 
 /// A deliberately quiet progress indicator for the five-operation Chronicle.
@@ -21,19 +23,23 @@ class OrbitalProgressRing extends StatelessWidget {
   final bool lowSpec;
   final bool reduceMotion;
 
-  String _semanticsLabel() {
+  String _semanticsLabel(BuildContext context) {
     final concluded = progress.concludedOperations.length;
     final current = progress.currentOperation;
     final currentText = current == null
-        ? 'COMPLETE'
-        : 'OP-${current.index + 1} CURRENT';
-    return 'ORBITAL PROGRESS // FIVE NODES // $concluded CONCLUDED // $currentText';
+        ? context.l10n.ending
+        : StoryLocalizations(context.l10n).operationTitle(current);
+    return context.l10n.orbitalProgressSemantics(
+      context.l10n.commandDeck,
+      concluded,
+      currentText,
+    );
   }
 
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
-    label: _semanticsLabel(),
+    label: _semanticsLabel(context),
     child: ExcludeSemantics(
       child: SizedBox(
         height: 92,

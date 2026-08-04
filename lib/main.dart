@@ -534,7 +534,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   Widget build(BuildContext context) => switch (screen) {
     _Screen.lobby => LobbyScreen(
-      selectedMode: GameMode.skirmish,
+      selectedMode: chronicleAvailable ? GameMode.chronicle : GameMode.skirmish,
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
       selectedSkirmishFaction: selectedFaction,
@@ -579,10 +579,31 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
       ),
     ),
-    _Screen.battle => BattleScreen(
-      game: game!,
-      preferences: runtime.preferences,
-      requireLandscape: _requireLandscapeForBattle,
+    _Screen.battle => Stack(
+      children: [
+        BattleScreen(
+          game: game!,
+          preferences: runtime.preferences,
+          requireLandscape: _requireLandscapeForBattle,
+        ),
+        if (activeBattle?.replay == true)
+          Positioned(
+            top: 18,
+            left: 18,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: Color(0xCC091113),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                child: Text(
+                  context.l10n.archiveSimulation,
+                  style: TokenfrontType.instrument.copyWith(fontSize: 10),
+                ),
+              ),
+            ),
+          ),
+      ],
     ),
     _Screen.result => ResultScreen(
       result: result!,

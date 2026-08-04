@@ -132,6 +132,10 @@ void main() {
               expect(copy.archive, isNotEmpty);
               expect(copy.restart, isNotEmpty);
               expect(copy.archiveSimulation, isNotEmpty);
+              expect(context.l10n.orbitalProgressSemantics(copy.commandDeck, 0, 'OP-01'), isNotEmpty);
+              expect(context.l10n.deployOperation('01'), isNotEmpty);
+              expect(context.l10n.medalEarned, isNotEmpty);
+              expect(context.l10n.restartDisclosure, isNotEmpty);
               return const SizedBox.shrink();
             },
           ),

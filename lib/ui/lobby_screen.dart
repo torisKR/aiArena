@@ -70,7 +70,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final dense = viewport.height < 700;
     final copy = StoryLocalizations(context.l10n);
     final lockedCore = widget.storyProgress.campaignFaction;
-    final selectedCore = lockedCore ?? chronicleSelection;
+    final selectedCore = lockedCore ?? chronicleSelection ?? Faction.amethyst;
     final operation = widget.storyProgress.currentOperation;
     return Scaffold(
       body: TacticalBackdrop(
@@ -112,19 +112,40 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             chronicleAvailable: widget.chronicleAvailable,
                             onChronicle: () =>
                                 setState(() => mode = GameMode.chronicle),
-                            onSkirmish: () {
-                              setState(() => mode = GameMode.skirmish);
-                              widget.onDeploySkirmish();
-                            },
+                            onSkirmish: () =>
+                                setState(() => mode = GameMode.skirmish),
                           ),
                         ],
                       ),
                       const SizedBox(height: 18),
                       if (mode == GameMode.chronicle) ...[
                         if (lockedCore == null && operation != null)
-                          _Prologue(prologue: copy.prologue),
-                        if (operation != null)
+                          ...[
+                            _Prologue(prologue: copy.prologue),
+                            ExcludeSemantics(
+                              child: Text(
+                                'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
+                                style: TokenfrontType.instrument.copyWith(
+                                  color: TokenfrontColors.quietText,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ),
+                          ],
+                        if (lockedCore != null && operation != null)
                           _Briefing(operation: operation, copy: copy),
+                        // Keep the fast deployment affordance in the first
+                        // viewport for phone-sized layouts. Chronicle remains
+                        // the selected mode; this action is the explicit
+                        // Skirmish shortcut used by the compact command deck.
+                        TacticalButton(
+                          key: const Key('skirmish-quick-deploy'),
+                          expanded: compact,
+                          label: context.l10n.deploySignal,
+                          color: TokenfrontColors.cobalt,
+                          onPressed: widget.onDeploySkirmish,
+                        ),
+                        const SizedBox(height: 12),
                         OrbitalProgressRing(
                           progress: widget.storyProgress,
                           lowSpec: widget.lowSpec,
@@ -143,7 +164,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         ),
                         const SizedBox(height: 18),
                         _ProtocolPanel(
-                          faction: selectedCore ?? Faction.amethyst,
+                          faction: selectedCore,
                         ),
                         const SizedBox(height: 16),
                         TacticalButton(
@@ -151,9 +172,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           expanded: compact,
                           label: operation == null
                               ? context.l10n.chronicleUnavailable
-                              : 'DEPLOY OP-${(operation.index + 1).toString().padLeft(2, '0')}',
-                          color:
-                              (selectedCore ?? Faction.amethyst).visual.color,
+                              : context.l10n.deployOperation(
+                                  (operation.index + 1).toString().padLeft(2, '0'),
+                                ),
+                          color: selectedCore.visual.color,
                           onPressed: operation == null
                               ? null
                               : () {
@@ -175,6 +197,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           label: context.l10n.deploySignal,
                           color: widget.selectedSkirmishFaction.visual.color,
                           onPressed: widget.onDeploySkirmish,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          context.l10n.archiveSimulation,
+                          textAlign: TextAlign.center,
+                          style: TokenfrontType.instrument.copyWith(
+                            color: TokenfrontColors.quietText,
+                            fontSize: 9,
+                          ),
                         ),
                       ],
                       const SizedBox(height: 20),
@@ -311,7 +342,7 @@ class _CoreGrid extends StatelessWidget {
         _CoreCard(
           faction: faction,
           selected: faction == selected,
-          locked: locked && faction != selected,
+          locked: locked,
           compact: compact,
           onTap: () => onSelected(faction),
         ),
@@ -386,14 +417,6 @@ class _CoreCard extends StatelessWidget {
                     color: TokenfrontColors.quietText,
                   ),
                 ),
-              if (locked)
-                Text(
-                  'LOCKED',
-                  style: TokenfrontType.instrument.copyWith(
-                    fontSize: 8,
-                    color: TokenfrontColors.quietText,
-                  ),
-                ),
             ],
           ),
         ),
@@ -401,7 +424,7 @@ class _CoreCard extends StatelessWidget {
     );
     return Semantics(
       label: locked
-          ? '${visual.name} LOCKED'
+          ? '${visual.name} // ${context.l10n.directiveLocked}'
           : context.l10n.chooseFaction(visual.name),
       button: !locked,
       enabled: !locked,

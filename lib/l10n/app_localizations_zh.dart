@@ -649,6 +649,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandDeck => '指挥甲板';
 
   @override
+  String orbitalProgressSemantics(String deck, int concluded, String current) {
+    return '$deck // 5个作战完成$concluded个 // $current';
+  }
+
+  @override
+  String deployOperation(String operation) {
+    return '部署 OP-$operation';
+  }
+
+  @override
+  String get medalEarned => '获得奖章';
+
+  @override
+  String get restartDisclosure =>
+      '战役核心、进度、传输、奖章和结局将重置。钱包、设置和外观保留。付费作战奖励无法再次获得。';
+
+  @override
   String get endingClaimRelay => '接管中继站';
 
   @override

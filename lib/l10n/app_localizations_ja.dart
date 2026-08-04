@@ -657,6 +657,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commandDeck => 'コマンドデッキ';
 
   @override
+  String orbitalProgressSemantics(String deck, int concluded, String current) {
+    return '$deck // 5作戦中$concluded作戦完了 // $current';
+  }
+
+  @override
+  String deployOperation(String operation) {
+    return 'OP-$operation 展開';
+  }
+
+  @override
+  String get medalEarned => 'メダル獲得';
+
+  @override
+  String get restartDisclosure =>
+      'キャンペーンコア、進行、送信、メダル、エンディングをリセットします。ウォレット、設定、コスメは保持されます。有料作戦ボーナスは再獲得できません。';
+
+  @override
   String get endingClaimRelay => 'リレーを掌握';
 
   @override

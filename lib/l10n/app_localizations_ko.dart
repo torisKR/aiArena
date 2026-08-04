@@ -663,6 +663,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commandDeck => '지휘 갑판';
 
   @override
+  String orbitalProgressSemantics(String deck, int concluded, String current) {
+    return '$deck // 전체 5개 중 $concluded개 완료 // $current';
+  }
+
+  @override
+  String deployOperation(String operation) {
+    return 'OP-$operation 투입';
+  }
+
+  @override
+  String get medalEarned => '메달 획득';
+
+  @override
+  String get restartDisclosure =>
+      '캠페인 코어, 진행도, 전송, 메달, 결말이 초기화됩니다. 지갑, 설정, 꾸미기는 유지됩니다. 유료 작전 보너스는 다시 받을 수 없습니다.';
+
+  @override
   String get endingClaimRelay => '릴레이 장악';
 
   @override

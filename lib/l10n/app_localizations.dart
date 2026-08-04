@@ -1270,6 +1270,30 @@ abstract class AppLocalizations {
   /// **'COMMAND DECK'**
   String get commandDeck;
 
+  /// No description provided for @orbitalProgressSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{deck} // {concluded} of 5 operations // {current}'**
+  String orbitalProgressSemantics(String deck, int concluded, String current);
+
+  /// No description provided for @deployOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOY OP-{operation}'**
+  String deployOperation(String operation);
+
+  /// No description provided for @medalEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'MEDAL EARNED'**
+  String get medalEarned;
+
+  /// No description provided for @restartDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Paid operation bonuses cannot be earned again.'**
+  String get restartDisclosure;
+
   /// No description provided for @endingClaimRelay.
   ///
   /// In en, this message translates to:

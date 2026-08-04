@@ -717,6 +717,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandDeck => 'COMMAND DECK';
 
   @override
+  String orbitalProgressSemantics(String deck, int concluded, String current) {
+    return '$deck // $concluded of 5 operations // $current';
+  }
+
+  @override
+  String deployOperation(String operation) {
+    return 'DEPLOY OP-$operation';
+  }
+
+  @override
+  String get medalEarned => 'MEDAL EARNED';
+
+  @override
+  String get restartDisclosure =>
+      'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Paid operation bonuses cannot be earned again.';
+
+  @override
   String get endingClaimRelay => 'CLAIM THE RELAY';
 
   @override

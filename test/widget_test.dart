@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/game/simulation.dart';
@@ -28,14 +29,63 @@ void main() {
     const prologue =
         'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.';
     expect(find.text(prologue), findsOneWidget);
-    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsNothing);
     expect(find.text('AMETHYST'), findsOneWidget);
     expect(find.text('COBALT'), findsOneWidget);
     expect(find.text('VOLT'), findsOneWidget);
     expect(find.text('PRISM'), findsOneWidget);
     expect(find.text('ARCHIVE'), findsWidgets);
     expect(find.text('SKIRMISH'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('ORBITAL PROGRESS')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('COMMAND DECK //')), findsOneWidget);
+  });
+
+  testWidgets('locked Chronicle cores are read-only and Archive hides locked detail', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+    addTearDown(runtime.dispose);
+    runtime.lockChronicleCore(Faction.amethyst);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('OP-01'), findsWidgets);
+    expect(find.bySemanticsLabel(RegExp('AMETHYST.*DIRECTIVE LOCKED')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('archive-action')));
+    await tester.tap(find.byKey(const Key('archive-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('OP-02'), findsOneWidget);
+    expect(find.text('OP-02  //  ECHO // BORROWED BODIES'), findsNothing);
+    expect(find.text('TRANSMISSION LOCKED'), findsNothing);
+  });
+
+  testWidgets('Skirmish mode selects configuration before separate deploy', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const TokenfrontApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BattleScreen), findsNothing);
+    expect(find.byKey(const Key('skirmish-deploy')), findsOneWidget);
+    expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsOneWidget);
+  });
+
+  testWidgets('Archive restart resets story while preserving wallet', (tester) async {
+    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+    addTearDown(runtime.dispose);
+    runtime.lockChronicleCore(Faction.volt);
+    final before = runtime.wallet.balance;
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('archive-action')));
+    await tester.tap(find.byKey(const Key('archive-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RESTART CHRONICLE'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Campaign core'), findsOneWidget);
+    await tester.tap(find.text('RESTART CHRONICLE').last);
+    await tester.pumpAndSettle();
+    expect(runtime.storyProgress, StoryProgress.initial());
+    expect(runtime.wallet.balance, before);
   });
 
   testWidgets('Command Deck and Archive fit 320x568', (tester) async {
@@ -47,6 +97,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('CHRONICLE'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(tester.binding.focusManager.primaryFocus, isNotNull);
     await tester.ensureVisible(find.byKey(const Key('archive-action')));
     await tester.tap(find.byKey(const Key('archive-action')));
     await tester.pumpAndSettle();
@@ -124,6 +177,9 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('SKIRMISH').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
     final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
     for (final unit in battle.game.simulation.units) {

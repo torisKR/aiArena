@@ -48,11 +48,7 @@ final class _ArchiveSheet extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: TokenfrontColors.deepField,
         title: Text(l10n.restartChronicle),
-        content: const Text(
-          'Campaign core, progress, transmissions, medals, and ending reset. '
-          'Wallet, settings, and cosmetics remain. Paid operation bonuses '
-          'cannot be earned again.',
-        ),
+        content: Text(l10n.restartDisclosure),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -98,13 +94,14 @@ final class _ArchiveSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 5),
-            Text(
-              'FIVE OPERATIONS // CANONICAL RECORD',
-              style: TokenfrontType.instrument.copyWith(
-                color: TokenfrontColors.quietText,
-                fontSize: 9,
+            if (storyProgress.concludedOperations.isNotEmpty)
+              Text(
+                copy.archiveSimulation,
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.quietText,
+                  fontSize: 9,
+                ),
               ),
-            ),
             const SizedBox(height: 14),
             for (final operation in StoryCatalog.operations)
               _ArchiveRow(
@@ -179,20 +176,43 @@ final class _ArchiveRow extends StatelessWidget {
     final concluded = progress.concludedOperations.contains(operation.id);
     final current = progress.currentOperation == operation.id;
     final locked = !concluded && !current;
+    if (locked) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 9),
+        child: TacticalPanel(
+          padding: const EdgeInsets.all(13),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.lock_outline,
+                size: 18,
+                color: TokenfrontColors.quietText,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'OP-${(operation.id.index + 1).toString().padLeft(2, '0')}',
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.quietText,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final transmission = concluded
         ? copy.transmission(operation.id)
-        : 'TRANSMISSION LOCKED';
-    final medal = concluded && progress.medals.contains(operation.id)
-        ? 'MEDAL EARNED'
-        : 'MEDAL —';
+        : copy.directiveLocked;
+    final medal = progress.medals.contains(operation.id)
+        ? context.l10n.medalEarned
+        : copy.directiveMissed;
     final bonusClaimed = rewardLedger.claimedDirectiveBonusIds.contains(
       operation.bonusClaimId,
     );
     final bonus = bonusClaimed
         ? copy.bonusClaimed
-        : concluded
-        ? 'BONUS AVAILABLE'
-        : 'BONUS LOCKED';
+        : copy.directiveBonus(operation.oneTimeBonus);
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
       child: TacticalPanel(
