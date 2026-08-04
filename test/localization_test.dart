@@ -116,6 +116,31 @@ void main() {
     );
   });
 
+  testWidgets('Command Deck archive and ring labels stay localized', (
+    tester,
+  ) async {
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final copy = StoryLocalizations(context.l10n);
+              expect(copy.commandDeck, isNotEmpty);
+              expect(copy.archive, isNotEmpty);
+              expect(copy.restart, isNotEmpty);
+              expect(copy.archiveSimulation, isNotEmpty);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
   test('operation numbers are supplied as locale data, not fixed ARB copy', () {
     const localeCodes = <String>['en', 'ko', 'ja', 'zh'];
     const titleKeys = <String>[

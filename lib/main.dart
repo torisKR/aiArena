@@ -16,6 +16,7 @@ import 'services/ads/ad_service.dart';
 import 'services/analytics/analytics_event.dart';
 import 'services/battle_orientation_controller.dart';
 import 'ui/armory_sheet.dart';
+import 'ui/archive_sheet.dart';
 import 'ui/battle_screen.dart';
 import 'ui/lobby_screen.dart';
 import 'ui/result_screen.dart';
@@ -243,6 +244,23 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     );
   }
 
+  void _openArchive() {
+    showSignalArchive(
+      context: context,
+      storyProgress: runtime.storyProgress,
+      rewardLedger: runtime.rewardLedger,
+      onRestart: () {
+        runtime.restartChronicle();
+        setState(() {
+          briefingOperation = _resolveCurrentOperation();
+          screen = _Screen.briefing;
+          selectedFaction = Faction.amethyst;
+        });
+      },
+      onReplay: (operationId) => _startChronicleReplay(operationId),
+    );
+  }
+
   Future<void> _lockBattleOrientation() async {
     final display = View.of(context).display;
     final logicalShortestSide =
@@ -275,9 +293,21 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     );
   }
 
-  void _openChronicle() {
-    if (!chronicleAvailable || briefingOperation == null) return;
-    setState(() => screen = _Screen.briefing);
+  Future<void> _startChronicleReplay(StoryOperationId operationId) async {
+    StoryOperation operation;
+    try {
+      operation = storyOperations.firstWhere(
+        (candidate) => candidate.id == operationId,
+      );
+    } on StateError {
+      return;
+    }
+    await _startBattle(
+      mode: GameMode.chronicle,
+      faction: runtime.storyProgress.campaignFaction ?? selectedFaction,
+      operation: operation,
+      replay: true,
+    );
   }
 
   Future<void> _startChronicle(Faction faction) async {
@@ -289,6 +319,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       operation: operation,
     );
   }
+
+  Future<void> _deployChronicle() {
+    return _startChronicle(selectedFaction);
+  }
+
+  Future<void> _deploySkirmish() => startMatch(selectedFaction);
 
   Future<void> _startBattle({
     required GameMode mode,
@@ -498,24 +534,50 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   Widget build(BuildContext context) => switch (screen) {
     _Screen.lobby => LobbyScreen(
-      onDeploy: startMatch,
+      selectedMode: GameMode.skirmish,
+      storyProgress: runtime.storyProgress,
+      rewardLedger: runtime.rewardLedger,
+      selectedSkirmishFaction: selectedFaction,
+      onSelectChronicleCore: (faction) {
+        setState(() => selectedFaction = faction);
+      },
+      onSelectSkirmishFaction: (faction) =>
+          setState(() => selectedFaction = faction),
+      onDeployChronicle: _deployChronicle,
+      onDeploySkirmish: _deploySkirmish,
+      onOpenArchive: _openArchive,
+      chronicleAvailable: chronicleAvailable,
       warTokenBalance: runtime.wallet.balance,
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
-      chronicleAvailable: chronicleAvailable,
-      onOpenChronicle: _openChronicle,
+      lowSpec: runtime.preferences.lowSpecMode,
+      reduceMotion: runtime.preferences.reducedMotionFor(
+        systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
+      ),
     ),
     _Screen.briefing => LobbyScreen(
-      onDeploy: startMatch,
-      onChronicleDeploy: _startChronicle,
+      selectedMode: GameMode.chronicle,
+      storyProgress: runtime.storyProgress,
+      rewardLedger: runtime.rewardLedger,
+      selectedSkirmishFaction: selectedFaction,
+      onSelectChronicleCore: (faction) {
+        setState(() => selectedFaction = faction);
+      },
+      onSelectSkirmishFaction: (faction) =>
+          setState(() => selectedFaction = faction),
+      onDeployChronicle: _deployChronicle,
+      onDeploySkirmish: _deploySkirmish,
+      onOpenArchive: _openArchive,
+      chronicleAvailable: chronicleAvailable,
       warTokenBalance: runtime.wallet.balance,
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
-      chronicleAvailable: chronicleAvailable,
-      briefing: true,
-      currentOperation: briefingOperation,
+      lowSpec: runtime.preferences.lowSpecMode,
+      reduceMotion: runtime.preferences.reducedMotionFor(
+        systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
+      ),
     ),
     _Screen.battle => BattleScreen(
       game: game!,

@@ -14,6 +14,46 @@ import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/result_screen.dart';
 
 void main() {
+  testWidgets('fresh Command Deck shows prologue before core selection', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const TokenfrontApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHRONICLE'));
+    await tester.pumpAndSettle();
+    const prologue =
+        'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.';
+    expect(find.text(prologue), findsOneWidget);
+    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+    expect(find.text('AMETHYST'), findsOneWidget);
+    expect(find.text('COBALT'), findsOneWidget);
+    expect(find.text('VOLT'), findsOneWidget);
+    expect(find.text('PRISM'), findsOneWidget);
+    expect(find.text('ARCHIVE'), findsWidgets);
+    expect(find.text('SKIRMISH'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('ORBITAL PROGRESS')), findsOneWidget);
+  });
+
+  testWidgets('Command Deck and Archive fit 320x568', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const TokenfrontApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHRONICLE'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('archive-action')));
+    await tester.tap(find.byKey(const Key('archive-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('ARCHIVE'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Chronicle construction failure keeps Skirmish deployable', (
     tester,
   ) async {
