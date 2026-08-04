@@ -6,6 +6,9 @@ import '../game/faction_visuals.dart';
 import '../game/simulation.dart';
 import '../l10n/l10n.dart';
 import '../services/ads/ad_service.dart';
+import '../story/campaign_controller.dart';
+import '../story/story_localizations.dart';
+import '../story/story_models.dart';
 import 'primitives.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -25,6 +28,13 @@ class ResultScreen extends StatefulWidget {
     required this.onRematch,
     required this.onLobby,
     this.onContinue,
+    this.operation,
+    this.campaignTransition,
+    this.storyProgress,
+    this.rewardLedger,
+    this.replay = false,
+    this.onChooseEnding,
+    this.onCommandDeck,
   });
 
   final MatchResult result;
@@ -41,6 +51,13 @@ class ResultScreen extends StatefulWidget {
   final VoidCallback onRematch;
   final VoidCallback onLobby;
   final VoidCallback? onContinue;
+  final StoryOperation? operation;
+  final CampaignTransition? campaignTransition;
+  final StoryProgress? storyProgress;
+  final ProfileRewardLedger? rewardLedger;
+  final bool replay;
+  final ValueChanged<EndingChoice>? onChooseEnding;
+  final VoidCallback? onCommandDeck;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -80,172 +97,286 @@ class _ResultScreenState extends State<ResultScreen> {
     final l10n = context.l10n;
     final winner = widget.result.winner;
     final won = winner == widget.playerFaction;
+    final copy = StoryLocalizations(l10n);
+    final operation = widget.operation;
+    final chronicle = operation != null;
+    final directiveSucceeded =
+        widget.campaignTransition?.directiveSucceeded ??
+        (widget.storyProgress?.medals.contains(operation?.id) ?? false);
+    final bonusCredit = widget.campaignTransition?.directiveBonusCredit ?? 0;
+    final bonusClaimed =
+        operation != null &&
+        (bonusCredit > 0 ||
+            (widget.rewardLedger?.claimedDirectiveBonusIds.contains(
+                  operation.bonusClaimId,
+                ) ??
+                false));
+    final ending = widget.storyProgress?.ending;
+    final endingUnlocked =
+        chronicle &&
+        operation.id == StoryOperationId.lastInstruction &&
+        widget.storyProgress?.concludedOperations.contains(
+              StoryOperationId.lastInstruction,
+            ) ==
+            true;
     return Scaffold(
       body: TacticalBackdrop(
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(22),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      won ? l10n.signalSurvived : l10n.signalLost,
-                      textAlign: TextAlign.center,
-                      style: TokenfrontType.display.copyWith(
-                        color:
-                            winner?.visual.color ?? TokenfrontColors.relayIvory,
-                        fontSize: 38,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      winner == null
-                          ? l10n.drawSummary(
-                              duration,
-                              widget.matchId.toUpperCase(),
-                            )
-                          : l10n.winnerSummary(
-                              winner.visual.name,
-                              duration,
-                              widget.matchId.toUpperCase(),
-                            ),
-                      textAlign: TextAlign.center,
-                      style: TokenfrontType.instrument.copyWith(
-                        color: TokenfrontColors.quietText,
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    TacticalPanel(
-                      color: TokenfrontColors.deepField.withValues(alpha: .84),
-                      child: Column(
-                        children: [
-                          const _StandingHeader(),
-                          const Divider(color: Color(0x33F2E9D1)),
-                          for (
-                            var index = 0;
-                            index < widget.result.standings.length;
-                            index++
-                          )
-                            _StandingRow(
-                              rank: index + 1,
-                              standing: widget.result.standings[index],
-                              player:
-                                  widget.result.standings[index].faction ==
-                                  widget.playerFaction,
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TacticalPanel(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _Metric(
-                              label: l10n.relays,
-                              value: '${widget.relays}',
-                            ),
-                          ),
-                          Expanded(
-                            child: _Metric(
-                              label: l10n.match,
-                              value: l10n.complete,
-                            ),
-                          ),
-                          Expanded(
-                            child: _Metric(
-                              label: l10n.warToken,
-                              value:
-                                  '+${widget.baseReward * (doubled ? 2 : 1)}  /  ${widget.warTokenBalance}',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    if (rewardMessage case final message?) ...[
-                      TacticalPanel(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        borderColor: doubled
-                            ? TokenfrontColors.volt
-                            : TokenfrontColors.quietText,
-                        child: Text(
-                          message,
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(22),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          won ? l10n.signalSurvived : l10n.signalLost,
                           textAlign: TextAlign.center,
-                          style: TokenfrontType.body.copyWith(fontSize: 11),
+                          style: TokenfrontType.display.copyWith(
+                            color:
+                                winner?.visual.color ??
+                                TokenfrontColors.relayIvory,
+                            fontSize: 38,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    Wrap(
+                        const SizedBox(height: 8),
+                        Text(
+                          winner == null
+                              ? l10n.drawSummary(
+                                  duration,
+                                  widget.matchId.toUpperCase(),
+                                )
+                              : l10n.winnerSummary(
+                                  winner.visual.name,
+                                  duration,
+                                  widget.matchId.toUpperCase(),
+                                ),
+                          textAlign: TextAlign.center,
+                          style: TokenfrontType.instrument.copyWith(
+                            color: TokenfrontColors.quietText,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        if (chronicle) ...[
+                          _ChronicleDebriefPanel(
+                            operation: operation,
+                            playerFaction: widget.playerFaction,
+                            directiveSucceeded: directiveSucceeded,
+                            bonusClaimed: bonusClaimed,
+                            bonusAmount: operation.oneTimeBonus,
+                            ending: ending,
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        TacticalPanel(
+                          color: TokenfrontColors.deepField.withValues(
+                            alpha: .84,
+                          ),
+                          child: Column(
+                            children: [
+                              const _StandingHeader(),
+                              const Divider(color: Color(0x33F2E9D1)),
+                              for (
+                                var index = 0;
+                                index < widget.result.standings.length;
+                                index++
+                              )
+                                _StandingRow(
+                                  rank: index + 1,
+                                  standing: widget.result.standings[index],
+                                  player:
+                                      widget.result.standings[index].faction ==
+                                      widget.playerFaction,
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TacticalPanel(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _Metric(
+                                  label: l10n.relays,
+                                  value: '${widget.relays}',
+                                ),
+                              ),
+                              Expanded(
+                                child: _Metric(
+                                  label: l10n.match,
+                                  value: l10n.complete,
+                                ),
+                              ),
+                              Expanded(
+                                child: _Metric(
+                                  label: l10n.warToken,
+                                  value:
+                                      '+${widget.baseReward * (doubled ? 2 : 1)}  /  ${widget.warTokenBalance}',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        if (rewardMessage case final message?) ...[
+                          TacticalPanel(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            borderColor: doubled
+                                ? TokenfrontColors.volt
+                                : TokenfrontColors.quietText,
+                            child: Text(
+                              message,
+                              textAlign: TextAlign.center,
+                              style: TokenfrontType.body.copyWith(fontSize: 11),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            if (widget.onContinue != null && !chronicle)
+                              TacticalButton(
+                                label: chronicle
+                                    ? copy.continueCampaign
+                                    : 'CONTINUE',
+                                onPressed: widget.onContinue,
+                                color: TokenfrontColors.relayIvory,
+                              ),
+                            TacticalButton(
+                              label: requestingReward
+                                  ? l10n.requestingAd
+                                  : doubled
+                                  ? l10n.rewardDoubled
+                                  : l10n.doubleReward,
+                              onPressed: doubled || requestingReward
+                                  ? null
+                                  : _doubleReward,
+                              color: TokenfrontColors.volt,
+                            ),
+                            if (!chronicle)
+                              TacticalButton(
+                                label: l10n.rematch,
+                                onPressed: widget.onRematch,
+                                color: widget.playerFaction.visual.color,
+                              ),
+                            OutlinedButton(
+                              onPressed: widget.onCommandDeck ?? widget.onLobby,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(124, 50),
+                                foregroundColor: TokenfrontColors.relayIvory,
+                                side: const BorderSide(
+                                  color: Color(0x66F2E9D1),
+                                ),
+                                shape: const BeveledRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(10),
+                                  ),
+                                ),
+                                textStyle: TokenfrontType.instrument,
+                              ),
+                              child: Text(
+                                chronicle ? copy.commandDeck : l10n.lobby,
+                              ),
+                            ),
+                            OutlinedButton(
+                              onPressed: widget.onOpenLocker,
+                              style: _secondaryButtonStyle(),
+                              child: Text(l10n.locker),
+                            ),
+                            OutlinedButton(
+                              onPressed: widget.onOpenSettings,
+                              style: _secondaryButtonStyle(),
+                              child: Text(l10n.settings),
+                            ),
+                          ],
+                        ),
+                        if (widget.bannerVisible) ...[
+                          const SizedBox(height: 18),
+                          const _ResultSponsorRail(),
+                        ],
+                        if (endingUnlocked &&
+                            ending == null &&
+                            widget.onChooseEnding != null) ...[
+                          const SizedBox(height: 14),
+                          TacticalPanel(
+                            borderColor: TokenfrontColors.volt,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  copy.endingHeading,
+                                  style: TokenfrontType.instrument,
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 10,
+                                  runSpacing: 10,
+                                  children: [
+                                    TacticalButton(
+                                      label: copy.endingLabel(
+                                        EndingChoice.claimRelay,
+                                      ),
+                                      onPressed: () => widget.onChooseEnding!(
+                                        EndingChoice.claimRelay,
+                                      ),
+                                      color: TokenfrontColors.relayIvory,
+                                    ),
+                                    TacticalButton(
+                                      label: copy.endingLabel(
+                                        EndingChoice.openRelay,
+                                      ),
+                                      onPressed: () => widget.onChooseEnding!(
+                                        EndingChoice.openRelay,
+                                      ),
+                                      color: TokenfrontColors.volt,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (chronicle && widget.onContinue != null)
+                Positioned(
+                  left: 22,
+                  right: 22,
+                  bottom: 8,
+                  child: Center(
+                    child: Wrap(
                       alignment: WrapAlignment.center,
                       spacing: 10,
-                      runSpacing: 10,
                       children: [
-                        if (widget.onContinue != null)
-                          TacticalButton(
-                            label: 'CONTINUE',
-                            onPressed: widget.onContinue,
-                            color: TokenfrontColors.relayIvory,
-                          ),
                         TacticalButton(
-                          label: requestingReward
-                              ? l10n.requestingAd
-                              : doubled
-                              ? l10n.rewardDoubled
-                              : l10n.doubleReward,
-                          onPressed: doubled || requestingReward
-                              ? null
-                              : _doubleReward,
-                          color: TokenfrontColors.volt,
+                          label: copy.continueCampaign,
+                          onPressed: widget.onContinue,
+                          color: TokenfrontColors.relayIvory,
                         ),
                         TacticalButton(
-                          label: l10n.rematch,
+                          label: copy.retryDirective,
                           onPressed: widget.onRematch,
                           color: widget.playerFaction.visual.color,
                         ),
-                        OutlinedButton(
-                          onPressed: widget.onLobby,
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(124, 50),
-                            foregroundColor: TokenfrontColors.relayIvory,
-                            side: const BorderSide(color: Color(0x66F2E9D1)),
-                            shape: const BeveledRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10),
-                              ),
-                            ),
-                            textStyle: TokenfrontType.instrument,
-                          ),
-                          child: Text(l10n.lobby),
-                        ),
-                        OutlinedButton(
-                          onPressed: widget.onOpenLocker,
-                          style: _secondaryButtonStyle(),
-                          child: Text(l10n.locker),
-                        ),
-                        OutlinedButton(
-                          onPressed: widget.onOpenSettings,
-                          style: _secondaryButtonStyle(),
-                          child: Text(l10n.settings),
-                        ),
                       ],
                     ),
-                    if (widget.bannerVisible) ...[
-                      const SizedBox(height: 18),
-                      const _ResultSponsorRail(),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ),
+            ],
           ),
         ),
       ),
@@ -291,6 +422,96 @@ class _ResultSponsorRail extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _ChronicleDebriefPanel extends StatelessWidget {
+  const _ChronicleDebriefPanel({
+    required this.operation,
+    required this.playerFaction,
+    required this.directiveSucceeded,
+    required this.bonusClaimed,
+    required this.bonusAmount,
+    required this.ending,
+  });
+
+  final StoryOperation operation;
+  final Faction playerFaction;
+  final bool directiveSucceeded;
+  final bool bonusClaimed;
+  final int bonusAmount;
+  final EndingChoice? ending;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    final directive = copy.directiveLabel(
+      operation.directive.kind,
+      target: operation.directive.target,
+    );
+    final medal = directiveSucceeded
+        ? context.l10n.medalEarned
+        : copy.directiveMissed;
+    final bonus = bonusClaimed
+        ? copy.bonusClaimed
+        : copy.directiveBonus(bonusAmount);
+    return TacticalPanel(
+      key: const Key('chronicle-debrief'),
+      borderColor: TokenfrontColors.relayIvory.withValues(alpha: .62),
+      color: TokenfrontColors.deepField.withValues(alpha: .9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            copy.transmissionRecovered,
+            style: TokenfrontType.instrument.copyWith(
+              color: TokenfrontColors.volt,
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            copy.operationTitle(operation.id),
+            style: TokenfrontType.display.copyWith(fontSize: 22),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            copy.transmission(operation.id),
+            style: TokenfrontType.body.copyWith(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            copy.coreResponse(copy.coreName(playerFaction)),
+            style: TokenfrontType.body.copyWith(
+              color: TokenfrontColors.quietText,
+              fontSize: 11,
+            ),
+          ),
+          const Divider(color: Color(0x33F2E9D1), height: 22),
+          Text(
+            '$directive  //  $medal  //  $bonus',
+            style: TokenfrontType.instrument.copyWith(
+              color: directiveSucceeded
+                  ? TokenfrontColors.volt
+                  : TokenfrontColors.quietText,
+              fontSize: 10,
+            ),
+          ),
+          if (ending case final choice?) ...[
+            const Divider(color: Color(0x33F2E9D1), height: 22),
+            Text(
+              '${copy.endingHeading}  //  ${copy.endingLabel(choice)}',
+              style: TokenfrontType.instrument.copyWith(
+                color: TokenfrontColors.volt,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(copy.endingEpilogue(choice), style: TokenfrontType.body),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _StandingHeader extends StatelessWidget {

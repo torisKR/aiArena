@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -12,6 +13,7 @@ import '../game/simulation.dart';
 import '../game/tokenfront_game.dart';
 import '../l10n/l10n.dart';
 import '../settings/game_preferences.dart';
+import '../story/story_models.dart';
 import 'primitives.dart';
 
 class BattleScreen extends StatefulWidget {
@@ -171,6 +173,20 @@ class _BattleScreenState extends State<BattleScreen>
                             compact: compact,
                           ),
                         ),
+                        if (snapshot.directiveProgress != null)
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                top: compact ? (short ? 62 : 72) : 58,
+                              ),
+                              child: _DirectiveRail(
+                                game: game,
+                                snapshot: snapshot,
+                                compact: compact,
+                              ),
+                            ),
+                          ),
                         Align(
                           alignment: Alignment.topRight,
                           child: Padding(
@@ -401,6 +417,143 @@ class _CommandRail extends StatelessWidget {
     ),
   );
 }
+
+/// The Chronicle objective is deliberately a read-only rail.  The animated
+/// panel is excluded from semantics and a separate, stable live-region label
+/// changes only at operation start, its midpoint, and completion.
+class _DirectiveRail extends StatefulWidget {
+  const _DirectiveRail({
+    required this.game,
+    required this.snapshot,
+    required this.compact,
+  });
+
+  final TokenfrontGame game;
+  final BattleHudSnapshot snapshot;
+  final bool compact;
+
+  @override
+  State<_DirectiveRail> createState() => _DirectiveRailState();
+}
+
+class _DirectiveRailState extends State<_DirectiveRail> {
+  Timer? _cueTimer;
+  bool _cueActive = false;
+
+  DirectiveProgress get progress => widget.snapshot.directiveProgress!;
+
+  @override
+  void initState() {
+    super.initState();
+    if (progress.completed) _startCueIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DirectiveRail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.snapshot.directiveProgress!.completed &&
+        progress.completed) {
+      _startCueIfNeeded();
+    }
+    if (widget.game.reduceMotion || widget.game.lowSpecMode) {
+      _cueTimer?.cancel();
+      _cueTimer = null;
+      _cueActive = false;
+    }
+  }
+
+  int _milestoneFor(DirectiveProgress value) {
+    if (value.completed) return 2;
+    if (value.current <= 0) return 0;
+    final midpoint = math.max(1, (value.target / 2).floor());
+    return value.current >= midpoint ? 1 : 0;
+  }
+
+  String _labelFor(DirectiveProgress value, int milestone) {
+    if (milestone == 2) return context.l10n.directiveLocked;
+    final current = milestone == 1
+        ? (value.target / 2).floor().clamp(1, value.target.round())
+        : 0;
+    return 'DIRECTIVE // ${_directiveName(value.kind)} $current / ${value.target.round()}';
+  }
+
+  void _startCueIfNeeded() {
+    if (!progress.completed ||
+        widget.game.reduceMotion ||
+        widget.game.lowSpecMode) {
+      return;
+    }
+    _cueTimer?.cancel();
+    if (mounted) setState(() => _cueActive = true);
+    _cueTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _cueActive = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _cueTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = progress;
+    final milestone = _milestoneFor(value);
+    final completed = value.completed;
+    final current = value.current.round().clamp(0, value.target.round());
+    final text = completed
+        ? context.l10n.directiveLocked
+        : 'DIRECTIVE // ${_directiveName(value.kind)} $current / ${value.target.round()}';
+    return IgnorePointer(
+      child: Semantics(
+        key: Key('directive-rail-semantics-$milestone'),
+        container: true,
+        liveRegion: true,
+        label: _labelFor(value, milestone),
+        child: ExcludeSemantics(
+          child: AnimatedContainer(
+            key: const Key('directive-rail'),
+            duration: widget.game.reduceMotion || widget.game.lowSpecMode
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.compact ? 10 : 12,
+              vertical: widget.compact ? 5 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: TokenfrontColors.deepField.withValues(alpha: .9),
+              border: Border.all(
+                color: completed || _cueActive
+                    ? TokenfrontColors.volt
+                    : TokenfrontColors.relayIvory.withValues(alpha: .32),
+                width: completed || _cueActive ? 1.5 : 1,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
+            ),
+            child: Text(
+              text,
+              style: TokenfrontType.instrument.copyWith(
+                color: completed
+                    ? TokenfrontColors.volt
+                    : TokenfrontColors.relayIvory,
+                fontSize: widget.compact ? 9 : 10,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _directiveName(DirectiveKind kind) => switch (kind) {
+  DirectiveKind.longestCommandLink => 'COMMAND LINK',
+  DirectiveKind.commandRelays => 'COMMAND RELAYS',
+  DirectiveKind.commandKills => 'COMMAND KILLS',
+  DirectiveKind.finalRank => 'FINAL RANK',
+  DirectiveKind.victory => 'VICTORY',
+};
 
 class _ViewRail extends StatelessWidget {
   const _ViewRail({

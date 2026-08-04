@@ -10,6 +10,7 @@ import 'package:tokenfront/design/tokens.dart';
 import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/game/tokenfront_game.dart';
 import 'package:tokenfront/l10n/l10n.dart';
+import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 
 TokenfrontGame _game({
@@ -349,6 +350,82 @@ void main() {
   });
 
   group('battle accessibility and responsive layout', () {
+    testWidgets('directive rail announces milestones without tick spam', (
+      tester,
+    ) async {
+      final game = TokenfrontGame(
+        playerFaction: Faction.amethyst,
+        mode: GameMode.chronicle,
+        operation: const StoryOperation(
+          id: StoryOperationId.split,
+          seed: 2026080503,
+          duration: Duration(seconds: 180),
+          directive: Directive(kind: DirectiveKind.commandKills, target: 3),
+          oneTimeBonus: 25,
+        ),
+        config: const BattleConfig(unitsPerFaction: 20),
+        reduceMotion: true,
+        lowSpecMode: true,
+        hapticsEnabled: false,
+        audioEnabled: false,
+        onBattleConcluded: (_) {},
+      );
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+      await tester.pump(const Duration(milliseconds: 50));
+      game.pauseEngine();
+
+      game.hud.value = BattleHudSnapshot.initial(
+        unitsPerFaction: 20,
+        matchLimitSeconds: 180,
+        directiveProgress: const DirectiveProgress(
+          kind: DirectiveKind.commandKills,
+          current: 1,
+          target: 3,
+        ),
+      );
+      await tester.pump();
+      expect(find.text('DIRECTIVE // COMMAND KILLS 1 / 3'), findsOneWidget);
+      await tester.pump();
+      expect(
+        find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
+        findsOneWidget,
+      );
+
+      game.hud.value = BattleHudSnapshot.initial(
+        unitsPerFaction: 20,
+        matchLimitSeconds: 180,
+        directiveProgress: const DirectiveProgress(
+          kind: DirectiveKind.commandKills,
+          current: 2,
+          target: 3,
+        ),
+      );
+      await tester.pump();
+      expect(find.text('DIRECTIVE // COMMAND KILLS 2 / 3'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('DIRECTIVE // COMMAND KILLS 1 / 3'),
+        findsOneWidget,
+      );
+
+      game.hud.value = BattleHudSnapshot.initial(
+        unitsPerFaction: 20,
+        matchLimitSeconds: 180,
+        directiveProgress: const DirectiveProgress(
+          kind: DirectiveKind.commandKills,
+          current: 3,
+          target: 3,
+        ),
+      );
+      await tester.pump();
+      expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('DIRECTIVE LOCKED // BONUS READY'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsOneWidget);
+    });
+
     testWidgets('releasing movement after minimap focus stops the unit', (
       tester,
     ) async {

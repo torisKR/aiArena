@@ -13,6 +13,7 @@ import 'package:tokenfront/services/analytics/analytics_event.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
 import 'package:tokenfront/settings/game_preferences.dart';
 import 'package:tokenfront/story/story_catalog.dart';
+import 'package:tokenfront/story/campaign_controller.dart';
 import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/archive_sheet.dart';
@@ -48,48 +49,52 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('COMMAND DECK //')), findsOneWidget);
   });
 
-  testWidgets('locked Chronicle cores are read-only and Archive hides locked detail', (
-    tester,
-  ) async {
-    final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
-    addTearDown(runtime.dispose);
-    runtime.lockChronicleCore(Faction.amethyst);
-    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('OP-01'), findsWidgets);
-    final lockedCards = find.bySemanticsLabel(RegExp('DIRECTIVE LOCKED'));
-    expect(lockedCards, findsNWidgets(4));
-    for (var index = 0; index < lockedCards.evaluate().length; index++) {
-      final semantics = tester.getSemantics(lockedCards.at(index));
-      final flags = semantics.getSemanticsData().flagsCollection;
-      expect(flags.isButton, isFalse);
-      expect(_hasSemanticsFlag(semantics, SemanticsFlag.isFocusable), isFalse);
-    }
-    await tester.tap(find.byKey(const Key('skirmish-mode')));
-    await tester.pumpAndSettle();
-    final skirmishDeploy = tester.getSemantics(
-      find.byKey(const Key('skirmish-deploy')),
-    );
-    final skirmishFlags = skirmishDeploy.getSemanticsData().flagsCollection;
-    expect(skirmishFlags.isButton, isTrue);
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    expect(tester.binding.focusManager.primaryFocus, isNotNull);
-    await tester.ensureVisible(find.byKey(const Key('archive-action')));
-    await tester.tap(find.byKey(const Key('archive-action')));
-    await tester.pumpAndSettle();
-    expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
-    expect(find.text('CURRENT OPERATION'), findsOneWidget);
-    expect(
-      find.text('Maintain one uninterrupted command link for 45 seconds.'),
-      findsOneWidget,
-    );
-    expect(find.text('OP-02'), findsOneWidget);
-    expect(find.text('OP-02  //  ECHO // BORROWED BODIES'), findsNothing);
-    expect(find.text('TRANSMISSION LOCKED'), findsNothing);
-    expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsNothing);
-    expect(find.text('DIRECTIVE MISSED'), findsNothing);
-    expect(find.textContaining('DIRECTIVE BONUS'), findsNothing);
-  });
+  testWidgets(
+    'locked Chronicle cores are read-only and Archive hides locked detail',
+    (tester) async {
+      final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
+      addTearDown(runtime.dispose);
+      runtime.lockChronicleCore(Faction.amethyst);
+      await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('OP-01'), findsWidgets);
+      final lockedCards = find.bySemanticsLabel(RegExp('DIRECTIVE LOCKED'));
+      expect(lockedCards, findsNWidgets(4));
+      for (var index = 0; index < lockedCards.evaluate().length; index++) {
+        final semantics = tester.getSemantics(lockedCards.at(index));
+        final flags = semantics.getSemanticsData().flagsCollection;
+        expect(flags.isButton, isFalse);
+        expect(
+          _hasSemanticsFlag(semantics, SemanticsFlag.isFocusable),
+          isFalse,
+        );
+      }
+      await tester.tap(find.byKey(const Key('skirmish-mode')));
+      await tester.pumpAndSettle();
+      final skirmishDeploy = tester.getSemantics(
+        find.byKey(const Key('skirmish-deploy')),
+      );
+      final skirmishFlags = skirmishDeploy.getSemanticsData().flagsCollection;
+      expect(skirmishFlags.isButton, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      expect(tester.binding.focusManager.primaryFocus, isNotNull);
+      await tester.ensureVisible(find.byKey(const Key('archive-action')));
+      await tester.tap(find.byKey(const Key('archive-action')));
+      await tester.pumpAndSettle();
+      expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+      expect(find.text('CURRENT OPERATION'), findsOneWidget);
+      expect(
+        find.text('Maintain one uninterrupted command link for 45 seconds.'),
+        findsOneWidget,
+      );
+      expect(find.text('OP-02'), findsOneWidget);
+      expect(find.text('OP-02  //  ECHO // BORROWED BODIES'), findsNothing);
+      expect(find.text('TRANSMISSION LOCKED'), findsNothing);
+      expect(find.text('DIRECTIVE LOCKED // BONUS READY'), findsNothing);
+      expect(find.text('DIRECTIVE MISSED'), findsNothing);
+      expect(find.textContaining('DIRECTIVE BONUS'), findsNothing);
+    },
+  );
 
   testWidgets('Skirmish mode selects configuration before separate deploy', (
     tester,
@@ -103,7 +108,9 @@ void main() {
     expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
   });
 
-  testWidgets('Archive restart resets story while preserving wallet', (tester) async {
+  testWidgets('Archive restart resets story while preserving wallet', (
+    tester,
+  ) async {
     final runtime = TokenfrontRuntime(platform: ClientPlatform.web);
     addTearDown(runtime.dispose);
     runtime.lockChronicleCore(Faction.volt);
@@ -334,7 +341,7 @@ void main() {
       );
       final currentBeforeReplay = runtime.storyProgress.currentOperation;
       final endingBeforeReplay = runtime.storyProgress.ending;
-      await tester.tap(find.text('REMATCH'));
+      await tester.tap(find.text('RETRY DIRECTIVE'));
       await tester.pump();
       expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
 
@@ -636,6 +643,144 @@ void main() {
     expect(find.text('REWARD DOUBLED'), findsOneWidget);
     expect(find.text('+40 War Tokens secured.'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Chronicle OP-05 loss exposes both persistent ending choices', (
+    tester,
+  ) async {
+    EndingChoice? selected;
+    final standings = <FactionStanding>[
+      const FactionStanding(
+        faction: Faction.cobalt,
+        survivors: 12,
+        levelSum: 72,
+        kills: 88,
+      ),
+      const FactionStanding(
+        faction: Faction.amethyst,
+        survivors: 0,
+        levelSum: 0,
+        kills: 81,
+      ),
+    ];
+    final progress = StoryProgress(
+      campaignFaction: Faction.amethyst,
+      concludedOperations: StoryOperationId.values,
+      medals: const [],
+      recoveredTransmissions: StoryOperationId.values,
+      ending: null,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ResultScreen(
+          result: MatchResult(
+            reason: MatchEndReason.elimination,
+            winner: Faction.cobalt,
+            standings: standings,
+          ),
+          matchId: 'op05-loss',
+          playerFaction: Faction.amethyst,
+          relays: 0,
+          elapsed: 180,
+          baseReward: 40,
+          warTokenBalance: 40,
+          bannerVisible: false,
+          onDoubleReward: () async => const RewardedClaim(
+            adResult: AdResult(AdStatus.unavailable),
+            credited: 0,
+            alreadyClaimed: false,
+          ),
+          onOpenSettings: () {},
+          onOpenLocker: () {},
+          onRematch: () {},
+          onLobby: () {},
+          operation: StoryCatalog.byId(StoryOperationId.lastInstruction),
+          campaignTransition: CampaignTransition(
+            nextProgress: StoryProgress.initial(),
+            nextLedger: ProfileRewardLedger.empty(),
+            directiveSucceeded: false,
+            directiveBonusCredit: 0,
+            firstConclusion: true,
+          ),
+          storyProgress: progress,
+          rewardLedger: ProfileRewardLedger.empty(),
+          onChooseEnding: (choice) => selected = choice,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('CLAIM THE RELAY'), findsOneWidget);
+    expect(find.text('OPEN THE RELAY'), findsOneWidget);
+    await tester.ensureVisible(find.text('OPEN THE RELAY'));
+    await tester.tap(find.text('OPEN THE RELAY'));
+    expect(selected, EndingChoice.openRelay);
+  });
+
+  testWidgets('Chronicle OP-05 win renders the stored ending epilogue', (
+    tester,
+  ) async {
+    final progress = StoryProgress(
+      campaignFaction: Faction.amethyst,
+      concludedOperations: StoryOperationId.values,
+      medals: StoryOperationId.values,
+      recoveredTransmissions: StoryOperationId.values,
+      ending: EndingChoice.claimRelay,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ResultScreen(
+          result: MatchResult(
+            reason: MatchEndReason.elimination,
+            winner: Faction.amethyst,
+            standings: const [
+              FactionStanding(
+                faction: Faction.amethyst,
+                survivors: 12,
+                levelSum: 72,
+                kills: 88,
+              ),
+            ],
+          ),
+          matchId: 'op05-win',
+          playerFaction: Faction.amethyst,
+          relays: 2,
+          elapsed: 180,
+          baseReward: 40,
+          warTokenBalance: 40,
+          bannerVisible: false,
+          onDoubleReward: () async => const RewardedClaim(
+            adResult: AdResult(AdStatus.unavailable),
+            credited: 0,
+            alreadyClaimed: false,
+          ),
+          onOpenSettings: () {},
+          onOpenLocker: () {},
+          onRematch: () {},
+          onLobby: () {},
+          operation: StoryCatalog.byId(StoryOperationId.lastInstruction),
+          campaignTransition: CampaignTransition(
+            nextProgress: progress,
+            nextLedger: ProfileRewardLedger.empty(),
+            directiveSucceeded: true,
+            directiveBonusCredit: 40,
+            firstConclusion: true,
+          ),
+          storyProgress: progress,
+          rewardLedger: ProfileRewardLedger.empty(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'One core inherits Orbit 00. The other three survive only as checksum scars.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('settings and locker remain usable on a narrow surface', (

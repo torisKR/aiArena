@@ -10,6 +10,7 @@ import 'game/faction_visuals.dart';
 import 'game/simulation.dart';
 import 'game/tokenfront_game.dart';
 import 'story/story_models.dart';
+import 'story/campaign_controller.dart';
 import 'story/story_catalog.dart';
 import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
@@ -134,6 +135,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   int completedMatches = 0;
   int attemptNumber = 0;
   int baseReward = 0;
+  CampaignTransition? campaignTransition;
   String currentMatchId = '';
   bool bannerVisible = false;
   bool _startingMatch = false;
@@ -355,6 +357,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     relays = 0;
     elapsed = 0;
     baseReward = 0;
+    campaignTransition = null;
     bannerVisible = false;
     attemptNumber += 1;
     final seed = operation?.seed ?? 20260715 + (++matchIndex);
@@ -448,8 +451,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         !runtime.storyProgress.concludedOperations.contains(
           StoryOperationId.wake,
         );
+    CampaignTransition? transition;
     if (active?.mode == GameMode.chronicle && active?.operation != null) {
-      runtime.concludeChronicle(
+      transition = runtime.concludeChronicle(
         operationId: active!.operation!.id,
         report: report,
         replay: active.replay,
@@ -484,6 +488,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       relays = report.commandRelays;
       elapsed = matchElapsed;
       baseReward = reward;
+      campaignTransition = transition;
       screen = _Screen.result;
     });
     briefingOperation = _resolveCurrentOperation();
@@ -522,6 +527,14 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       await _leaveResult(rematch: false);
       return;
     }
+    if (active?.replay == true) {
+      await _leaveResult(rematch: false);
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openArchive();
+      });
+      return;
+    }
     await runtime.closeResult(completedMatches: completedMatches);
     if (!mounted) return;
     final nextOperation = _resolveCurrentOperation();
@@ -529,6 +542,16 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       game = null;
       screen = nextOperation == null ? _Screen.lobby : _Screen.briefing;
     });
+  }
+
+  void _chooseEnding(EndingChoice choice) {
+    if (runtime.storyProgress.ending != null) return;
+    try {
+      runtime.chooseChronicleEnding(choice);
+    } on StateError {
+      return;
+    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -586,16 +609,18 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
           preferences: runtime.preferences,
           requireLandscape: _requireLandscapeForBattle,
         ),
-        if (activeBattle?.replay == true && runtime.storyProgress.ending != null)
+        if (activeBattle?.replay == true &&
+            runtime.storyProgress.ending != null)
           Positioned(
             top: 18,
             left: 18,
             child: DecoratedBox(
-              decoration: const BoxDecoration(
-                color: Color(0xCC091113),
-              ),
+              decoration: const BoxDecoration(color: Color(0xCC091113)),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
                 child: Text(
                   context.l10n.archiveSimulation,
                   style: TokenfrontType.instrument.copyWith(fontSize: 10),
@@ -623,9 +648,24 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenLocker: _openLocker,
       onRematch: () => _leaveResult(rematch: true),
       onLobby: () => _leaveResult(rematch: false),
-      onContinue: activeBattle?.mode == GameMode.chronicle
+      onContinue:
+          activeBattle?.mode == GameMode.chronicle &&
+              !(activeBattle?.operation?.id ==
+                      StoryOperationId.lastInstruction &&
+                  runtime.storyProgress.ending == null)
           ? _continueFromResult
           : null,
+      operation: activeBattle?.operation,
+      campaignTransition: campaignTransition,
+      storyProgress: runtime.storyProgress,
+      rewardLedger: runtime.rewardLedger,
+      replay: activeBattle?.replay ?? false,
+      onChooseEnding:
+          activeBattle?.operation?.id == StoryOperationId.lastInstruction &&
+              runtime.storyProgress.ending == null
+          ? _chooseEnding
+          : null,
+      onCommandDeck: () => _leaveResult(rematch: false),
     ),
   };
 }
