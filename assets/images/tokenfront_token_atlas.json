@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "image": "tokenfront_token_atlas.png",
+  "cellSize": 64,
+  "frames": {
+    "amethyst": {
+      "x": 0,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "cobalt": {
+      "x": 64,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "volt": {
+      "x": 128,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "prism": {
+      "x": 192,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    }
+  }
+}

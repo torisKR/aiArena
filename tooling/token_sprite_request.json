@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "cell": {
+    "shape": "square",
+    "size": 64,
+    "safe_margin": 8
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [0, 255, 0]
+  },
+  "fit": {
+    "pixel_perfect": true,
+    "logical_height": 32,
+    "palette_size": 16,
+    "detail_bias": true,
+    "align_x": "alpha-centroid",
+    "align_y": "center"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "subtle two-pixel tactical signal pulse; the top direction nib and body stay aligned"
+    }
+  }
+}

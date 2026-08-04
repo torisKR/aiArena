@@ -1,0 +1,471 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Japanese (`ja`).
+class AppLocalizationsJa extends AppLocalizations {
+  AppLocalizationsJa([String locale = 'ja']) : super(locale);
+
+  @override
+  String get appTitle => 'Tokenfront: AIアリーナ';
+
+  @override
+  String get lobbyTagline => 'AIアリーナ  /  ひとつのシグナル。四つの戦線。';
+
+  @override
+  String factionSignal(String faction) {
+    return '$faction シグナル';
+  }
+
+  @override
+  String get factionBrief => '1,000ユニット · Lv.1–10均衡 · 指揮権を連続維持';
+
+  @override
+  String get deploySignal => 'シグナル展開';
+
+  @override
+  String lockerBalance(int balance) {
+    return 'ロッカー  $balance WT';
+  }
+
+  @override
+  String get tune => '調整';
+
+  @override
+  String get signalSettings => 'シグナル設定';
+
+  @override
+  String get offline => 'オフライン';
+
+  @override
+  String chooseFaction(String faction) {
+    return '$faction陣営を選択';
+  }
+
+  @override
+  String unitsCount(int count) {
+    return '$countユニット';
+  }
+
+  @override
+  String get units => 'ユニット';
+
+  @override
+  String get highLevel => '高Lv';
+
+  @override
+  String get wins => '勝利';
+
+  @override
+  String get equalLevel => '同Lv';
+
+  @override
+  String get death => '撃破';
+
+  @override
+  String get relays => '指揮継承';
+
+  @override
+  String get move => '移動';
+
+  @override
+  String get stickWasd => 'スティック / WASD';
+
+  @override
+  String get dash => 'ダッシュ';
+
+  @override
+  String get buttonSpace => 'ボタン / SPACE';
+
+  @override
+  String get sponsorBannerArea => 'スポンサーバナー領域';
+
+  @override
+  String get sponsorSignal => 'スポンサーシグナル';
+
+  @override
+  String get lobbyPlacement => 'ロビー配置';
+
+  @override
+  String get languageSection => '言語';
+
+  @override
+  String get displayLanguage => '表示言語';
+
+  @override
+  String get displayLanguageDetail => '端末の言語に従うか、このゲームで使う言語を選択します。';
+
+  @override
+  String get languageSystem => 'システム設定';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageSimplifiedChinese => '简体中文';
+
+  @override
+  String get settingsTitle => 'シグナル調整';
+
+  @override
+  String get settingsSubtitle => '戦闘力を変えずに戦場を調整。';
+
+  @override
+  String get closeSettings => '設定を閉じる';
+
+  @override
+  String get battlefieldSection => '戦場';
+
+  @override
+  String get lowSpecFilter => '軽量フィルター';
+
+  @override
+  String get lowSpecFilterDetail => 'パーティクルと高負荷な戦場表現を削減。';
+
+  @override
+  String get reduceMotion => '動きを抑える';
+
+  @override
+  String get reduceMotionDetail => '指揮継承時のカメラ移動と大きな画面遷移を短縮。';
+
+  @override
+  String get mouseCamera => 'マウス視点';
+
+  @override
+  String get mouseCameraDetail => 'Webでホイールズームとドラッグ移動を有効化。';
+
+  @override
+  String get audioCues => '音声キュー';
+
+  @override
+  String get audioCuesDetail => 'ダッシュ、戦闘、指揮継承の信号音を再生。';
+
+  @override
+  String get hapticCues => '触覚キュー';
+
+  @override
+  String get hapticCuesDetail => '対応端末でダッシュと指揮継承を振動で通知。';
+
+  @override
+  String get privacySection => 'プライバシー';
+
+  @override
+  String get shareAnalytics => '分析データ共有';
+
+  @override
+  String get shareAnalyticsDetail => 'オンライン時に匿名のマッチイベントをまとめて送信。';
+
+  @override
+  String get adRequests => '広告リクエスト';
+
+  @override
+  String get adRequestsDetail => 'ロビーと結果画面の広告を許可。追跡には別途プラットフォーム権限が必要です。';
+
+  @override
+  String get privacyDefaultNote =>
+      '両方とも初期設定はオフです。どちらをオフにしても、オフラインマッチと報酬は利用できます。';
+
+  @override
+  String get closePanel => 'パネルを閉じる';
+
+  @override
+  String get stateOff => 'オフ';
+
+  @override
+  String get stateOn => 'オン';
+
+  @override
+  String get semanticsOff => 'オフ';
+
+  @override
+  String get semanticsOn => 'オン';
+
+  @override
+  String needMoreWarTokens(int count) {
+    return 'ウォートークンがあと$count必要です。';
+  }
+
+  @override
+  String get signalLocker => 'シグナルロッカー';
+
+  @override
+  String get lockerSubtitle => 'ウォートークンは戦場外観にのみ使用。戦闘力は変化しません。';
+
+  @override
+  String warTokenBalance(int balance) {
+    return 'ウォートークン $balance';
+  }
+
+  @override
+  String get closeSignalLocker => 'シグナルロッカーを閉じる';
+
+  @override
+  String get equipped => '装備中';
+
+  @override
+  String get equip => '装備';
+
+  @override
+  String unlockCost(int cost) {
+    return 'アンロック  $cost';
+  }
+
+  @override
+  String get commandEdge => '指揮輪郭';
+
+  @override
+  String get movementTrace => '移動軌跡';
+
+  @override
+  String get defeatMark => '撃破エフェクト';
+
+  @override
+  String get cosmeticFieldIssueName => '標準支給';
+
+  @override
+  String get cosmeticFieldIssueDescription => '陣営シグナルの標準カラー。';
+
+  @override
+  String get cosmeticRelayIvoryName => 'リレーアイボリー';
+
+  @override
+  String get cosmeticRelayIvoryDescription => '陣営の中心を見やすく保つアイボリーの指揮輪郭。';
+
+  @override
+  String get cosmeticOxideEdgeName => 'オキサイドエッジ';
+
+  @override
+  String get cosmeticOxideEdgeDescription => '操作ユニットに暖色の戦術輪郭を追加。';
+
+  @override
+  String get cosmeticCleanWakeName => 'クリーンウェイク';
+
+  @override
+  String get cosmeticCleanWakeDescription => '移動軌跡を残しません。';
+
+  @override
+  String get cosmeticRelayTapeName => 'リレーテープ';
+
+  @override
+  String get cosmeticRelayTapeDescription => '短く分割された指揮軌跡。';
+
+  @override
+  String get cosmeticCinderGridName => 'シンダーグリッド';
+
+  @override
+  String get cosmeticCinderGridDescription => '高速移動時にまばらなオキサイド軌跡を表示。';
+
+  @override
+  String get cosmeticSignalRingName => 'シグナルリング';
+
+  @override
+  String get cosmeticSignalRingDescription => '標準の小さな撃破パルス。';
+
+  @override
+  String get cosmeticFractureName => '四方向フラクチャー';
+
+  @override
+  String get cosmeticFractureDescription => 'ゲームプレイに影響しない鮮明な幾何学破砕。';
+
+  @override
+  String get signalLostObserving => 'シグナル喪失  /  残存戦を観戦';
+
+  @override
+  String timeRemaining(String time) {
+    return '残り時間 $time';
+  }
+
+  @override
+  String factionAlive(String faction, int count) {
+    return '$faction 生存 $count';
+  }
+
+  @override
+  String get cameraShort => '視点';
+
+  @override
+  String get ecoShort => '省電';
+
+  @override
+  String get lockShort => '復帰';
+
+  @override
+  String get mouseCameraSemantics => 'マウスドラッグとホイールによるカメラ操作';
+
+  @override
+  String get lowPowerModeSemantics => '省電力モード';
+
+  @override
+  String get resetCameraSemantics => '操作ユニットにカメラを戻す';
+
+  @override
+  String get battlePausedSemantics => 'アプリが非アクティブなため戦闘を一時停止';
+
+  @override
+  String get battlePaused => 'シグナル待機  /  戦闘一時停止';
+
+  @override
+  String controlledUnitStatus(int level, int killCount, int relayCount) {
+    return '操作ユニット レベル$level、撃破$killCount、指揮継承$relayCount';
+  }
+
+  @override
+  String controlledUnitVisualStatus(
+    String level,
+    String killCount,
+    String relayCount,
+  ) {
+    return 'LV $level  /  撃破 $killCount  /  継承 $relayCount';
+  }
+
+  @override
+  String get movementJoystick => '移動スティック';
+
+  @override
+  String get movementJoystickHint => 'ドラッグで移動。キーボードはWASDまたは矢印キーを使用できます。';
+
+  @override
+  String get tacticalMapSemantics => '戦術マップ';
+
+  @override
+  String get tacticalMapHint => 'ドラッグまたは矢印キーでカメラを移動します。実行すると操作ユニットに戻ります。';
+
+  @override
+  String get rotateToPlay => '横向きでプレイ';
+
+  @override
+  String get rotateToPlayHint =>
+      'Tokenfrontの戦闘は横向きで進行します。続けるにはスマートフォンを回転してください。';
+
+  @override
+  String get dashSemantics => 'ダッシュ';
+
+  @override
+  String get dashHint => '短時間、移動速度が2倍。キーボードショートカットはSPACEです。';
+
+  @override
+  String get dashKeyLabel => 'ダッシュ\nSPACE';
+
+  @override
+  String commandHandoff(String stage, int progress) {
+    return '指揮継承：$stage、$progressパーセント';
+  }
+
+  @override
+  String get handoffImpactHold => '衝撃停止';
+
+  @override
+  String get handoffCasualtyFocus => '撃破対象フォーカス · 0.5×';
+
+  @override
+  String get handoffSuccessorScan => '後継ユニット選定';
+
+  @override
+  String get handoffRelayTravel => '指揮継承中';
+
+  @override
+  String get handoffSignalLock => 'シグナル固定';
+
+  @override
+  String get combatWinCode => 'WIN';
+
+  @override
+  String get combatOutCode => 'OUT';
+
+  @override
+  String get signalSurvived => 'シグナル生存';
+
+  @override
+  String get signalLost => 'シグナル喪失';
+
+  @override
+  String drawSummary(String duration, String matchId) {
+    return '引き分け  /  $duration  /  $matchId';
+  }
+
+  @override
+  String winnerSummary(String winner, String duration, String matchId) {
+    return '$winner、最後のシグナルを確保  /  $duration  /  $matchId';
+  }
+
+  @override
+  String get match => 'マッチ';
+
+  @override
+  String get complete => '完了';
+
+  @override
+  String get warToken => 'ウォートークン';
+
+  @override
+  String warTokensSecured(int count) {
+    return 'ウォートークンを+$count確保。';
+  }
+
+  @override
+  String get requestingAd => '広告をリクエスト中…';
+
+  @override
+  String get rewardDoubled => '報酬2倍';
+
+  @override
+  String get doubleReward => '報酬を2倍に';
+
+  @override
+  String get rematch => '再戦';
+
+  @override
+  String get lobby => 'ロビー';
+
+  @override
+  String get locker => 'ロッカー';
+
+  @override
+  String get settings => '設定';
+
+  @override
+  String get adRequestsOffMessage => '広告リクエストはオフです。設定で有効にできます。基本報酬は保持されます。';
+
+  @override
+  String get noConnectionRewardMessage => '接続がありません。マッチと基本報酬は完了済みです。';
+
+  @override
+  String get noRewardedAdMessage => '利用できるリワード広告がありません。基本報酬は付与済みです。';
+
+  @override
+  String get adFailedRewardMessage => '広告に失敗しました。基本報酬は付与済みです。';
+
+  @override
+  String get rewardOfferUnavailableMessage => 'この報酬オファーは利用できません。';
+
+  @override
+  String get rewardRequestCompleteMessage => '報酬リクエストが完了しました。';
+
+  @override
+  String get resultSponsorPlacement => 'スポンサーシグナル  /  結果画面配置';
+
+  @override
+  String get faction => '陣営';
+
+  @override
+  String get alive => '生存';
+
+  @override
+  String get levelSum => 'Σ LV';
+
+  @override
+  String get kills => '撃破';
+
+  @override
+  String standingFactionYou(String faction) {
+    return '$faction  · 自分';
+  }
+}

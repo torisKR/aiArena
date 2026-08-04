@@ -1,0 +1,37 @@
+{
+  "game": "Tokenfront: AI Arena",
+  "capturedAt": "2026-07-15T14:01:00+09:00",
+  "device": {
+    "model": "SM A175N",
+    "deviceId": "RFKYB09D9TL",
+    "platform": "Android 16 (API 36)",
+    "renderer": "Impeller (Vulkan)"
+  },
+  "buildMode": "profile",
+  "scenario": {
+    "description": "400 units arranged in a camera-sized 20x20 dense combat region",
+    "warmupSeconds": 3,
+    "sampleSeconds": 30,
+    "audioEnabled": false,
+    "hapticsEnabled": false,
+    "harness": "tooling/performance_profile_app.dart"
+  },
+  "result": {
+    "unitsAllocated": 400,
+    "unitsAliveAtEnd": 53,
+    "frameSamples": 2599,
+    "observedFramesPerSecond": 86.63,
+    "averageInstantaneousFps": 88.38,
+    "onePercentLowFps": 45.0,
+    "cumulativeSimulationTicksIncludingWarmup": 958,
+    "renderedUnitsAtEnd": 47,
+    "culledUnitsAtEnd": 6,
+    "uncaughtFlutterExceptions": 0
+  },
+  "acceptance": {
+    "targetAverageFps": 60,
+    "targetDenseCombatFloorFps": 30,
+    "passedForThisDeviceSession": true
+  },
+  "rawLine": "TOKENFRONT_PERFORMANCE {\"unitsAllocated\":400,\"unitsAlive\":53,\"samples\":2599,\"averageFps\":88.38,\"onePercentLowFps\":45.0,\"simulationTicks\":958,\"renderedUnits\":47,\"culledUnits\":6}"
+}
