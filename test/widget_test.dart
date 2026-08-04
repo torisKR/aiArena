@@ -18,6 +18,7 @@ import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/archive_sheet.dart';
 import 'package:tokenfront/ui/result_screen.dart';
+import 'package:tokenfront/ui/primitives.dart';
 
 bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
   // ignore: deprecated_member_use
@@ -25,6 +26,37 @@ bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
 }
 
 void main() {
+  testWidgets('orbital backdrop stays below units and is non-interactive', (
+    tester,
+  ) async {
+    var unitTaps = 0;
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TacticalBackdrop(
+          child: Center(
+            child: Semantics(
+              label: 'runtime unit',
+              child: GestureDetector(
+                key: const Key('runtime-unit'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () => unitTaps += 1,
+                child: const SizedBox(width: 120, height: 120),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('runtime-unit')));
+    expect(unitTaps, 1);
+    expect(find.bySemanticsLabel('runtime unit'), findsOneWidget);
+    expect(find.bySemanticsLabel('tokenfront_keyart.png'), findsNothing);
+    semantics.dispose();
+  });
+
   testWidgets('battle pauses and resumes without disposed focus callbacks', (
     tester,
   ) async {

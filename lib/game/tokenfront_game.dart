@@ -984,6 +984,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     canvas.translate(-renderCenter.x, -renderCenter.y);
 
     _drawArena(canvas, zoom);
+    _drawOrbitalBackdrop(canvas, zoom);
     _drawMovementTrail(canvas, zoom);
     if (_isImpactChromaticActive) {
       _drawChromaticEchoes(canvas, zoom, visibleUnitBounds);
@@ -1087,6 +1088,60 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
         ..strokeWidth = 2 / zoom
         ..isAntiAlias = false,
     );
+  }
+
+  void _drawOrbitalBackdrop(Canvas canvas, double zoom) {
+    final config = simulation.config;
+    final center = Offset(config.worldWidth / 2, config.worldHeight / 2);
+    final arcPaint = Paint()
+      ..color = TokenfrontColors.relayIvory.withValues(alpha: .10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3 / zoom
+      ..isAntiAlias = false;
+    for (final (radius, start, sweep) in <(double, double, double)>[
+      (240, .28, 2.10),
+      (420, 2.72, 2.26),
+      (620, -.42, 2.45),
+    ]) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        start,
+        sweep,
+        false,
+        arcPaint,
+      );
+    }
+    canvas.drawCircle(
+      center,
+      22,
+      Paint()
+        ..color = TokenfrontColors.relayIvory.withValues(alpha: .16)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4 / zoom
+        ..isAntiAlias = false,
+    );
+    canvas.drawCircle(
+      center,
+      7,
+      Paint()
+        ..color = TokenfrontColors.relayIvory.withValues(alpha: .22)
+        ..isAntiAlias = false,
+    );
+    final nodeOffset = 310.0;
+    for (final (offset, color) in <(Offset, Color)>[
+      (Offset(-nodeOffset, 24), TokenfrontColors.amethyst),
+      (Offset(22, -nodeOffset), TokenfrontColors.cobalt),
+      (Offset(nodeOffset, -28), TokenfrontColors.volt),
+      (Offset(-34, nodeOffset), TokenfrontColors.prism),
+    ]) {
+      canvas.drawCircle(
+        center + offset,
+        8,
+        Paint()
+          ..color = color.withValues(alpha: .18)
+          ..isAntiAlias = false,
+      );
+    }
   }
 
   bool _isWithinUnitBounds(Unit unit, Rect bounds) {

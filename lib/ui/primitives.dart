@@ -309,12 +309,17 @@ class TacticalBackdrop extends StatelessWidget {
     children: [
       const ColoredBox(color: TokenfrontColors.deepField),
       if (showKeyArt)
-        Image.asset(
-          'assets/blender/tokenfront_keyart.png',
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+        IgnorePointer(
+          ignoring: true,
+          child: ExcludeSemantics(
+            child: Image.asset(
+              'assets/blender/tokenfront_keyart.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              filterQuality: FilterQuality.low,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
         ),
       DecoratedBox(
         decoration: BoxDecoration(

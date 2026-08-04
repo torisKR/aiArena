@@ -105,6 +105,41 @@ def curve_tape(points, mat):
     return obj
 
 
+def broken_arc(name, radius, segments, mat, z=0.07):
+    curve_data = bpy.data.curves.new(f"{name} path", "CURVE")
+    curve_data.dimensions = "3D"
+    curve_data.resolution_u = 2
+    curve_data.bevel_depth = 0.026
+    curve_data.bevel_resolution = 0
+    for start, end in segments:
+        spline = curve_data.splines.new("POLY")
+        points = max(8, int((end - start) * radius * 2.0))
+        spline.points.add(points - 1)
+        for index, point in enumerate(spline.points):
+            theta = math.radians(start + (end - start) * index / (points - 1))
+            point.co = (math.cos(theta) * radius, math.sin(theta) * radius, z, 1)
+    obj = bpy.data.objects.new(name, curve_data)
+    bpy.context.collection.objects.link(obj)
+    curve_data.materials.append(mat)
+    return obj
+
+
+def planetary_limb(name, location, radius, mat):
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=64,
+        radius=radius,
+        depth=0.035,
+        location=location,
+    )
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(mat)
+    bevel = obj.modifiers.new("Soft planetary edge", "BEVEL")
+    bevel.width = 0.04
+    bevel.segments = 2
+    return obj
+
+
 def look_at(obj, target=(0, 0, 0)):
     direction = Vector(target) - obj.location
     obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
@@ -137,6 +172,9 @@ def build_scene():
     grid_mat = material("Pressed grid", (0.073, 0.105, 0.106, 1), roughness=0.95)
     rail_mat = material("Relay Ivory", PALETTE["ivory"], metallic=0.12, roughness=0.48, emission=1.4)
     dark_metal = material("Boundary metal", (0.018, 0.030, 0.032, 1), metallic=0.7, roughness=0.55)
+    void_mat = material("Planetary void", (0.004, 0.009, 0.012, 1), metallic=0.15, roughness=0.94)
+    beacon_mat = material("Last Relay beacon", PALETTE["ivory"], metallic=0.34, roughness=0.48, emission=0.35)
+    arc_mat = material("Broken orbit arc", PALETTE["ivory"], metallic=0.18, roughness=0.62, emission=0.22)
     faction_mats = {
         key: material(key.title(), PALETTE[key], metallic=0.28, roughness=0.54, emission=0.14)
         for key in ("amethyst", "cobalt", "volt", "prism")
@@ -147,6 +185,21 @@ def build_scene():
         cube(f"Grid X {x:+d}", (x, 0, 0.012), (0.012, 5.0, 0.012), grid_mat)
     for y in range(-5, 6):
         cube(f"Grid Y {y:+d}", (0, y, 0.012), (8.25, 0.012, 0.012), grid_mat)
+
+    cylinder("LastRelayBeacon", (0, 0, 0.24), 0.34, 0.24, 8, beacon_mat, rotation=math.pi / 8)
+    cylinder("LastRelayBeaconCore", (0, 0, 0.42), 0.105, 0.12, 8, beacon_mat, rotation=math.pi / 8)
+    broken_arc("BrokenOrbitArc01", 1.35, ((18, 132), (194, 308)), arc_mat)
+    broken_arc("BrokenOrbitArc02", 2.35, ((42, 158), (214, 334)), arc_mat)
+    broken_arc("BrokenOrbitArc03", 3.45, ((2, 94), (146, 276)), arc_mat)
+    planetary_limb("PlanetaryLimb", (9.5, 5.9, -0.08), 3.9, void_mat)
+    node_positions = {
+        "SignalNodeAmethyst": (-1.95, 0.20, "amethyst"),
+        "SignalNodeCobalt": (0.70, 1.95, "cobalt"),
+        "SignalNodeVolt": (2.15, -0.35, "volt"),
+        "SignalNodePrism": (-0.45, -2.10, "prism"),
+    }
+    for node_name, (x, y, faction) in node_positions.items():
+        cylinder(node_name, (x, y, 0.16), 0.115, 0.16, 6, faction_mats[faction], rotation=math.pi / 6)
 
     cube("North rail", (0, 5.32, 0.25), (8.75, 0.12, 0.25), dark_metal, bevel=0.06)
     cube("South rail", (0, -5.32, 0.25), (8.75, 0.12, 0.25), dark_metal, bevel=0.06)

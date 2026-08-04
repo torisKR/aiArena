@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
@@ -36,6 +37,33 @@ void main() {
       [for (final frame in frames.values) (frame as Map)['x']],
       [0, 64, 128, 192],
     );
+  });
+
+  test('orbital key art keeps the tactical asset contract', () async {
+    final bytes = await rootBundle.load('assets/blender/tokenfront_keyart.png');
+    final codec = await ui.instantiateImageCodec(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
+    final frame = await codec.getNextFrame();
+    expect(frame.image.width, 1440);
+    expect(frame.image.height, 900);
+    frame.image.dispose();
+    codec.dispose();
+
+    final script = File('tooling/build_tokenfront_scene.py').readAsStringSync();
+    for (final objectName in [
+      'LastRelayBeacon',
+      'BrokenOrbitArc01',
+      'BrokenOrbitArc02',
+      'BrokenOrbitArc03',
+      'PlanetaryLimb',
+      'SignalNodeAmethyst',
+      'SignalNodeCobalt',
+      'SignalNodeVolt',
+      'SignalNodePrism',
+    ]) {
+      expect(script, contains(objectName), reason: 'scene object $objectName');
+    }
   });
 
   test(
