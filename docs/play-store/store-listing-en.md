@@ -1,6 +1,6 @@
 # Google Play store listing — English (US)
 
-Status: DRAFT — owner must confirm the final product name, category, countries, and release track before submission.
+Status: PLAY CONSOLE DRAFT — localized text saved on 2026-08-05; graphics and final review remain pending.
 
 Title: Tokenfront: Orbital Signal War
 Short description: Command a living signal through a 4,000-unit offline orbital war.

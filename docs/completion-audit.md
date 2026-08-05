@@ -5,19 +5,15 @@
 - Repository root: `/Users/toris/projects/aiArena`
 - Audited product: Flutter + Flame offline single-player MVP
 
-**Task 12 status: INTERIM FEATURE PREVIEW — PRIVACY REDEPLOY REQUIRED.** The
-current release Web artifact is built and its 46-line pre-deploy digest is
-recorded at `.omo/evidence/task-12/tokenfront-orbital-war-build.sha256`; the
-digest file SHA-256 is
-`b575725e9a9fe9a80d82a8b5abc99cb7e8ae6c49568ee095b2d957ad03f9c4f7`. Forty-six
-files were uploaded to the retained `tokenfront-orbital-war` Pages project as
-production deployment `e74f7d12-c7c5-40c0-9d87-83240b57de5c` at
-`2026-08-04T20:53:49.386Z` (`2026-08-05T05:53:49.386+09:00`); the canonical
-preview URL is <https://tokenfront-orbital-war.pages.dev/>. This is a dirty
-working-tree feature preview whose Cloudflare source metadata still names base
-commit `f246035`, not commit-bound final release evidence. Task 7 must rebuild
-and redeploy after the in-app privacy surface exists and prove Web/AAB source
-parity.
+**Web release status: PRIVACY-COMPLETE PRODUCTION DEPLOYMENT VERIFIED.** Commit
+`6620db3e30f97e66b1d6aad5adb916065607f71d` was built and deployed to the
+retained `tokenfront-orbital-war` Cloudflare Pages project. The immutable
+deployment is <https://32b36d4b.tokenfront-orbital-war.pages.dev/> and the
+canonical production URL is <https://tokenfront-orbital-war.pages.dev/>. The
+public policy is available at
+<https://tokenfront-orbital-war.pages.dev/privacy.html>. Local, canonical, and
+immutable policy responses were byte-identical: 14,317 bytes with SHA-256
+`1f0f9bfe4bd51f4786a27467780527d864d71cd1cb2edc0b757fe8a543777d6d`.
 
 This is an evidence audit, not a store-release declaration. “Verified” means the current workspace contains the implementation plus a relevant passing automated test, successful build/runtime command, or a recorded hands-on target-platform check. Browser visual QA is identified as hands-on rather than automated.
 
@@ -209,11 +205,11 @@ smoke plus ten deterministic Chronicle/Skirmish scenarios):
 
 1. **Live ad and analytics integrations:** select and connect AdMob/H5 Games Ads and the production analytics SDK/endpoint; add publisher/ad-unit IDs, credentials, live inventory/event receipt, and provider failure QA.
 2. **Native iOS ATT:** implement the native system prompt and approve the final ATT purpose string/consent copy.
-3. **Signing and store privacy metadata:** configure Android/iOS release signing and provisioning; complete store privacy/data-safety declarations, privacy policy, ad disclosure, age rating, target markets, screenshots, and submission metadata.
+3. **Play publishing handoff:** generate the explicitly approved first upload key outside Git, audit the signed AAB, upload the validated graphics, complete IARC/Data Safety, configure the four-country production release, and submit it for review.
 4. **Long-duration and cross-platform performance acceptance:** the 60 average / 30 dense target was verified only for the historical 400-unit SM A175N session. Current 4,000-unit device acceptance remains pending; collect long-duration memory, thermal, endurance, FPS, and 1% low data on representative real Android/iOS devices and deployed browsers. Compare default CanvasKit and optional Skwasm only if the Wasm path is selected for production.
 
 ## Audit conclusion
 
 The requested gameplay MVP, deterministic combat rules, handoff experience, responsive cross-platform controls, far-AI throttling, fixed 4,000-unit pool, expanded camera and tactical minimap, sub-600dp Android/iOS/Web landscape-request and portrait-gate flow, render culling, Blender MCP runtime atlas, offline-safe service boundaries, and automated regression suite are implemented and evidenced. The 2026-07-15 Android physical, iOS Simulator, Safari, and Chrome checks remain preserved platform evidence for the prior build. The relay-tape `PathMetrics` fix remains regression-tested, while the former SM A175N result is treated strictly as a historical 400-unit performance baseline.
 
-The workspace is not yet store-ready because live provider credentials/SDKs, native ATT UI/copy, release signing/store declarations, and long-duration real-device performance acceptance remain open. Device-local persistence is now implemented and verified; account synchronization or a purchase ledger would be a separate requirement if War Tokens ever become purchasable.
+The offline NoOp Android release intentionally contains no live ad or analytics SDK, so provider credentials and iOS ATT are not Play-release prerequisites for this artifact. The remaining Play gates are explicit upload-key/legal confirmation, signed-AAB evidence, browser file-upload permission, IARC/Data Safety completion, release availability, and submission. Long-duration physical-device performance remains a separate acceptance risk; the current API 37 emulator integration and profile evidence are green.
