@@ -6,9 +6,9 @@
 - Audited product: Flutter + Flame offline single-player MVP
 
 **Web release status: PRIVACY-COMPLETE PRODUCTION DEPLOYMENT VERIFIED.** Commit
-`6620db3e30f97e66b1d6aad5adb916065607f71d` was built and deployed to the
+`c3a294f` was built as version `1.1.0+2` and deployed to the
 retained `tokenfront-orbital-war` Cloudflare Pages project. The immutable
-deployment is <https://32b36d4b.tokenfront-orbital-war.pages.dev/> and the
+deployment is <https://57b98656.tokenfront-orbital-war.pages.dev/> and the
 canonical production URL is <https://tokenfront-orbital-war.pages.dev/>. The
 public policy is available at
 <https://tokenfront-orbital-war.pages.dev/privacy.html>. Local, canonical, and

@@ -2,6 +2,8 @@
 
 Observed UTC: 2026-08-05T01:04:53Z
 State: DRAFT — NOT SUBMITTED
+Local release version: 1.1.0 (versionCode 2)
+Cloudflare immutable deployment: https://57b98656.tokenfront-orbital-war.pages.dev/
 
 ## Canonical app
 
