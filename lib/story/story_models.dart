@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/foundation.dart' show mapEquals, setEquals;
 import 'package:tokenfront/game/simulation.dart';
 
 enum GameMode { chronicle, skirmish }
@@ -16,6 +16,11 @@ enum DirectiveKind {
 enum EndingChoice { claimRelay, openRelay }
 
 enum ChronicleEndReason { timeLimit, globalResolution, playerEliminated }
+
+/// The campaign-level doctrine implied by the routes selected across
+/// concluded operations. This is descriptive only; it does not change combat
+/// power or simulation outcomes.
+enum SignalDoctrine { undecided, preserve, force, balanced }
 
 final class Directive {
   const Directive({required this.kind, required this.target});
@@ -101,6 +106,8 @@ final class BattleReport {
     required this.longestCommandLinkSeconds,
     required this.playerRank,
     required this.playerSurvivors,
+    this.manualRelays = 0,
+    this.relayRoute,
   }) : standingsAtConclusion = List<FactionStanding>.unmodifiable(
          standingsAtConclusion,
        );
@@ -113,6 +120,16 @@ final class BattleReport {
   final double longestCommandLinkSeconds;
   final int playerRank;
   final int playerSurvivors;
+  final int manualRelays;
+  final RelayRoute? relayRoute;
+
+  /// Relays attributable to combat casualties rather than manual transfers.
+  /// Persisted/legacy reports may contain inconsistent counts, so this value
+  /// is deliberately clamped at zero.
+  int get casualtyRelays {
+    final value = commandRelays - manualRelays;
+    return value < 0 ? 0 : value;
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -125,7 +142,9 @@ final class BattleReport {
           commandKills == other.commandKills &&
           longestCommandLinkSeconds == other.longestCommandLinkSeconds &&
           playerRank == other.playerRank &&
-          playerSurvivors == other.playerSurvivors;
+          playerSurvivors == other.playerSurvivors &&
+          manualRelays == other.manualRelays &&
+          relayRoute == other.relayRoute;
 
   @override
   int get hashCode => Object.hash(
@@ -137,6 +156,8 @@ final class BattleReport {
     longestCommandLinkSeconds,
     playerRank,
     playerSurvivors,
+    manualRelays,
+    relayRoute,
   );
 }
 
@@ -171,9 +192,11 @@ final class StoryProgress {
     required Iterable<StoryOperationId> medals,
     required Iterable<StoryOperationId> recoveredTransmissions,
     required this.ending,
+    Map<StoryOperationId, RelayRoute> signalRoutes = const {},
   }) : concludedOperations = _orderedStoryIds(concludedOperations),
        medals = _orderedStoryIds(medals),
-       recoveredTransmissions = _orderedStoryIds(recoveredTransmissions);
+       recoveredTransmissions = _orderedStoryIds(recoveredTransmissions),
+       signalRoutes = _orderedSignalRoutes(signalRoutes);
 
   factory StoryProgress.initial() => StoryProgress(
     campaignFaction: null,
@@ -181,21 +204,19 @@ final class StoryProgress {
     medals: const [],
     recoveredTransmissions: const [],
     ending: null,
+    signalRoutes: const {},
   );
 
   factory StoryProgress.fromJson(Map<String, Object?> json) {
     final factionName = json['campaignFaction'];
     final endingName = json['ending'];
     final progress = StoryProgress(
-      campaignFaction: factionName == null
-          ? null
-          : Faction.values.byName(factionName as String),
+      campaignFaction: factionName == null ? null : _decodeFaction(factionName),
       concludedOperations: _decodeStoryIds(json['concludedOperations']),
       medals: _decodeStoryIds(json['medals']),
       recoveredTransmissions: _decodeStoryIds(json['recoveredTransmissions']),
-      ending: endingName == null
-          ? null
-          : EndingChoice.values.byName(endingName as String),
+      ending: endingName == null ? null : _decodeEndingChoice(endingName),
+      signalRoutes: _decodeSignalRoutes(json['signalRoutes']),
     );
     if (!progress.isSemanticallyValid) {
       throw const FormatException('story progress is semantically invalid');
@@ -208,6 +229,25 @@ final class StoryProgress {
   final Set<StoryOperationId> medals;
   final Set<StoryOperationId> recoveredTransmissions;
   final EndingChoice? ending;
+  final Map<StoryOperationId, RelayRoute> signalRoutes;
+
+  SignalDoctrine get signalDoctrine {
+    if (signalRoutes.isEmpty) return SignalDoctrine.undecided;
+    var preserveCount = 0;
+    var forceCount = 0;
+    for (final route in signalRoutes.values) {
+      switch (route) {
+        case RelayRoute.preserve:
+          preserveCount++;
+        case RelayRoute.force:
+          forceCount++;
+      }
+    }
+    if (preserveCount == forceCount) return SignalDoctrine.balanced;
+    return preserveCount > forceCount
+        ? SignalDoctrine.preserve
+        : SignalDoctrine.force;
+  }
 
   /// Whether this progress can be produced by the sequential campaign rules.
   ///
@@ -217,6 +257,7 @@ final class StoryProgress {
     if (!_isPrefix(concludedOperations)) return false;
     if (!concludedOperations.containsAll(medals)) return false;
     if (!setEquals(concludedOperations, recoveredTransmissions)) return false;
+    if (!signalRoutes.keys.every(concludedOperations.contains)) return false;
     if (concludedOperations.isNotEmpty && campaignFaction == null) return false;
     if (ending == null) return true;
     return campaignFaction != null &&
@@ -237,6 +278,7 @@ final class StoryProgress {
     medals: medals,
     recoveredTransmissions: recoveredTransmissions,
     ending: ending,
+    signalRoutes: signalRoutes,
   );
 
   /// Returns a new progress value with only the supplied fields changed.
@@ -250,6 +292,7 @@ final class StoryProgress {
     Object? medals = _unset,
     Object? recoveredTransmissions = _unset,
     Object? ending = _unset,
+    Object? signalRoutes = _unset,
   }) => StoryProgress(
     campaignFaction: identical(campaignFaction, _unset)
         ? this.campaignFaction
@@ -264,6 +307,9 @@ final class StoryProgress {
         ? this.recoveredTransmissions
         : recoveredTransmissions as Iterable<StoryOperationId>,
     ending: identical(ending, _unset) ? this.ending : ending as EndingChoice?,
+    signalRoutes: identical(signalRoutes, _unset)
+        ? this.signalRoutes
+        : signalRoutes as Map<StoryOperationId, RelayRoute>,
   );
 
   Map<String, Object?> toJson() => {
@@ -276,6 +322,10 @@ final class StoryProgress {
         .map((operation) => operation.name)
         .toList(),
     'ending': ending?.name,
+    'signalRoutes': {
+      for (final entry in signalRoutes.entries)
+        entry.key.name: entry.value.name,
+    },
   };
 
   @override
@@ -286,7 +336,8 @@ final class StoryProgress {
           setEquals(concludedOperations, other.concludedOperations) &&
           setEquals(medals, other.medals) &&
           setEquals(recoveredTransmissions, other.recoveredTransmissions) &&
-          ending == other.ending;
+          ending == other.ending &&
+          mapEquals(signalRoutes, other.signalRoutes);
 
   @override
   int get hashCode => Object.hash(
@@ -295,6 +346,9 @@ final class StoryProgress {
     Object.hashAll(medals),
     Object.hashAll(recoveredTransmissions),
     ending,
+    Object.hashAll(
+      signalRoutes.entries.map((entry) => Object.hash(entry.key, entry.value)),
+    ),
   );
 }
 
@@ -356,5 +410,76 @@ Iterable<StoryOperationId> _decodeStoryIds(Object? value) {
   if (value is! Iterable) {
     throw const FormatException('story operation IDs must be lists');
   }
-  return value.map((item) => StoryOperationId.values.byName(item as String));
+  return value.map((item) {
+    if (item is! String) {
+      throw const FormatException('story operation IDs must be strings');
+    }
+    return _decodeStoryOperationId(item);
+  });
+}
+
+Faction _decodeFaction(Object value) {
+  if (value is! String) {
+    throw const FormatException('campaign faction must be a name');
+  }
+  try {
+    return Faction.values.byName(value);
+  } on ArgumentError {
+    throw FormatException('unknown campaign faction: $value');
+  }
+}
+
+EndingChoice _decodeEndingChoice(Object value) {
+  if (value is! String) {
+    throw const FormatException('ending must be a name');
+  }
+  try {
+    return EndingChoice.values.byName(value);
+  } on ArgumentError {
+    throw FormatException('unknown ending choice: $value');
+  }
+}
+
+Map<StoryOperationId, RelayRoute> _orderedSignalRoutes(
+  Map<StoryOperationId, RelayRoute> source,
+) {
+  final ordered = <StoryOperationId, RelayRoute>{};
+  for (final operation in StoryOperationId.values) {
+    final route = source[operation];
+    if (route != null) ordered[operation] = route;
+  }
+  return Map<StoryOperationId, RelayRoute>.unmodifiable(ordered);
+}
+
+Map<StoryOperationId, RelayRoute> _decodeSignalRoutes(Object? value) {
+  if (value == null) return const {};
+  if (value is! Map) {
+    throw const FormatException('signalRoutes must be a map');
+  }
+  final routes = <StoryOperationId, RelayRoute>{};
+  for (final entry in value.entries) {
+    if (entry.key is! String || entry.value is! String) {
+      throw const FormatException('signalRoutes must map names to names');
+    }
+    final operation = _decodeStoryOperationId(entry.key as String);
+    final route = _decodeRelayRoute(entry.value as String);
+    routes[operation] = route;
+  }
+  return routes;
+}
+
+StoryOperationId _decodeStoryOperationId(String name) {
+  try {
+    return StoryOperationId.values.byName(name);
+  } on ArgumentError {
+    throw FormatException('unknown story operation ID: $name');
+  }
+}
+
+RelayRoute _decodeRelayRoute(String name) {
+  try {
+    return RelayRoute.values.byName(name);
+  } on ArgumentError {
+    throw FormatException('unknown relay route: $name');
+  }
 }

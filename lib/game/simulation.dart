@@ -594,6 +594,13 @@ class HandoffCandidateScore {
       levelScore * 0.5 + safetyScore * 0.3 + nonCombatScore * 0.2;
 }
 
+/// The reason a command handoff occurred. Casualty handoffs are automatic;
+/// manual relays are explicitly requested by the player.
+enum HandoffKind { casualty, manual }
+
+/// Deterministic policy used to choose a target for a manual relay.
+enum RelayRoute { preserve, force }
+
 class HandoffEvent {
   const HandoffEvent({
     required this.timestamp,
@@ -601,6 +608,8 @@ class HandoffEvent {
     required this.fromUnitId,
     required this.toUnitId,
     required this.score,
+    this.kind = HandoffKind.casualty,
+    this.route,
   });
 
   final double timestamp;
@@ -608,6 +617,8 @@ class HandoffEvent {
   final int fromUnitId;
   final int? toUnitId;
   final double? score;
+  final HandoffKind kind;
+  final RelayRoute? route;
 
   bool get factionEliminated => toUnitId == null;
 }
@@ -862,6 +873,8 @@ class BattleSimulation {
   List<Vec2> _nextPositions = <Vec2>[];
   final Map<int, Unit> _unitsById = {};
   final List<int> _survivorScratch = List<int>.filled(Faction.values.length, 0);
+  RelayRoute? _pendingManualRelayRoute;
+  int? _pendingManualRelaySourceId;
 
   Faction? get winner => result?.winner;
   Unit? get controlledUnit => unitById(controlledUnitId);
@@ -932,6 +945,11 @@ class BattleSimulation {
   /// rendering and follow another army while [isSpectating] is true.
   bool get isSpectating => playerFactionEliminated && !finished;
 
+  /// True after a manual relay request has been accepted and before the next
+  /// fixed simulation tick consumes it. The game layer can use this one bit to
+  /// suppress duplicate taps without polling candidate state every frame.
+  bool get manualRelayPending => _pendingManualRelayRoute != null;
+
   void spawnArmies() {
     random.reset(seed);
     resolver.random.reset(seed ^ 0xa341316c);
@@ -944,6 +962,8 @@ class BattleSimulation {
     matchElapsed = 0;
     simulationTickCount = 0;
     _simulationAccumulator = 0;
+    _pendingManualRelayRoute = null;
+    _pendingManualRelaySourceId = null;
     finished = false;
     result = null;
     playerEliminatedAt = null;
@@ -1050,6 +1070,21 @@ class BattleSimulation {
       )
       .toList(growable: false);
 
+  /// Number of live AI tokens currently backed by a faction's core.
+  int liveTokenSupply(Faction faction) {
+    var live = 0;
+    for (final unit in units) {
+      if (unit.alive && unit.faction == faction) live += 1;
+    }
+    return live.clamp(0, config.unitsPerFaction).toInt();
+  }
+
+  /// Tokens permanently burned from a faction's fixed per-core supply.
+  int burnedTokenSupply(Faction faction) =>
+      (config.unitsPerFaction - liveTokenSupply(faction))
+          .clamp(0, config.unitsPerFaction)
+          .toInt();
+
   void rebuildSpatialGrid() => grid.rebuild(units);
 
   void setPlayerInput(Vec2 direction, {bool dash = false}) {
@@ -1074,6 +1109,23 @@ class BattleSimulation {
     }
     playerFaction = faction ?? unit.faction;
     controlledUnitId = unitId;
+  }
+
+  /// Queues a deterministic manual command relay for the next fixed tick.
+  ///
+  /// No simulation state is changed by this method. A false result means the
+  /// request cannot be queued (for example, the match is finished, the
+  /// player faction is eliminated, the source is invalid/dead, or another
+  /// request is pending). Target selection and no-candidate failure are
+  /// resolved once when the request is consumed on the fixed tick.
+  bool requestManualRelay(RelayRoute route) {
+    if (finished || playerFactionEliminated || manualRelayPending) return false;
+    final source = controlledUnit;
+    if (source == null || !source.alive) return false;
+
+    _pendingManualRelaySourceId = source.id;
+    _pendingManualRelayRoute = route;
+    return true;
   }
 
   void step(double deltaSeconds) {
@@ -1116,6 +1168,7 @@ class BattleSimulation {
     }
 
     grid.rebuild(units);
+    _consumeManualRelay();
     final controlled = controlledUnit;
     for (final unit in units) {
       if (!unit.alive) continue;
@@ -1131,6 +1184,51 @@ class BattleSimulation {
     _resolveNearbyCombats();
     _handoffIfNeeded();
     _finishIfNeeded();
+  }
+
+  void _consumeManualRelay() {
+    final route = _pendingManualRelayRoute;
+    final sourceId = _pendingManualRelaySourceId;
+    _pendingManualRelayRoute = null;
+    _pendingManualRelaySourceId = null;
+    if (route == null || sourceId == null || finished) return;
+
+    final source = unitById(sourceId);
+    if (source == null ||
+        !source.alive ||
+        controlledUnitId != source.id ||
+        playerFactionEliminated) {
+      return;
+    }
+    final target = selectManualRelay(source: source, route: route);
+    if (target == null) return;
+
+    // The source survives, but no longer receives player input. Resetting its
+    // target/velocity hands it back to the normal AI controller next tick.
+    source
+      ..targetId = null
+      ..velocity = Vec2.zero
+      ..state = AiState.seek;
+    controlledUnitId = target.id;
+    target.targetId = null;
+    if (!target.isCombatLocked && !target.isRecovering) {
+      target.state = AiState.seek;
+    }
+    // The transfer tick must not carry over movement or dash input intended
+    // for the source unit into the newly controlled receiver.
+    _playerMove = Vec2.zero;
+    _playerDash = false;
+    handoffLog.add(
+      HandoffEvent(
+        timestamp: matchElapsed,
+        faction: source.faction,
+        fromUnitId: source.id,
+        toUnitId: target.id,
+        score: scoreHandoffCandidate(target).total,
+        kind: HandoffKind.manual,
+        route: route,
+      ),
+    );
   }
 
   void _updateControlledUnit(Unit unit) {
@@ -1234,6 +1332,60 @@ class BattleSimulation {
     );
   }
 
+  /// Selects a living same-faction target for a manual relay. The ordering is
+  /// intentionally lexicographic and does not consume any random stream.
+  Unit? selectManualRelay({required Unit source, required RelayRoute route}) {
+    if (!source.alive) return null;
+    grid.rebuild(units);
+    HandoffCandidateScore? best;
+    for (final candidate in units) {
+      if (!candidate.alive ||
+          candidate.id == source.id ||
+          candidate.faction != source.faction) {
+        continue;
+      }
+      // Reuse the existing bounded handoff safety query. This avoids an
+      // arena-wide scan for every same-faction candidate.
+      final candidateScore = scoreHandoffCandidate(candidate);
+      if (best == null) {
+        best = candidateScore;
+        continue;
+      }
+
+      final safetyComparison = candidateScore.safetyScore.compareTo(
+        best.safetyScore,
+      );
+      final nonCombatComparison = candidateScore.nonCombatScore.compareTo(
+        best.nonCombatScore,
+      );
+      final levelComparison = candidateScore.levelScore.compareTo(
+        best.levelScore,
+      );
+      final isBetter = switch (route) {
+        RelayRoute.preserve =>
+          safetyComparison > 0 ||
+              (safetyComparison == 0 &&
+                  (nonCombatComparison > 0 ||
+                      (nonCombatComparison == 0 &&
+                          (levelComparison > 0 ||
+                              (levelComparison == 0 &&
+                                  candidate.id < best.unit.id))))),
+        RelayRoute.force =>
+          levelComparison > 0 ||
+              (levelComparison == 0 &&
+                  (nonCombatComparison < 0 ||
+                      (nonCombatComparison == 0 &&
+                          (safetyComparison < 0 ||
+                              (safetyComparison == 0 &&
+                                  candidate.id < best.unit.id))))),
+      };
+      if (isBetter) {
+        best = candidateScore;
+      }
+    }
+    return best?.unit;
+  }
+
   Unit? selectHandoff({Faction? faction, int? fallenUnitId}) {
     faction ??= unitById(fallenUnitId)?.faction ?? playerFaction;
     if (faction == null) return null;
@@ -1278,6 +1430,7 @@ class BattleSimulation {
         fromUnitId: previous.id,
         toUnitId: successor?.id,
         score: score?.total,
+        kind: HandoffKind.casualty,
       ),
     );
   }

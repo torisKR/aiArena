@@ -22,6 +22,7 @@ import 'ui/armory_sheet.dart';
 import 'ui/archive_sheet.dart';
 import 'ui/battle_screen.dart';
 import 'ui/lobby_screen.dart';
+import 'ui/operation_briefing_screen.dart';
 import 'ui/result_screen.dart';
 import 'ui/settings_sheet.dart';
 
@@ -101,6 +102,7 @@ final class _ActiveBattle {
     required this.faction,
     required this.matchId,
     this.operation,
+    this.relayRoute,
     this.replay = false,
   });
 
@@ -108,6 +110,7 @@ final class _ActiveBattle {
   final Faction faction;
   final String matchId;
   final StoryOperation? operation;
+  final RelayRoute? relayRoute;
   final bool replay;
 }
 
@@ -140,6 +143,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   late final List<StoryOperation> storyOperations;
   bool chronicleAvailable = true;
   StoryOperation? briefingOperation;
+  RelayRoute? briefingRoute;
   _ActiveBattle? activeBattle;
   TokenfrontGame? game;
   MatchResult? result;
@@ -149,6 +153,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   int completedMatches = 0;
   int attemptNumber = 0;
   int baseReward = 0;
+  int manualRelays = 0;
+  RelayRoute? reportRoute;
   CampaignTransition? campaignTransition;
   String currentMatchId = '';
   bool bannerVisible = false;
@@ -285,7 +291,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         runtime.restartChronicle();
         setState(() {
           briefingOperation = _resolveCurrentOperation();
-          screen = _Screen.briefing;
+          briefingRoute = null;
+          screen = _Screen.lobby;
           selectedFaction = Faction.amethyst;
           chronicleFaction = Faction.amethyst;
           skirmishFaction = Faction.amethyst;
@@ -327,6 +334,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       mode: GameMode.skirmish,
       faction: faction,
       operation: null,
+      relayRoute: null,
     );
   }
 
@@ -344,16 +352,31 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       faction: runtime.storyProgress.campaignFaction ?? selectedFaction,
       operation: operation,
       replay: true,
+      relayRoute:
+          runtime.storyProgress.signalRoutes[operationId] ??
+          RelayRoute.preserve,
     );
+  }
+
+  Future<void> _openChronicleBriefing() async {
+    final operation = _resolveCurrentOperation();
+    if (!chronicleAvailable || operation == null) return;
+    setState(() {
+      briefingOperation = operation;
+      briefingRoute = null;
+      screen = _Screen.briefing;
+    });
   }
 
   Future<void> _startChronicle(Faction faction) async {
     final operation = briefingOperation;
-    if (!chronicleAvailable || operation == null) return;
+    final route = briefingRoute;
+    if (!chronicleAvailable || operation == null || route == null) return;
     await _startBattle(
       mode: GameMode.chronicle,
       faction: faction,
       operation: operation,
+      relayRoute: route,
     );
   }
 
@@ -367,8 +390,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     required GameMode mode,
     required Faction faction,
     required StoryOperation? operation,
+    RelayRoute? relayRoute,
     bool replay = false,
   }) async {
+    if (mode == GameMode.chronicle && relayRoute == null) return;
     if (_startingMatch) return;
     _startingMatch = true;
     final request = ++_battleRequest;
@@ -393,6 +418,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     relays = 0;
     elapsed = 0;
     baseReward = 0;
+    manualRelays = 0;
+    reportRoute = null;
     campaignTransition = null;
     bannerVisible = false;
     attemptNumber += 1;
@@ -408,6 +435,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       faction: battleFaction,
       matchId: currentMatchId,
       operation: operation,
+      relayRoute: mode == GameMode.chronicle ? relayRoute : null,
       replay: replay,
     );
     runtime.record(
@@ -424,6 +452,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       playerFaction: battleFaction,
       mode: mode,
       operation: operation,
+      relayRoute: mode == GameMode.chronicle ? relayRoute : null,
       seed: seed,
       config: operation == null
           ? const BattleConfig()
@@ -476,7 +505,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       (standing) => standing.faction == selectedFaction,
     );
     final matchElapsed = endedGame.simulation.matchElapsed;
-    final reward = 40 + report.commandRelays * 8 + (playerStanding.kills ~/ 5);
+    final reward = 40 + report.casualtyRelays * 8 + (playerStanding.kills ~/ 5);
     completedMatches += 1;
     runtime.claimBaseReward(matchId: currentMatchId, amount: reward);
     final active = activeBattle;
@@ -522,6 +551,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       game = null;
       result = matchResult;
       relays = report.commandRelays;
+      manualRelays = report.manualRelays;
+      reportRoute = report.relayRoute;
       elapsed = matchElapsed;
       baseReward = reward;
       campaignTransition = transition;
@@ -540,6 +571,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         mode: active?.mode ?? GameMode.skirmish,
         faction: active?.faction ?? selectedFaction,
         operation: active?.operation,
+        relayRoute: active?.relayRoute,
         replay: active?.mode == GameMode.chronicle
             ? true
             : active?.replay ?? false,
@@ -575,6 +607,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     final nextOperation = _resolveCurrentOperation();
     setState(() {
       game = null;
+      briefingRoute = null;
       screen = nextOperation == null ? _Screen.lobby : _Screen.briefing;
     });
   }
@@ -589,8 +622,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     if (mounted) setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) => switch (screen) {
+  Widget _buildScreen(BuildContext context) => switch (screen) {
     _Screen.lobby => LobbyScreen(
       selectedMode: chronicleAvailable ? GameMode.chronicle : GameMode.skirmish,
       storyProgress: runtime.storyProgress,
@@ -602,7 +634,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       },
       onSelectSkirmishFaction: (faction) =>
           setState(() => skirmishFaction = faction),
-      onDeployChronicle: _deployChronicle,
+      onDeployChronicle: _openChronicleBriefing,
       onDeploySkirmish: _deploySkirmish,
       onOpenArchive: _openArchive,
       chronicleAvailable: chronicleAvailable,
@@ -616,31 +648,43 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
       ),
     ),
-    _Screen.briefing => LobbyScreen(
-      selectedMode: GameMode.chronicle,
-      storyProgress: runtime.storyProgress,
-      rewardLedger: runtime.rewardLedger,
-      selectedChronicleFaction: chronicleFaction,
-      selectedSkirmishFaction: skirmishFaction,
-      onSelectChronicleCore: (faction) {
-        setState(() => chronicleFaction = faction);
-      },
-      onSelectSkirmishFaction: (faction) =>
-          setState(() => skirmishFaction = faction),
-      onDeployChronicle: _deployChronicle,
-      onDeploySkirmish: _deploySkirmish,
-      onOpenArchive: _openArchive,
-      chronicleAvailable: chronicleAvailable,
-      warTokenBalance: runtime.wallet.balance,
-      onOpenSettings: _openSettings,
-      onOpenLocker: _openLocker,
-      bannerVisible: bannerVisible,
-      onChooseEnding: _chooseEnding,
-      lowSpec: runtime.preferences.lowSpecMode,
-      reduceMotion: runtime.preferences.reducedMotionFor(
-        systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
-      ),
-    ),
+    _Screen.briefing =>
+      briefingOperation == null
+          ? LobbyScreen(
+              selectedMode: GameMode.chronicle,
+              storyProgress: runtime.storyProgress,
+              rewardLedger: runtime.rewardLedger,
+              selectedChronicleFaction: chronicleFaction,
+              selectedSkirmishFaction: skirmishFaction,
+              onSelectChronicleCore: (faction) =>
+                  setState(() => chronicleFaction = faction),
+              onSelectSkirmishFaction: (faction) =>
+                  setState(() => skirmishFaction = faction),
+              onDeployChronicle: _openChronicleBriefing,
+              onDeploySkirmish: _deploySkirmish,
+              onOpenArchive: _openArchive,
+              chronicleAvailable: chronicleAvailable,
+              warTokenBalance: runtime.wallet.balance,
+              onOpenSettings: _openSettings,
+              onOpenLocker: _openLocker,
+              bannerVisible: bannerVisible,
+              onChooseEnding: _chooseEnding,
+              lowSpec: runtime.preferences.lowSpecMode,
+              reduceMotion: runtime.preferences.reducedMotionFor(
+                systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(
+                  context,
+                ),
+              ),
+            )
+          : OperationBriefingScreen(
+              operation: briefingOperation!,
+              faction:
+                  runtime.storyProgress.campaignFaction ?? chronicleFaction,
+              selectedRoute: briefingRoute,
+              onSelectRoute: (route) => setState(() => briefingRoute = route),
+              onDeploy: _deployChronicle,
+              onBack: () => setState(() => screen = _Screen.lobby),
+            ),
     _Screen.battle => Stack(
       children: [
         BattleScreen(
@@ -677,6 +721,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       matchId: currentMatchId,
       playerFaction: selectedFaction,
       relays: relays,
+      manualRelays: manualRelays,
+      relayRoute: reportRoute,
       elapsed: elapsed,
       baseReward: baseReward,
       warTokenBalance: runtime.wallet.balance,
@@ -711,4 +757,22 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onCommandDeck: () => _leaveResult(rematch: false),
     ),
   };
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = runtime.preferences.reducedMotionFor(
+      systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
+    );
+    final transitionDuration = reduceMotion
+        ? Duration.zero
+        : TokenfrontMotion.screenTransition;
+    return AnimatedSwitcher(
+      duration: transitionDuration,
+      reverseDuration: transitionDuration,
+      child: KeyedSubtree(
+        key: ValueKey<_Screen>(screen),
+        child: _buildScreen(context),
+      ),
+    );
+  }
 }

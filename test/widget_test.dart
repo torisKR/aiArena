@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/app/tokenfront_state_store.dart';
+import 'package:tokenfront/design/tokens.dart';
 import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/main.dart';
@@ -20,11 +21,34 @@ import 'package:tokenfront/story/story_models.dart';
 import 'package:tokenfront/ui/battle_screen.dart';
 import 'package:tokenfront/ui/archive_sheet.dart';
 import 'package:tokenfront/ui/result_screen.dart';
+import 'package:tokenfront/ui/operation_briefing_screen.dart';
 import 'package:tokenfront/ui/primitives.dart';
 
 bool _hasSemanticsFlag(SemanticsNode node, SemanticsFlag flag) {
   // ignore: deprecated_member_use
   return node.hasFlag(flag);
+}
+
+Future<void> _deployChronicleBriefing(
+  WidgetTester tester, {
+  RelayRoute route = RelayRoute.preserve,
+}) async {
+  if (find.byKey(const Key('briefing-deploy')).evaluate().isEmpty) {
+    await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
+    await tester.tap(find.byKey(const Key('chronicle-deploy')));
+    await tester.pumpAndSettle();
+  }
+  final routeKey = route == RelayRoute.force
+      ? const Key('briefing-route-force')
+      : const Key('briefing-route-preserve');
+  await tester.ensureVisible(find.byKey(routeKey));
+  await tester.pump();
+  await tester.tap(find.byKey(routeKey));
+  await tester.pump();
+  await tester.ensureVisible(find.byKey(const Key('briefing-deploy')));
+  await tester.tap(find.byKey(const Key('briefing-deploy')));
+  await tester.pump();
+  await tester.pump();
 }
 
 final class _MemoryStateStore implements TokenfrontStateStore {
@@ -40,6 +64,67 @@ final class _MemoryStateStore implements TokenfrontStateStore {
 }
 
 void main() {
+  testWidgets('screen transition honors runtime reduced-motion preference', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    AnimatedSwitcher transition() =>
+        tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher).first);
+    expect(transition().duration, TokenfrontMotion.screenTransition);
+
+    runtime.preferences.setForceReducedMotion(true);
+    await tester.pump();
+    expect(transition().duration, Duration.zero);
+  });
+
+  testWidgets(
+    'Chronicle CTA opens a separate briefing and requires an explicit route',
+    (tester) async {
+      final runtime = TokenfrontRuntime(
+        platform: ClientPlatform.web,
+        preferences: GamePreferences(
+          audioEnabled: false,
+          hapticsEnabled: false,
+        ),
+      );
+      addTearDown(runtime.dispose);
+      await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
+      await tester.tap(find.byKey(const Key('chronicle-deploy')));
+      await tester.pumpAndSettle();
+      expect(find.byType(OperationBriefingScreen), findsOneWidget);
+      expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
+      expect(find.text('OP-01 // OP-01  //  WAKE // DEAD ORBIT'), findsNothing);
+      final deploy = tester.widget<TacticalButton>(
+        find.byKey(const Key('briefing-deploy')),
+      );
+      expect(deploy.onPressed, isNull);
+
+      await tester.ensureVisible(find.byKey(const Key('briefing-route-force')));
+      await tester.tap(find.byKey(const Key('briefing-route-force')));
+      await tester.pump();
+      expect(
+        tester
+            .widget<TacticalButton>(find.byKey(const Key('briefing-deploy')))
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.byKey(const Key('briefing-deploy')));
+      await tester.pump();
+      final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+      expect(battle.game.selectedRelayRoute, RelayRoute.force);
+      expect(runtime.storyProgress.campaignFaction, Faction.amethyst);
+    },
+  );
+
   testWidgets('orbital backdrop stays below units and is non-interactive', (
     tester,
   ) async {
@@ -94,6 +179,7 @@ void main() {
     } else {
       await tester.tap(find.text('SKIRMISH').first);
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
       await tester.tap(find.byKey(const Key('skirmish-deploy')));
     }
     await tester.pump();
@@ -220,9 +306,12 @@ void main() {
       await tester.pumpWidget(TokenfrontApp(runtime: runtime));
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.text('COBALT').first);
       await tester.tap(find.text('COBALT').first);
+      await tester.ensureVisible(find.byKey(const Key('skirmish-mode')));
       await tester.tap(find.byKey(const Key('skirmish-mode')));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('PRISM').first);
       await tester.tap(find.text('PRISM').first);
       await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
       await tester.tap(find.byKey(const Key('skirmish-deploy')));
@@ -231,16 +320,15 @@ void main() {
       skirmish.game.simulation.finalizeAtTimeLimit();
       skirmish.game.update(1 / 30);
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('LOBBY'));
       await tester.tap(find.text('LOBBY'));
       await tester.pumpAndSettle();
 
       final cobalt = tester.getSemantics(
-        find.bySemanticsLabel('Choose COBALT faction'),
+        find.bySemanticsLabel('Choose the COBALT AI core'),
       );
       expect(_hasSemanticsFlag(cobalt, SemanticsFlag.isSelected), isTrue);
-      await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
-      await tester.tap(find.byKey(const Key('chronicle-deploy')));
-      await tester.pump();
+      await _deployChronicleBriefing(tester);
       final chronicle = tester.widget<BattleScreen>(find.byType(BattleScreen));
       expect(chronicle.game.playerFaction, Faction.cobalt);
       expect(runtime.storyProgress.campaignFaction, Faction.cobalt);
@@ -267,7 +355,7 @@ void main() {
     expect(runtime.storyProgress, StoryProgress.initial());
     expect(runtime.wallet.balance, before);
     final amethyst = tester.getSemantics(
-      find.bySemanticsLabel('Choose AMETHYST faction'),
+      find.bySemanticsLabel('Choose the AMETHYST AI core'),
     );
     expect(_hasSemanticsFlag(amethyst, SemanticsFlag.isSelected), isTrue);
   });
@@ -390,6 +478,7 @@ void main() {
 
     expect(find.text('CHRONICLE UNAVAILABLE'), findsOneWidget);
     expect(find.byKey(const Key('chronicle-deploy-disabled')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
     await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
     expect(find.byType(BattleScreen), findsOneWidget);
@@ -410,10 +499,9 @@ void main() {
     await tester.tap(find.text('CHRONICLE'));
     await tester.pumpAndSettle();
     expect(find.textContaining('OP-01'), findsWidgets);
+    await tester.ensureVisible(find.text('AMETHYST').first);
     await tester.tap(find.text('AMETHYST').first);
-    await tester.ensureVisible(find.text('DEPLOY OP-01'));
-    await tester.tap(find.text('DEPLOY OP-01'));
-    await tester.pump();
+    await _deployChronicleBriefing(tester);
 
     final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
     for (final unit in battle.game.simulation.units) {
@@ -431,7 +519,7 @@ void main() {
       ),
       hasLength(1),
     );
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.textContaining('CONTINUE').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('OP-02'), findsWidgets);
   });
@@ -475,10 +563,9 @@ void main() {
 
     await tester.tap(find.text('CHRONICLE'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('AMETHYST').first);
     await tester.tap(find.text('AMETHYST').first);
-    await tester.ensureVisible(find.text('DEPLOY OP-01'));
-    await tester.tap(find.text('DEPLOY OP-01'));
-    await tester.pump();
+    await _deployChronicleBriefing(tester);
     final firstBattle = tester.widget<BattleScreen>(find.byType(BattleScreen));
     for (final unit in firstBattle.game.simulation.units) {
       if (unit.faction == Faction.amethyst) {
@@ -488,13 +575,10 @@ void main() {
     }
     firstBattle.game.update(1 / 30);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.textContaining('CONTINUE').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('COBALT').first);
-    await tester.ensureVisible(find.text('DEPLOY OP-02'));
-    await tester.tap(find.text('DEPLOY OP-02'));
-    await tester.pump();
+    await _deployChronicleBriefing(tester);
     final secondBattle = tester.widget<BattleScreen>(find.byType(BattleScreen));
     expect(secondBattle.game.mode, GameMode.chronicle);
     expect(secondBattle.game.playerFaction, Faction.amethyst);
@@ -517,9 +601,7 @@ void main() {
 
       await tester.tap(find.text('CHRONICLE'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('DEPLOY OP-01'));
-      await tester.tap(find.text('DEPLOY OP-01'));
-      await tester.pump();
+      await _deployChronicleBriefing(tester);
       final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
       for (final unit in battle.game.simulation.units) {
         if (unit.faction == Faction.amethyst) {
@@ -582,9 +664,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('CHRONICLE'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('DEPLOY OP-01'));
-    await tester.tap(find.text('DEPLOY OP-01'));
-    await tester.pump();
+    await _deployChronicleBriefing(tester);
     final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
     for (final unit in battle.game.simulation.units) {
       if (unit.faction == Faction.amethyst) {
@@ -594,10 +674,11 @@ void main() {
     }
     battle.game.update(1 / 30);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.textContaining('CONTINUE').last);
     await tester.pumpAndSettle();
     expect(find.text('CHRONICLE UNAVAILABLE'), findsOneWidget);
     expect(find.byKey(const Key('chronicle-deploy-disabled')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
     await tester.tap(find.byKey(const Key('skirmish-deploy')));
     await tester.pump();
     expect(find.byType(BattleScreen), findsOneWidget);
@@ -613,7 +694,12 @@ void main() {
     expect(find.text('COBALT'), findsOneWidget);
     expect(find.text('VOLT'), findsOneWidget);
     expect(find.text('PRISM'), findsOneWidget);
-    expect(find.text('1000 UNITS'), findsNWidgets(4));
+    expect(find.text('1000 AI TOKENS'), findsNWidgets(4));
+    expect(
+      find.text('FOUR AI CORES. 4,000 LIVE TOKENS. ONE LAST RELAY.'),
+      findsOneWidget,
+    );
+    expect(find.text('COMMAND THE TOKEN FLOW.'), findsOneWidget);
     expect(find.text('4,000'), findsOneWidget);
     await tester.tap(find.byKey(const Key('skirmish-mode')));
     await tester.pumpAndSettle();

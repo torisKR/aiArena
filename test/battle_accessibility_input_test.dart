@@ -16,22 +16,64 @@ import 'package:tokenfront/ui/battle_screen.dart';
 
 TokenfrontGame _game({
   StoryOperation? operation,
+  RelayRoute? relayRoute,
   bool reduceMotion = false,
   bool lowSpecMode = false,
   bool mouseCameraEnabled = true,
   BattleConfig config = const BattleConfig(unitsPerFaction: 20),
+  ValueChanged<BattleReport>? onBattleConcluded,
 }) => TokenfrontGame(
   playerFaction: Faction.amethyst,
   mode: operation == null ? GameMode.skirmish : GameMode.chronicle,
   operation: operation,
+  relayRoute: relayRoute,
   config: config,
   reduceMotion: reduceMotion,
   lowSpecMode: lowSpecMode,
   mouseCameraEnabled: mouseCameraEnabled,
   hapticsEnabled: false,
   audioEnabled: false,
-  onBattleConcluded: (_) {},
+  onBattleConcluded: onBattleConcluded ?? (_) {},
 );
+
+const _relayOperation = StoryOperation(
+  id: StoryOperationId.wake,
+  seed: 2026080505,
+  duration: Duration(seconds: 180),
+  directive: Directive(kind: DirectiveKind.commandRelays, target: 1),
+  oneTimeBonus: 25,
+);
+
+TokenfrontGame _relayGame({RelayRoute route = RelayRoute.preserve}) => _game(
+  operation: _relayOperation,
+  relayRoute: route,
+  config: const BattleConfig(unitsPerFaction: 2),
+);
+
+void _isolateRelayUnits(TokenfrontGame game) {
+  final controlled = game.simulation.controlledUnit!;
+  final enemy = game.simulation.units.firstWhere(
+    (unit) => unit.faction != controlled.faction,
+  );
+  for (final unit in game.simulation.units) {
+    unit
+      ..alive = unit.faction == controlled.faction || unit.id == enemy.id
+      ..state = unit.faction == controlled.faction
+          ? AiState.seek
+          : AiState.dead;
+  }
+  enemy.state = AiState.seek;
+  enemy
+    ..position = const Vec2(2100, 1300)
+    ..state = AiState.recover
+    ..recoverRemaining = 1000;
+  controlled.position = const Vec2(500, 500);
+  final target = game.simulation.units.firstWhere(
+    (unit) => unit.faction == controlled.faction && unit.id != controlled.id,
+  );
+  target.position = const Vec2(680, 560);
+  game.simulation.rebuildSpatialGrid();
+}
 
 KeyDownEvent _keyDown(
   PhysicalKeyboardKey physical,
@@ -203,6 +245,153 @@ void main() {
       expect(game.handoffStage, isNull);
       expect(game.simulation.controlledUnit, isNotNull);
       expect(game.simulation.controlledUnit!.faction, Faction.amethyst);
+    });
+
+    test(
+      'Chronicle manual relay starts ready and consumes charge on event',
+      () {
+        final game = _relayGame(route: RelayRoute.force);
+        _isolateRelayUnits(game);
+        final source = game.simulation.controlledUnit!;
+
+        expect(game.selectedRelayRoute, RelayRoute.force);
+        expect(game.manualRelayCharge, 1);
+        expect(game.manualRelayReady, isTrue);
+        expect(game.hud.value.manualRelayReady, isTrue);
+        expect(game.triggerManualRelay(), isTrue);
+        expect(game.manualRelayCharge, 1);
+        expect(game.manualRelayPending, isTrue);
+
+        game.update(.04);
+
+        expect(game.simulation.handoffLog, hasLength(1));
+        expect(game.simulation.handoffLog.single.kind, HandoffKind.manual);
+        expect(game.simulation.handoffLog.single.route, RelayRoute.force);
+        expect(game.manualRelayCharge, 0);
+        expect(game.manualRelayReady, isFalse);
+        expect(game.debugFallenUnitId, isNull);
+        expect(source.alive, isTrue);
+        expect(game.handoffElapsed, 0);
+
+        _advance(game, HandoffTimeline.duration + .1);
+        expect(game.handoffStage, isNull);
+        expect(game.commandRelays, 1);
+        expect(game.manualRelayCount, 1);
+      },
+    );
+
+    test('manual relay recharge uses exactly 45 simulation seconds', () {
+      final game = _relayGame();
+      _isolateRelayUnits(game);
+      expect(game.triggerManualRelay(), isTrue);
+      game.update(.04);
+      final eventTimestamp = game.simulation.handoffLog.single.timestamp;
+      _advance(game, HandoffTimeline.duration);
+      expect(game.manualRelayCharge, lessThan(1));
+      var guard = 0;
+      while (game.manualRelayCharge! < 1 - 1e-9 && guard < 2000) {
+        game.update(.025);
+        guard += 1;
+      }
+      expect(game.manualRelayCharge, closeTo(1, 1e-9));
+      expect(
+        game.simulation.matchElapsed - eventTimestamp,
+        greaterThanOrEqualTo(45),
+      );
+      expect(game.simulation.matchElapsed - eventTimestamp, lessThan(45.1));
+      expect(game.manualRelayReady, isTrue);
+    });
+
+    test(
+      'failed manual relay keeps a full charge and Skirmish is disabled',
+      () {
+        final game = _game(
+          operation: _relayOperation,
+          config: const BattleConfig(unitsPerFaction: 1),
+        );
+        expect(game.manualRelayCharge, 1);
+        expect(game.hud.value.manualRelayCharge, 1);
+        expect(game.triggerManualRelay(), isTrue);
+        game.update(.04);
+
+        expect(game.simulation.handoffLog, isEmpty);
+        expect(game.manualRelayCharge, 1);
+        expect(game.manualRelayReady, isTrue);
+        expect(game.hud.value.manualRelayPending, isFalse);
+
+        final skirmish = _game();
+        expect(skirmish.selectedRelayRoute, isNull);
+        expect(skirmish.manualRelayCharge, isNull);
+        expect(skirmish.manualRelayReady, isFalse);
+        expect(skirmish.triggerManualRelay(), isFalse);
+      },
+    );
+
+    test('manual relay report separates total/manual counts and route', () {
+      final reports = <BattleReport>[];
+      final game = _game(
+        operation: _relayOperation,
+        relayRoute: RelayRoute.force,
+        config: const BattleConfig(unitsPerFaction: 2),
+        onBattleConcluded: reports.add,
+      );
+      _isolateRelayUnits(game);
+      expect(game.triggerManualRelay(), isTrue);
+      game.update(.04);
+      _advance(game, HandoffTimeline.duration + .1);
+      game.simulation.finalizeAtTimeLimit();
+      game.update(.04);
+
+      expect(reports, hasLength(1));
+      expect(reports.single.commandRelays, 1);
+      expect(reports.single.manualRelays, 1);
+      expect(reports.single.casualtyRelays, 0);
+      expect(reports.single.relayRoute, RelayRoute.force);
+    });
+
+    test('manual receiver loss fails current relay before queued casualty', () {
+      final game = _game(
+        operation: _relayOperation,
+        config: const BattleConfig(unitsPerFaction: 3),
+      );
+      _isolateRelayUnits(game);
+      final source = game.simulation.controlledUnit!;
+      final receiver = game.simulation.units.firstWhere(
+        (unit) => unit.faction == source.faction && unit.id != source.id,
+      );
+      final casualtySuccessor = game.simulation.units.lastWhere(
+        (unit) => unit.faction == source.faction && unit.id != source.id,
+      );
+      expect(game.triggerManualRelay(), isTrue);
+      game.update(.04);
+      expect(game.simulation.handoffLog.single.kind, HandoffKind.manual);
+
+      receiver
+        ..alive = false
+        ..state = AiState.dead;
+      game.simulation.setControlledUnit(null, faction: source.faction);
+      game.simulation.handoffLog.add(
+        HandoffEvent(
+          timestamp: game.simulation.matchElapsed,
+          faction: source.faction,
+          fromUnitId: receiver.id,
+          toUnitId: casualtySuccessor.id,
+          score: 0,
+          kind: HandoffKind.casualty,
+        ),
+      );
+      game.update(.04);
+      expect(game.handoffStage, HandoffStage.impactHold);
+
+      _advance(game, HandoffTimeline.duration + .1);
+      expect(game.manualRelayCount, 0);
+      expect(game.commandRelays, 0);
+      expect(game.handoffStage, HandoffStage.impactHold);
+
+      _advance(game, HandoffTimeline.duration + .1);
+      expect(game.manualRelayCount, 0);
+      expect(game.commandRelays, 1);
+      expect(game.handoffStage, isNull);
     });
   });
 
@@ -610,6 +799,39 @@ void main() {
       await tester.pump();
       expect(game.hud.value.lowSpecMode, isFalse);
       expect(game.debugDashActive, isFalse);
+    });
+
+    testWidgets('R reaches the game from an unrelated focused HUD control', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(844, 390);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final game = _relayGame();
+      _isolateRelayUnits(game);
+
+      await tester.pumpWidget(_localizedBattle(BattleScreen(game: game)));
+      await tester.pump(const Duration(milliseconds: 50));
+      final lowPower = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.label == 'Low power mode',
+      );
+      final lowPowerLabel = find.descendant(
+        of: lowPower,
+        matching: find.text('ECO'),
+      );
+      final buttonFocus = Focus.of(tester.element(lowPowerLabel));
+      buttonFocus.requestFocus();
+      await tester.pump();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyR);
+      await tester.pump();
+      expect(game.simulation.manualRelayPending, isTrue);
+      expect(game.manualRelayCharge, 1);
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.keyR);
+      await tester.pump();
+      expect(game.simulation.manualRelayPending, isTrue);
     });
 
     testWidgets('minimap arrow repeats stay camera-only', (tester) async {

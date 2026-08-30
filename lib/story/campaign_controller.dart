@@ -84,7 +84,11 @@ final class CampaignController {
     final concluded = {...progress.concludedOperations, operationId};
     final transmissions = {...progress.recoveredTransmissions, operationId};
     final medals = {...progress.medals};
+    final signalRoutes = {...progress.signalRoutes};
     if (succeeded) medals.add(operationId);
+    if (report.relayRoute != null) {
+      signalRoutes[operationId] = report.relayRoute!;
+    }
 
     final hasClaim = ledger.claimedDirectiveBonusIds.contains(
       operation.bonusClaimId,
@@ -104,6 +108,7 @@ final class CampaignController {
         concludedOperations: concluded,
         medals: medals,
         recoveredTransmissions: transmissions,
+        signalRoutes: signalRoutes,
       ),
       nextLedger: nextLedger,
       directiveSucceeded: succeeded,

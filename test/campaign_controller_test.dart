@@ -142,6 +142,89 @@ void main() {
     expect(duplicate.nextProgress.currentOperation, StoryOperationId.echo);
   });
 
+  test('first conclusion records the selected preserve or force route', () {
+    final preserve = controller.conclude(
+      progress: StoryProgress.initial().lockCore(Faction.amethyst),
+      ledger: ProfileRewardLedger.empty(),
+      operationId: StoryOperationId.wake,
+      report: report(link: 45, route: RelayRoute.preserve),
+      replay: false,
+    );
+    expect(preserve.nextProgress.signalRoutes, {
+      StoryOperationId.wake: RelayRoute.preserve,
+    });
+
+    final force = controller.conclude(
+      progress: StoryProgress.initial().lockCore(Faction.amethyst),
+      ledger: ProfileRewardLedger.empty(),
+      operationId: StoryOperationId.wake,
+      report: report(link: 45, route: RelayRoute.force),
+      replay: false,
+    );
+    expect(force.nextProgress.signalRoutes, {
+      StoryOperationId.wake: RelayRoute.force,
+    });
+  });
+
+  test(
+    'successful replay with the opposite route never overwrites history',
+    () {
+      final first = controller.conclude(
+        progress: StoryProgress.initial().lockCore(Faction.amethyst),
+        ledger: ProfileRewardLedger.empty(),
+        operationId: StoryOperationId.wake,
+        report: report(link: 45, route: RelayRoute.preserve),
+        replay: false,
+      );
+      final replay = controller.conclude(
+        progress: first.nextProgress,
+        ledger: first.nextLedger,
+        operationId: StoryOperationId.wake,
+        report: report(link: 45, route: RelayRoute.force),
+        replay: true,
+      );
+
+      expect(replay.nextProgress.signalRoutes, {
+        StoryOperationId.wake: RelayRoute.preserve,
+      });
+    },
+  );
+
+  test('legacy report without a route does not invent route history', () {
+    final transition = controller.conclude(
+      progress: StoryProgress.initial().lockCore(Faction.amethyst),
+      ledger: ProfileRewardLedger.empty(),
+      operationId: StoryOperationId.wake,
+      report: report(link: 45),
+      replay: false,
+    );
+
+    expect(transition.nextProgress.signalRoutes, isEmpty);
+  });
+
+  test('OP-02 counts manual and casualty relays toward its directive', () {
+    final progress = StoryProgress.initial()
+        .lockCore(Faction.amethyst)
+        .copyWith(
+          concludedOperations: const {StoryOperationId.wake},
+          recoveredTransmissions: const {StoryOperationId.wake},
+        );
+    final transition = controller.conclude(
+      progress: progress,
+      ledger: ProfileRewardLedger.empty(),
+      operationId: StoryOperationId.echo,
+      report: report(relays: 2, manualRelays: 1),
+      replay: false,
+    );
+
+    expect(transition.directiveSucceeded, isTrue);
+    expect(transition.directiveBonusCredit, 20);
+    expect(transition.nextProgress.concludedOperations, {
+      StoryOperationId.wake,
+      StoryOperationId.echo,
+    });
+  });
+
   test(
     'successful replay restores a missing medal and unclaimed bonus only',
     () {
@@ -279,6 +362,8 @@ BattleReport report({
   double link = 0,
   int rank = 4,
   int survivors = 0,
+  int manualRelays = 0,
+  RelayRoute? route,
   List<FactionStanding>? standings,
 }) {
   return BattleReport(
@@ -317,5 +402,7 @@ BattleReport report({
     longestCommandLinkSeconds: link,
     playerRank: rank,
     playerSurvivors: survivors,
+    manualRelays: manualRelays,
+    relayRoute: route,
   );
 }

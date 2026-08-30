@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../design/tokens.dart';
+import '../game/simulation.dart';
 import '../l10n/l10n.dart';
 import '../story/story_catalog.dart';
 import '../story/story_localizations.dart';
 import '../story/story_models.dart';
+import 'living_relay_thread.dart';
 import 'primitives.dart';
 
 Future<void> showSignalArchive({
@@ -18,7 +20,9 @@ Future<void> showSignalArchive({
   isScrollControlled: true,
   backgroundColor: TokenfrontColors.deepField,
   shape: const BeveledRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    borderRadius: BorderRadius.vertical(
+      top: Radius.circular(TokenfrontRadii.control * 2),
+    ),
   ),
   builder: (context) => _ArchiveSheet(
     storyProgress: storyProgress,
@@ -74,7 +78,12 @@ final class _ArchiveSheet extends StatelessWidget {
     final copy = StoryLocalizations(context.l10n);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
+        padding: const EdgeInsets.fromLTRB(
+          TokenfrontSpacing.lg,
+          TokenfrontSpacing.lg,
+          TokenfrontSpacing.lg,
+          TokenfrontSpacing.xxl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -93,37 +102,37 @@ final class _ArchiveSheet extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: TokenfrontSpacing.xs),
             if (storyProgress.ending != null)
               Text(
                 copy.archiveSimulation,
                 style: TokenfrontType.instrument.copyWith(
-                  color: TokenfrontColors.quietText,
+                  color: TokenfrontColors.archiveAsh,
                   fontSize: 9,
                 ),
               ),
-            const SizedBox(height: 14),
-            for (final operation in StoryCatalog.operations)
-              _ArchiveRow(
-                operation: operation,
-                progress: storyProgress,
-                rewardLedger: rewardLedger,
-                onReplay: onReplay,
-              ),
+            const SizedBox(height: TokenfrontSpacing.md),
+            _ArchiveTimeline(
+              progress: storyProgress,
+              rewardLedger: rewardLedger,
+              onReplay: onReplay,
+            ),
+            if (storyProgress.signalDoctrine != SignalDoctrine.undecided)
+              _RoutingPattern(progress: storyProgress, copy: copy),
             if (storyProgress.ending case final ending?) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: TokenfrontSpacing.lg),
               TacticalPanel(
                 borderColor: TokenfrontColors.volt.withValues(alpha: .7),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(copy.endingHeading, style: TokenfrontType.instrument),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: TokenfrontSpacing.sm),
                     Text(
                       copy.endingEpilogue(ending),
                       style: TokenfrontType.body,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: TokenfrontSpacing.md),
                     Text(
                       copy.archiveSimulation,
                       style: TokenfrontType.instrument.copyWith(
@@ -135,7 +144,7 @@ final class _ArchiveSheet extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 18),
+            const SizedBox(height: TokenfrontSpacing.lg),
             OutlinedButton.icon(
               onPressed: onRestart == null
                   ? null
@@ -144,7 +153,9 @@ final class _ArchiveSheet extends StatelessWidget {
               label: Text(copy.restart),
               style: OutlinedButton.styleFrom(
                 foregroundColor: TokenfrontColors.danger,
-                minimumSize: const Size.fromHeight(48),
+                minimumSize: const Size.fromHeight(
+                  TokenfrontSpacing.xxl + TokenfrontSpacing.lg,
+                ),
                 side: BorderSide(
                   color: TokenfrontColors.danger.withValues(alpha: .65),
                 ),
@@ -152,6 +163,88 @@ final class _ArchiveSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+final class _ArchiveTimeline extends StatelessWidget {
+  const _ArchiveTimeline({
+    required this.progress,
+    required this.rewardLedger,
+    required this.onReplay,
+  });
+
+  final StoryProgress progress;
+  final ProfileRewardLedger rewardLedger;
+  final ValueChanged<StoryOperationId>? onReplay;
+
+  List<LivingRelayThreadNode> _nodes() => [
+    for (final operation in StoryOperationId.values)
+      LivingRelayThreadNode(
+        identifier: 'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
+        state: progress.concludedOperations.contains(operation)
+            ? LivingRelayThreadNodeState.confirmed
+            : progress.currentOperation == operation
+            ? LivingRelayThreadNodeState.current
+            : LivingRelayThreadNodeState.locked,
+      ),
+  ];
+
+  List<LivingRelayThreadSegment> _segments() => [
+    for (var index = 0; index < LivingRelayThread.routeSegmentCount; index++)
+      LivingRelayThreadSegment(
+        state:
+            progress.concludedOperations.contains(
+              StoryOperationId.values[index],
+            )
+            ? progress.signalRoutes[StoryOperationId.values[index]] ==
+                      RelayRoute.force
+                  ? LivingRelayThreadNodeState.fault
+                  : LivingRelayThreadNodeState.confirmed
+            : progress.currentOperation == StoryOperationId.values[index]
+            ? LivingRelayThreadNodeState.current
+            : LivingRelayThreadNodeState.locked,
+      ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    return Semantics(
+      key: const Key('archive-living-relay-thread'),
+      container: true,
+      label: '${copy.archive} // ${copy.livingRelayThread}',
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: TokenfrontSpacing.xl,
+            child: LivingRelayThread(
+              variant: LivingRelayThreadVariant.verticalArchive,
+              nodes: _nodes(),
+              segments: _segments(),
+              progress: 0,
+              animate: false,
+              semanticLabel: null,
+              height: TokenfrontSpacing.xxl * 5 + TokenfrontSpacing.lg,
+            ),
+          ),
+          const SizedBox(width: TokenfrontSpacing.md),
+          Expanded(
+            child: Column(
+              children: [
+                for (final operation in StoryCatalog.operations)
+                  _ArchiveRow(
+                    operation: operation,
+                    progress: progress,
+                    rewardLedger: rewardLedger,
+                    onReplay: onReplay,
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -178,22 +271,47 @@ final class _ArchiveRow extends StatelessWidget {
     final locked = !concluded && !current;
     if (locked) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 9),
-        child: TacticalPanel(
-          padding: const EdgeInsets.all(13),
+        padding: const EdgeInsets.only(bottom: TokenfrontSpacing.sm),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(
+            TokenfrontSpacing.md,
+            TokenfrontSpacing.md,
+            TokenfrontSpacing.sm,
+            TokenfrontSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: TokenfrontColors.archiveAsh.withValues(alpha: .35),
+              ),
+            ),
+          ),
           child: Row(
             children: [
               const Icon(
                 Icons.lock_outline,
                 size: 18,
-                color: TokenfrontColors.quietText,
+                color: TokenfrontColors.archiveAsh,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: TokenfrontSpacing.md),
               Text(
                 'OP-${(operation.id.index + 1).toString().padLeft(2, '0')}',
                 style: TokenfrontType.instrument.copyWith(
-                  color: TokenfrontColors.quietText,
+                  color: TokenfrontColors.archiveAsh,
                   fontSize: 11,
+                ),
+              ),
+              const SizedBox(
+                width: TokenfrontSpacing.sm + TokenfrontSpacing.xs,
+              ),
+              Expanded(
+                child: Text(
+                  _lockedTeaser(operation, copy),
+                  key: Key('locked-teaser-${operation.id.name}'),
+                  style: TokenfrontType.body.copyWith(
+                    color: TokenfrontColors.archiveAsh,
+                    fontSize: 11,
+                  ),
                 ),
               ),
             ],
@@ -203,10 +321,19 @@ final class _ArchiveRow extends StatelessWidget {
     }
     if (current) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 9),
-        child: TacticalPanel(
-          borderColor: TokenfrontColors.relayIvory,
-          padding: const EdgeInsets.fromLTRB(13, 12, 10, 12),
+        padding: const EdgeInsets.only(bottom: TokenfrontSpacing.sm),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(
+            TokenfrontSpacing.md,
+            TokenfrontSpacing.md,
+            TokenfrontSpacing.sm,
+            TokenfrontSpacing.md,
+          ),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: TokenfrontColors.threadCyan),
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -217,7 +344,7 @@ final class _ArchiveRow extends StatelessWidget {
                   fontSize: 11,
                 ),
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: TokenfrontSpacing.sm),
               Text(
                 copy.currentOperation,
                 style: TokenfrontType.instrument.copyWith(
@@ -225,7 +352,16 @@ final class _ArchiveRow extends StatelessWidget {
                   fontSize: 9,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: TokenfrontSpacing.xs),
+              Text(
+                copy.incident(operation.id),
+                key: Key('archive-incident-${operation.id.name}'),
+                style: TokenfrontType.body.copyWith(
+                  color: TokenfrontColors.relayIvory,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: TokenfrontSpacing.sm),
               Text(
                 copy.directiveLabel(
                   operation.directive.kind,
@@ -249,12 +385,21 @@ final class _ArchiveRow extends StatelessWidget {
         ? copy.bonusClaimed
         : copy.directiveBonus(operation.oneTimeBonus);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
-      child: TacticalPanel(
-        padding: const EdgeInsets.fromLTRB(13, 12, 10, 12),
-        borderColor: current
-            ? TokenfrontColors.relayIvory
-            : TokenfrontColors.relayIvory.withValues(alpha: .22),
+      padding: const EdgeInsets.only(bottom: TokenfrontSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          TokenfrontSpacing.md,
+          TokenfrontSpacing.md,
+          TokenfrontSpacing.sm,
+          TokenfrontSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: TokenfrontColors.archiveAsh.withValues(alpha: .35),
+            ),
+          ),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -269,7 +414,7 @@ final class _ArchiveRow extends StatelessWidget {
                       fontSize: 11,
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: TokenfrontSpacing.sm),
                   Text(
                     transmission,
                     style: TokenfrontType.body.copyWith(
@@ -277,7 +422,18 @@ final class _ArchiveRow extends StatelessWidget {
                       color: null,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: TokenfrontSpacing.xs),
+                  if (progress.signalRoutes[operation.id] case final route?)
+                    Text(
+                      copy.routeLabel(route),
+                      key: Key('canonical-route-${operation.id.name}'),
+                      style: TokenfrontType.instrument.copyWith(
+                        color: TokenfrontColors.threadCyan,
+                        fontSize: 10,
+                      ),
+                    ),
+                  if (progress.signalRoutes[operation.id] != null)
+                    const SizedBox(height: TokenfrontSpacing.xs),
                   Text(
                     '$medal  //  $bonus',
                     style: TokenfrontType.instrument.copyWith(
@@ -299,6 +455,45 @@ final class _ArchiveRow extends StatelessWidget {
                 child: Text(copy.retryDirective),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+String _lockedTeaser(StoryOperation operation, StoryLocalizations copy) {
+  final title = copy.operationTitle(operation.id);
+  final marker = title.lastIndexOf('//');
+  final teaser = marker == -1 ? title : title.substring(marker + 2).trim();
+  return '$teaser?';
+}
+
+final class _RoutingPattern extends StatelessWidget {
+  const _RoutingPattern({required this.progress, required this.copy});
+
+  final StoryProgress progress;
+  final StoryLocalizations copy;
+
+  @override
+  Widget build(BuildContext context) {
+    final pattern = switch (progress.signalDoctrine) {
+      SignalDoctrine.preserve => 'CONTINUITY',
+      SignalDoctrine.force => 'PRESSURE',
+      SignalDoctrine.balanced => 'ADAPTIVE',
+      SignalDoctrine.undecided => '',
+    };
+    if (pattern.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: TokenfrontSpacing.xs,
+        bottom: TokenfrontSpacing.sm,
+      ),
+      child: Text(
+        copy.routingPattern(copy.patternLabel(pattern)),
+        key: const Key('routing-pattern'),
+        style: TokenfrontType.instrument.copyWith(
+          color: TokenfrontColors.threadCyan,
+          fontSize: 10,
         ),
       ),
     );

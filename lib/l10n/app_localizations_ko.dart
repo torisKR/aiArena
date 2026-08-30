@@ -12,7 +12,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appTitle => 'Tokenfront: 궤도 신호전';
 
   @override
-  String get lobbyTagline => '네 AI 코어. 단 하나의 최후 릴레이.';
+  String get lobbyTagline => '네 AI 코어. 4,000개의 활성 토큰. 단 하나의 최후 릴레이.';
 
   @override
   String factionSignal(String faction) {
@@ -20,7 +20,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get factionBrief => '1,000 유닛 · Lv.1–10 균형 · 지휘권 연속 유지';
+  String get factionBrief => '활성 AI 토큰 1,000개 · Lv.1–10 균형 · 지휘권 연속 유지';
 
   @override
   String get deploySignal => '궤도 투입';
@@ -41,16 +41,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String chooseFaction(String faction) {
-    return '$faction 진영 선택';
+    return '$faction AI 코어 선택';
   }
 
   @override
   String unitsCount(int count) {
-    return '$count 유닛';
+    return 'AI 토큰 $count개';
   }
 
   @override
-  String get units => '유닛';
+  String get units => 'AI 토큰';
 
   @override
   String get highLevel => '고레벨';
@@ -366,7 +366,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String factionAlive(String faction, int count) {
-    return '$faction 생존 $count';
+    return '$faction 활성 AI 토큰 $count개';
   }
 
   @override
@@ -551,7 +551,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get faction => '진영';
 
   @override
-  String get alive => '생존';
+  String get alive => '활성 토큰';
 
   @override
   String get levelSum => 'Σ LV';
@@ -678,25 +678,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coreArchive => 'ARCHIVE';
 
   @override
-  String get coreArchiveIdentity => '전쟁이 지우는 것을 기억합니다.';
+  String get coreArchiveIdentity => '토큰 전쟁이 지운 문맥을 끝까지 보존합니다.';
 
   @override
   String get coreBastion => 'BASTION';
 
   @override
-  String get coreBastionIdentity => '신호가 몸체보다 오래 살아남도록 버팁니다.';
+  String get coreBastionIdentity => '연산 예산을 천천히 써서 신호를 오래 유지합니다.';
 
   @override
   String get coreSurge => 'SURGE';
 
   @override
-  String get coreSurgeIdentity => '침묵이 닫히기 전에 간극을 가로지릅니다.';
+  String get coreSurgeIdentity => '토큰을 빠르게 소각해 간극을 먼저 돌파합니다.';
 
   @override
   String get coreMirror => 'MIRROR';
 
   @override
-  String get coreMirrorIdentity => '메시지를 보존하기 위해 패턴을 바꿉니다.';
+  String get coreMirrorIdentity => '적의 패턴을 재사용해 토큰 예산을 늘립니다.';
 
   @override
   String coreResponse(String coreName) {
@@ -840,4 +840,165 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get endingOpenEpilogue => '릴레이가 열립니다. 네 코어가 같은 기억을 받습니다. 인증 전쟁이 끝납니다.';
+
+  @override
+  String get storyRoleTitle => 'AI 토큰 흐름을 지휘하라.';
+
+  @override
+  String get storyRoleBody =>
+      '궤도 00의 네 가상 AI 코어는 각각 1,000개의 동일한 연산 토큰으로 전쟁을 시작한다. 모든 유닛은 활성 AI 토큰이다. 적의 공급량을 소각하고 현재 토큰이 지워지기 전에 지휘 신호를 넘겨라.';
+
+  @override
+  String get signalFork => '신호 분기';
+
+  @override
+  String get routePreserve => '보존';
+
+  @override
+  String get routeForce => '강행';
+
+  @override
+  String get routePreserveEffect =>
+      '수동 릴레이가 교전하지 않은 아군 중 가장 안전한 대상에게 연결됩니다. 낮은 레벨의 수신자일 수 있습니다.';
+
+  @override
+  String get routeForceEffect =>
+      '수동 릴레이가 노출된 아군 중 레벨이 가장 높은 대상에게 연결됩니다. 압박은 빠르지만 손실 위험이 커집니다.';
+
+  @override
+  String get relayReady => '릴레이 준비 완료';
+
+  @override
+  String relayCharging(num current, num target) {
+    return '릴레이 $current / $target';
+  }
+
+  @override
+  String get relayNoReceiver => '수신자 없음';
+
+  @override
+  String get relayLinkResetWarning => '지금 릴레이하면 지휘 연결 진행도가 다시 시작됩니다.';
+
+  @override
+  String get changeSimulationRoute => '시뮬레이션 경로 변경';
+
+  @override
+  String get fragmentRecovered => '조각 회수';
+
+  @override
+  String get simulationComplete => '시뮬레이션 완료';
+
+  @override
+  String continueToOperation(String operation) {
+    return 'OP-$operation(으)로 계속';
+  }
+
+  @override
+  String get battleDetails => '전투 상세';
+
+  @override
+  String routingPattern(String pattern) {
+    return '라우팅 패턴 // $pattern';
+  }
+
+  @override
+  String get patternContinuity => '연속성';
+
+  @override
+  String get patternPressure => '압박';
+
+  @override
+  String get patternAdaptive => '적응형';
+
+  @override
+  String get signalDoctrineUndecided => '미결정';
+
+  @override
+  String get signalDoctrinePreserve => '보존';
+
+  @override
+  String get signalDoctrineForce => '강행';
+
+  @override
+  String get signalDoctrineBalanced => '균형';
+
+  @override
+  String get operationWakeIncident =>
+      '인간 권한의 펄스는 어떤 유닛도 지목하지 않는다. 유닛 사이를 이동하는 신호를 지목한다.';
+
+  @override
+  String get operationWakePreserve => '근원을 숨겨라';
+
+  @override
+  String get operationWakeForce => '펄스를 따라가라';
+
+  @override
+  String get operationEchoIncident => '운반체가 삭제 대상으로 표시됐다. 지시는 아직 살아 있다.';
+
+  @override
+  String get operationEchoPreserve => '수신자를 지켜라';
+
+  @override
+  String get operationEchoForce => '포화를 가로질러라';
+
+  @override
+  String get operationSplitIncident => '적의 체크섬이 네 코어의 루트 키에 응답한다.';
+
+  @override
+  String get operationSplitPreserve => '온전하게 지켜라';
+
+  @override
+  String get operationSplitForce => '루트 키를 차지하라';
+
+  @override
+  String get operationCrownIncident => '궤도 00이 선두 코어 뒤의 모든 목격자를 삭제하고 있다.';
+
+  @override
+  String get operationCrownPreserve => '목격자를 지켜라';
+
+  @override
+  String get operationCrownForce => '왕관에 도달하라';
+
+  @override
+  String get operationLastIncident => '마지막 인간의 지시가 한 번의 전송을 위해 열렸다.';
+
+  @override
+  String get operationLastPreserve => '모든 채널을 운반하라';
+
+  @override
+  String get operationLastForce => '잠금을 부숴라';
+
+  @override
+  String get coreAmethystVoice => '이 전쟁이 지워 버린 모든 수신자를 기억한다.';
+
+  @override
+  String get coreCobaltVoice => '연결을 맡겨. 내가 지켜 낼게.';
+
+  @override
+  String get coreVoltVoice => '틈은 건너기 전까지만 위험하다.';
+
+  @override
+  String get corePrismVoice => '경로를 바꾸면 하나의 메시지가 살아남는다.';
+
+  @override
+  String get livingRelayThread => '살아 있는 릴레이 스레드';
+
+  @override
+  String get relayRouting => '라우팅 중';
+
+  @override
+  String get relayAction => '릴레이';
+
+  @override
+  String get relayKeyboardHint => 'R / Enter / Space';
+
+  @override
+  String manualRelaysSummary(int count) {
+    return '수동 릴레이  //  $count';
+  }
+
+  @override
+  String doctrineSummary(String doctrine) {
+    return '신호 교리  //  $doctrine';
+  }
 }

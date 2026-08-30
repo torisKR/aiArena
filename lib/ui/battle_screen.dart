@@ -14,7 +14,9 @@ import '../game/simulation.dart';
 import '../game/tokenfront_game.dart';
 import '../l10n/l10n.dart';
 import '../settings/game_preferences.dart';
+import '../story/story_localizations.dart';
 import '../story/story_models.dart';
+import 'living_relay_thread.dart';
 import 'primitives.dart';
 
 class BattleScreen extends StatefulWidget {
@@ -275,6 +277,7 @@ class BattleScreenState extends State<BattleScreen>
                                 game: game,
                                 snapshot: snapshot,
                                 compact: compact,
+                                operation: game.operation,
                               ),
                             ),
                           ),
@@ -307,9 +310,10 @@ class BattleScreenState extends State<BattleScreen>
                           alignment: Alignment.bottomRight,
                           child: Padding(
                             padding: EdgeInsets.only(right: minimapWidth + 10),
-                            child: _DashControl(
+                            child: _ActionCluster(
                               game: game,
-                              size: dashSize,
+                              snapshot: snapshot,
+                              dashSize: dashSize,
                               enabled: _gameplayInputEnabled,
                             ),
                           ),
@@ -525,11 +529,13 @@ class _DirectiveRail extends StatefulWidget {
     required this.game,
     required this.snapshot,
     required this.compact,
+    required this.operation,
   });
 
   final TokenfrontGame game;
   final BattleHudSnapshot snapshot;
   final bool compact;
+  final StoryOperation? operation;
 
   @override
   State<_DirectiveRail> createState() => _DirectiveRailState();
@@ -686,6 +692,10 @@ class _DirectiveRailState extends State<_DirectiveRail> {
       child: Semantics(
         key: Key('directive-rail-semantics-$milestone'),
         container: true,
+        // Keep the stable directive announcement contract for assistive
+        // technology. The operation title and incident are visible in this
+        // same story rail and are intentionally not repeated in the live
+        // region on every progress update.
         label: _labelFor(value, milestone),
         child: ExcludeSemantics(
           child: AnimatedContainer(
@@ -711,13 +721,71 @@ class _DirectiveRailState extends State<_DirectiveRail> {
               ),
               borderRadius: const BorderRadius.all(Radius.circular(6)),
             ),
-            child: Text(
-              text,
-              style: TokenfrontType.instrument.copyWith(
-                color: completed
-                    ? TokenfrontColors.volt
-                    : TokenfrontColors.relayIvory,
-                fontSize: widget.compact ? 9 : 10,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth:
+                    MediaQuery.sizeOf(context).width *
+                    (widget.compact ? .78 : .62),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.operation case final operation?) ...[
+                    Text(
+                      StoryLocalizations(
+                        context.l10n,
+                      ).operationTitle(operation.id),
+                      key: const Key('story-operation-title'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TokenfrontType.instrument.copyWith(
+                        color: TokenfrontColors.relayIvory,
+                        fontSize: widget.compact ? 10 : 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      StoryLocalizations(context.l10n).incident(operation.id),
+                      key: const Key('story-operation-incident'),
+                      maxLines: widget.compact ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: TokenfrontColors.quietText,
+                        fontSize: widget.compact ? 9 : 10,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    LivingRelayThread(
+                      key: const Key('living-relay-thread'),
+                      variant: LivingRelayThreadVariant.horizontalCharge,
+                      charge: (widget.game.manualRelayCharge ?? 1).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                      semanticLabel: StoryLocalizations(
+                        context.l10n,
+                      ).livingRelayThread,
+                      reducedMotion: widget.game.reduceMotion,
+                      lowSpec: widget.game.lowSpecMode,
+                      animate: false,
+                      height: TokenfrontSizes.threadStroke,
+                    ),
+                    const SizedBox(height: 5),
+                  ],
+                  Text(
+                    text,
+                    key: const Key('live-directive-copy'),
+                    style: TokenfrontType.instrument.copyWith(
+                      color: completed
+                          ? TokenfrontColors.volt
+                          : TokenfrontColors.relayIvory,
+                      fontSize: widget.compact ? 9 : 10,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -920,6 +988,7 @@ class _PlayerControls extends StatelessWidget {
             ),
             color: TokenfrontColors.deepField.withValues(alpha: .78),
             child: Text(
+              key: const Key('battle-controlled-unit-visual-status'),
               context.l10n.controlledUnitVisualStatus(
                 snapshot.currentLevel.toString().padLeft(2, '0'),
                 snapshot.currentKills.toString().padLeft(2, '0'),
@@ -1063,6 +1132,248 @@ class _JoystickPainter extends CustomPainter {
       oldDelegate.knob != knob || oldDelegate.compact != compact;
 }
 
+class _ActionCluster extends StatelessWidget {
+  const _ActionCluster({
+    required this.game,
+    required this.snapshot,
+    required this.dashSize,
+    required this.enabled,
+  });
+
+  final TokenfrontGame game;
+  final BattleHudSnapshot snapshot;
+  final double dashSize;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final relay =
+        game.mode == GameMode.chronicle && snapshot.manualRelayCharge != null;
+    final controls = <Widget>[
+      if (relay)
+        _RelayControl(game: game, snapshot: snapshot, enabled: enabled),
+      _DashControl(game: game, size: dashSize, enabled: enabled),
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (relay) ...[
+          _RelayResetWarning(game: game, snapshot: snapshot),
+          const SizedBox(height: 6),
+        ],
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < controls.length; index++) ...[
+              controls[index],
+              if (index != controls.length - 1) const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RelayResetWarning extends StatelessWidget {
+  const _RelayResetWarning({required this.game, required this.snapshot});
+
+  final TokenfrontGame game;
+  final BattleHudSnapshot snapshot;
+
+  bool get visible {
+    final operation = game.operation;
+    final progress = snapshot.directiveProgress;
+    return operation?.id == StoryOperationId.wake &&
+        progress?.kind == DirectiveKind.longestCommandLink &&
+        progress!.current > 0 &&
+        !progress.completed &&
+        snapshot.manualRelayReady;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox.shrink();
+    return Semantics(
+      key: const Key('relay-link-reset-warning'),
+      excludeSemantics: true,
+      liveRegion: true,
+      label: StoryLocalizations(context.l10n).relayLinkResetWarning,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 220),
+        child: Text(
+          StoryLocalizations(context.l10n).relayLinkResetWarning,
+          textAlign: TextAlign.right,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: TokenfrontColors.volt,
+            fontSize: 9,
+            height: 1.2,
+            fontFamily: TokenfrontType.instrument.fontFamily,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RelayControl extends StatefulWidget {
+  const _RelayControl({
+    required this.game,
+    required this.snapshot,
+    required this.enabled,
+  });
+
+  final TokenfrontGame game;
+  final BattleHudSnapshot snapshot;
+  final bool enabled;
+
+  @override
+  State<_RelayControl> createState() => _RelayControlState();
+}
+
+class _RelayControlState extends State<_RelayControl> {
+  Timer? _noReceiverTimer;
+  bool _noReceiver = false;
+  bool _requestPending = false;
+  int _requestManualCount = 0;
+  double _requestCharge = 1;
+  bool _focused = false;
+
+  @override
+  void didUpdateWidget(covariant _RelayControl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_requestPending) return;
+    final current = widget.snapshot;
+    final resolved = !current.manualRelayPending;
+    final succeeded =
+        current.manualRelayCount > _requestManualCount ||
+        (current.manualRelayCharge ?? 1) < _requestCharge - .01;
+    if (succeeded || resolved) {
+      _requestPending = false;
+      if (resolved && !succeeded) _showNoReceiver();
+    }
+  }
+
+  void _showNoReceiver() {
+    _noReceiverTimer?.cancel();
+    if (!mounted) return;
+    setState(() => _noReceiver = true);
+    _noReceiverTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _noReceiver = false);
+    });
+  }
+
+  void _trigger() {
+    final ready =
+        widget.snapshot.manualRelayReady || widget.game.manualRelayReady;
+    final accepted = widget.game.triggerManualRelay();
+    if (!accepted) {
+      if (ready) _showNoReceiver();
+      return;
+    }
+    _requestPending = true;
+    _requestManualCount = widget.snapshot.manualRelayCount;
+    _requestCharge = widget.snapshot.manualRelayCharge ?? 1;
+  }
+
+  @override
+  void dispose() {
+    _noReceiverTimer?.cancel();
+    super.dispose();
+  }
+
+  String _chargeCopy(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    final charge = widget.snapshot.manualRelayCharge ?? 0;
+    if (_noReceiver) return copy.relayNoReceiver;
+    if (widget.snapshot.manualRelayPending) {
+      return '${copy.routeLabel(widget.snapshot.relayRoute ?? RelayRoute.preserve)}\n${copy.relayRouting}';
+    }
+    if (widget.snapshot.manualRelayReady || charge >= 1 - 1e-9) {
+      return copy.relayReady;
+    }
+    final current = (charge * 45).floor().clamp(0, 44);
+    return copy.relayCharging(current, 45);
+  }
+
+  String _semanticsLabel(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    final route = copy.routeLabel(
+      widget.snapshot.relayRoute ?? RelayRoute.preserve,
+    );
+    return '${copy.relayAction} $route, ${_chargeCopy(context).replaceAll('\n', ', ')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+    final canTap =
+        widget.enabled &&
+        widget.snapshot.manualRelayReady &&
+        !widget.snapshot.manualRelayPending;
+    return Semantics(
+      key: const Key('relay-control-semantics'),
+      button: true,
+      enabled: canTap,
+      label: _semanticsLabel(context),
+      hint: copy.relayKeyboardHint,
+      onTap: canTap ? _trigger : null,
+      child: ExcludeSemantics(
+        child: Material(
+          color: TokenfrontColors.deepField.withValues(alpha: .92),
+          shape: BeveledRectangleBorder(
+            side: BorderSide(
+              color: _focused
+                  ? TokenfrontColors.relayIvory
+                  : widget.snapshot.manualRelayReady
+                  ? TokenfrontColors.threadCyan
+                  : TokenfrontColors.relayIvory.withValues(alpha: .35),
+              width: _focused ? 3 : 1,
+            ),
+            borderRadius: const BorderRadius.all(
+              Radius.circular(TokenfrontRadii.control),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: canTap ? _trigger : null,
+            canRequestFocus: true,
+            focusColor: TokenfrontColors.relayIvory.withValues(alpha: .22),
+            onFocusChange: (value) {
+              if (mounted && value != _focused) {
+                setState(() => _focused = value);
+              }
+            },
+            child: SizedBox.square(
+              key: const Key('relay-control'),
+              dimension: TokenfrontSizes.action,
+              child: Center(
+                child: Text(
+                  _chargeCopy(context),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TokenfrontType.instrument.copyWith(
+                    color: _noReceiver
+                        ? TokenfrontColors.danger
+                        : TokenfrontColors.threadCyan,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DashControl extends StatefulWidget {
   const _DashControl({
     required this.game,
@@ -1082,7 +1393,10 @@ class _DashControlState extends State<_DashControl> {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8, right: 4),
+    padding: const EdgeInsets.only(
+      bottom: TokenfrontSpacing.sm,
+      right: TokenfrontSpacing.xs,
+    ),
     child: Semantics(
       label: context.l10n.dashSemantics,
       hint: context.l10n.dashHint,
@@ -1098,7 +1412,9 @@ class _DashControlState extends State<_DashControl> {
                   : TokenfrontColors.deepField.withValues(alpha: .38),
               width: focused ? 3 : 1,
             ),
-            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            borderRadius: const BorderRadius.all(
+              Radius.circular(TokenfrontRadii.control),
+            ),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(

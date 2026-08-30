@@ -1,5 +1,5 @@
 name: tokenfront
-description: "Four AI command cores fight for the Last Relay in a deterministic 4,000-unit orbital signal war."
+description: "Four AI command cores spend 4,000 live tokens in a deterministic offline war for the Last Relay."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

@@ -9,6 +9,7 @@ import '../services/ads/ad_service.dart';
 import '../story/campaign_controller.dart';
 import '../story/story_localizations.dart';
 import '../story/story_models.dart';
+import 'living_relay_thread.dart';
 import 'primitives.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -36,6 +37,8 @@ class ResultScreen extends StatefulWidget {
     this.replay = false,
     this.onChooseEnding,
     this.onCommandDeck,
+    this.manualRelays = 0,
+    this.relayRoute,
   });
 
   final MatchResult result;
@@ -60,6 +63,12 @@ class ResultScreen extends StatefulWidget {
   final bool replay;
   final ValueChanged<EndingChoice>? onChooseEnding;
   final VoidCallback? onCommandDeck;
+
+  /// Chronicle-only manual transfer count. Kept optional for legacy callers.
+  final int manualRelays;
+
+  /// Chronicle route selected for this simulation, when one was recorded.
+  final RelayRoute? relayRoute;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -123,6 +132,18 @@ class _ResultScreenState extends State<ResultScreen> {
             true;
     final showEndingChoices =
         endingUnlocked && ending == null && widget.onChooseEnding != null;
+    final route = operation == null
+        ? null
+        : widget.relayRoute ?? widget.storyProgress?.signalRoutes[operation.id];
+    final nextOperation = chronicle && !widget.replay
+        ? widget.storyProgress?.currentOperation
+        : null;
+    // A progress object can still point at the operation being displayed in
+    // legacy callers. In that case retain the established CONTINUE copy.
+    final continueLabel =
+        nextOperation != null && nextOperation != operation?.id
+        ? copy.continueToOperation(nextOperation)
+        : copy.continueCampaign;
     return Scaffold(
       body: TacticalBackdrop(
         child: SafeArea(
@@ -131,7 +152,7 @@ class _ResultScreenState extends State<ResultScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   key: const Key('result-scroll'),
-                  padding: const EdgeInsets.all(22),
+                  padding: const EdgeInsets.all(TokenfrontSpacing.xl),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 720),
@@ -148,7 +169,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               fontSize: 38,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: TokenfrontSpacing.sm),
                           Text(
                             winner == null
                                 ? l10n.drawSummary(
@@ -166,8 +187,21 @@ class _ResultScreenState extends State<ResultScreen> {
                               fontSize: 11,
                             ),
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: TokenfrontSpacing.xl),
                           if (chronicle) ...[
+                            LivingRelayThread(
+                              key: const Key('living-relay-thread'),
+                              variant: LivingRelayThreadVariant.compactFragment,
+                              progress: 1,
+                              fragment: copy.reveal(operation.id),
+                              semanticLabel: context.l10n.livingRelayThread,
+                              reducedMotion: MediaQuery.disableAnimationsOf(
+                                context,
+                              ),
+                              lowSpec: false,
+                              animate: false,
+                            ),
+                            const SizedBox(height: TokenfrontSpacing.md),
                             _ChronicleDebriefPanel(
                               operation: operation,
                               playerFaction: widget.playerFaction,
@@ -175,17 +209,25 @@ class _ResultScreenState extends State<ResultScreen> {
                               bonusClaimed: bonusClaimed,
                               bonusAmount: operation.oneTimeBonus,
                               ending: ending,
+                              relayRoute: route,
+                              manualRelays: widget.manualRelays,
+                              doctrine:
+                                  widget.storyProgress?.signalDoctrine ??
+                                  SignalDoctrine.undecided,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: TokenfrontSpacing.md),
                           ],
                           TacticalPanel(
+                            key: chronicle
+                                ? const Key('result-standings')
+                                : null,
                             color: TokenfrontColors.deepField.withValues(
                               alpha: .84,
                             ),
                             child: Column(
                               children: [
                                 const _StandingHeader(),
-                                const Divider(color: Color(0x33F2E9D1)),
+                                const Divider(color: TokenfrontColors.divider),
                                 for (
                                   var index = 0;
                                   index < widget.result.standings.length;
@@ -204,7 +246,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: TokenfrontSpacing.md),
                           TacticalPanel(
                             child: Row(
                               children: [
@@ -230,12 +272,12 @@ class _ResultScreenState extends State<ResultScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: TokenfrontSpacing.lg),
                           if (rewardMessage case final message?) ...[
                             TacticalPanel(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
+                                horizontal: TokenfrontSpacing.md,
+                                vertical: TokenfrontSpacing.sm,
                               ),
                               borderColor: doubled
                                   ? TokenfrontColors.volt
@@ -248,12 +290,12 @@ class _ResultScreenState extends State<ResultScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: TokenfrontSpacing.md),
                           ],
                           Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: 10,
-                            runSpacing: 10,
+                            spacing: TokenfrontSpacing.sm,
+                            runSpacing: TokenfrontSpacing.sm,
                             children: [
                               if (widget.onContinue != null && !chronicle)
                                 TacticalButton(
@@ -297,14 +339,14 @@ class _ResultScreenState extends State<ResultScreen> {
                                 onPressed:
                                     widget.onCommandDeck ?? widget.onLobby,
                                 style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(124, 50),
+                                  minimumSize: TokenfrontSizes.buttonSize,
                                   foregroundColor: TokenfrontColors.relayIvory,
                                   side: const BorderSide(
-                                    color: Color(0x66F2E9D1),
+                                    color: TokenfrontColors.panelBorder,
                                   ),
                                   shape: const BeveledRectangleBorder(
                                     borderRadius: BorderRadius.all(
-                                      Radius.circular(10),
+                                      Radius.circular(TokenfrontRadii.control),
                                     ),
                                   ),
                                   textStyle: TokenfrontType.instrument,
@@ -326,7 +368,7 @@ class _ResultScreenState extends State<ResultScreen> {
                             ],
                           ),
                           if (widget.bannerVisible) ...[
-                            const SizedBox(height: 18),
+                            const SizedBox(height: TokenfrontSpacing.lg),
                             const _ResultSponsorRail(),
                           ],
                           const SizedBox(
@@ -343,6 +385,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 _ChronicleActionLayer(
                   showEndingChoices: showEndingChoices,
                   onContinue: widget.onContinue,
+                  continueLabel: continueLabel,
                   onRetry: widget.onRematch,
                   retryColor: widget.playerFaction.visual.color,
                   onChooseEnding: widget.onChooseEnding,
@@ -356,11 +399,11 @@ class _ResultScreenState extends State<ResultScreen> {
 }
 
 ButtonStyle _secondaryButtonStyle() => OutlinedButton.styleFrom(
-  minimumSize: const Size(112, 50),
+  minimumSize: TokenfrontSizes.buttonSize,
   foregroundColor: TokenfrontColors.relayIvory,
-  side: const BorderSide(color: Color(0x55F2E9D1)),
+  side: const BorderSide(color: TokenfrontColors.panelBorder),
   shape: const BeveledRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(10)),
+    borderRadius: BorderRadius.all(Radius.circular(TokenfrontRadii.control)),
   ),
   textStyle: TokenfrontType.instrument,
 );
@@ -382,7 +425,10 @@ class _ResultSponsorRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TacticalPanel(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+    padding: const EdgeInsets.symmetric(
+      horizontal: TokenfrontSpacing.md,
+      vertical: TokenfrontSpacing.sm,
+    ),
     color: TokenfrontColors.deepField.withValues(alpha: .72),
     child: Text(
       context.l10n.resultSponsorPlacement,
@@ -403,6 +449,9 @@ class _ChronicleDebriefPanel extends StatelessWidget {
     required this.bonusClaimed,
     required this.bonusAmount,
     required this.ending,
+    required this.relayRoute,
+    required this.manualRelays,
+    required this.doctrine,
   });
 
   final StoryOperation operation;
@@ -411,6 +460,9 @@ class _ChronicleDebriefPanel extends StatelessWidget {
   final bool bonusClaimed;
   final int bonusAmount;
   final EndingChoice? ending;
+  final RelayRoute? relayRoute;
+  final int manualRelays;
+  final SignalDoctrine doctrine;
 
   @override
   Widget build(BuildContext context) {
@@ -427,34 +479,34 @@ class _ChronicleDebriefPanel extends StatelessWidget {
         : copy.directiveBonus(bonusAmount);
     return TacticalPanel(
       key: const Key('chronicle-debrief'),
-      borderColor: TokenfrontColors.relayIvory.withValues(alpha: .62),
+      borderColor: TokenfrontColors.panelBorder,
       color: TokenfrontColors.deepField.withValues(alpha: .9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            copy.transmissionRecovered,
+            copy.fragmentRecovered,
             style: TokenfrontType.instrument.copyWith(
-              color: TokenfrontColors.volt,
+              color: TokenfrontColors.threadCyan,
               fontSize: 10,
             ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             copy.operationTitle(operation.id),
             style: TokenfrontType.display.copyWith(fontSize: 22),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             copy.transmission(operation.id),
             style: TokenfrontType.body.copyWith(fontSize: 14),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             copy.reveal(operation.id),
             style: TokenfrontType.body.copyWith(fontSize: 14),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             copy.coreResponse(copy.coreName(playerFaction)),
             style: TokenfrontType.body.copyWith(
@@ -462,7 +514,36 @@ class _ChronicleDebriefPanel extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-          const Divider(color: Color(0x33F2E9D1), height: 22),
+          const Divider(
+            color: TokenfrontColors.divider,
+            height: TokenfrontSpacing.xl,
+          ),
+          if (relayRoute case final route?) ...[
+            Text(
+              '${copy.routeLabel(route)}  //  ${copy.routeAction(operation.id, route)}',
+              style: TokenfrontType.instrument.copyWith(
+                color: TokenfrontColors.threadCyan,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: TokenfrontSpacing.sm),
+          ],
+          Text(
+            copy.manualRelaysSummary(manualRelays),
+            style: TokenfrontType.instrument.copyWith(
+              color: TokenfrontColors.quietText,
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: TokenfrontSpacing.sm),
+          Text(
+            copy.doctrineSummary(doctrine),
+            style: TokenfrontType.instrument.copyWith(
+              color: TokenfrontColors.quietText,
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             '$directive  //  $medal  //  $bonus',
             style: TokenfrontType.instrument.copyWith(
@@ -473,7 +554,10 @@ class _ChronicleDebriefPanel extends StatelessWidget {
             ),
           ),
           if (ending case final choice?) ...[
-            const Divider(color: Color(0x33F2E9D1), height: 22),
+            const Divider(
+              color: TokenfrontColors.divider,
+              height: TokenfrontSpacing.xl,
+            ),
             Text(
               '${copy.endingHeading}  //  ${copy.endingLabel(choice)}',
               style: TokenfrontType.instrument.copyWith(
@@ -481,7 +565,7 @@ class _ChronicleDebriefPanel extends StatelessWidget {
                 fontSize: 10,
               ),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: TokenfrontSpacing.sm),
             Text(copy.endingEpilogue(choice), style: TokenfrontType.body),
           ],
         ],
@@ -494,6 +578,7 @@ class _ChronicleActionLayer extends StatelessWidget {
   const _ChronicleActionLayer({
     required this.showEndingChoices,
     required this.onContinue,
+    required this.continueLabel,
     required this.onRetry,
     required this.retryColor,
     required this.onChooseEnding,
@@ -501,6 +586,7 @@ class _ChronicleActionLayer extends StatelessWidget {
 
   final bool showEndingChoices;
   final VoidCallback? onContinue;
+  final String continueLabel;
   final VoidCallback onRetry;
   final Color retryColor;
   final ValueChanged<EndingChoice>? onChooseEnding;
@@ -512,10 +598,17 @@ class _ChronicleActionLayer extends StatelessWidget {
       key: const Key('chronicle-action-layer'),
       decoration: BoxDecoration(
         color: TokenfrontColors.deepField.withValues(alpha: .96),
-        border: const Border(top: BorderSide(color: Color(0x55F2E9D1))),
+        border: const Border(
+          top: BorderSide(color: TokenfrontColors.panelBorder),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 8, 22, 8),
+        padding: const EdgeInsets.fromLTRB(
+          TokenfrontSpacing.xl,
+          TokenfrontSpacing.sm,
+          TokenfrontSpacing.xl,
+          TokenfrontSpacing.sm,
+        ),
         child: showEndingChoices
             ? TacticalPanel(
                 borderColor: TokenfrontColors.volt,
@@ -523,18 +616,28 @@ class _ChronicleActionLayer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(copy.endingHeading, style: TokenfrontType.instrument),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: TokenfrontSpacing.sm),
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        TacticalButton endingButton(
+                        Widget chronicleControl(TacticalButton button) =>
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minHeight: TokenfrontSizes.buttonHeight,
+                              ),
+                              child: button,
+                            );
+
+                        Widget endingButton(
                           EndingChoice choice,
                           Color color, {
                           bool expanded = false,
-                        }) => TacticalButton(
-                          label: copy.endingLabel(choice),
-                          onPressed: () => onChooseEnding!(choice),
-                          color: color,
-                          expanded: expanded,
+                        }) => chronicleControl(
+                          TacticalButton(
+                            label: copy.endingLabel(choice),
+                            onPressed: () => onChooseEnding!(choice),
+                            color: color,
+                            expanded: expanded,
+                          ),
                         );
                         if (constraints.maxWidth < 280) {
                           return Column(
@@ -545,7 +648,7 @@ class _ChronicleActionLayer extends StatelessWidget {
                                 TokenfrontColors.relayIvory,
                                 expanded: true,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: TokenfrontSpacing.sm),
                               endingButton(
                                 EndingChoice.openRelay,
                                 TokenfrontColors.volt,
@@ -556,8 +659,8 @@ class _ChronicleActionLayer extends StatelessWidget {
                         }
                         return Wrap(
                           alignment: WrapAlignment.center,
-                          spacing: 10,
-                          runSpacing: 10,
+                          spacing: TokenfrontSpacing.sm,
+                          runSpacing: TokenfrontSpacing.sm,
                           children: [
                             endingButton(
                               EndingChoice.claimRelay,
@@ -576,18 +679,29 @@ class _ChronicleActionLayer extends StatelessWidget {
               )
             : Wrap(
                 alignment: WrapAlignment.center,
-                spacing: 10,
-                runSpacing: 10,
+                spacing: TokenfrontSpacing.sm,
+                runSpacing: TokenfrontSpacing.sm,
                 children: [
-                  TacticalButton(
-                    label: copy.continueCampaign,
-                    onPressed: onContinue,
-                    color: TokenfrontColors.relayIvory,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: TokenfrontSizes.buttonHeight,
+                    ),
+                    child: TacticalButton(
+                      label: continueLabel,
+                      onPressed: onContinue,
+                      color: TokenfrontColors.relayIvory,
+                      expanded: true,
+                    ),
                   ),
-                  TacticalButton(
-                    label: copy.retryDirective,
-                    onPressed: onRetry,
-                    color: retryColor,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: TokenfrontSizes.buttonHeight,
+                    ),
+                    child: TacticalButton(
+                      label: copy.retryDirective,
+                      onPressed: onRetry,
+                      color: retryColor,
+                    ),
                   ),
                 ],
               ),
@@ -603,7 +717,7 @@ class _StandingHeader extends StatelessWidget {
     final l10n = context.l10n;
     return Row(
       children: [
-        const SizedBox(width: 34, child: Text('#')),
+        const SizedBox(width: TokenfrontSpacing.xxl, child: Text('#')),
         Expanded(flex: 3, child: Text(l10n.faction)),
         Expanded(child: Text(l10n.alive, textAlign: TextAlign.right)),
         Expanded(child: Text(l10n.levelSum, textAlign: TextAlign.right)),
@@ -628,13 +742,9 @@ class _StandingRow extends StatelessWidget {
     final factionLabel =
         '${standing.faction.visual.mark}  ${standing.faction.visual.name}';
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: TokenfrontSpacing.sm),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: TokenfrontColors.relayIvory.withValues(alpha: .08),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: TokenfrontColors.divider)),
       ),
       child: DefaultTextStyle(
         style: TokenfrontType.instrument.copyWith(
@@ -645,7 +755,7 @@ class _StandingRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(width: 34, child: Text('$rank')),
+            SizedBox(width: TokenfrontSpacing.xxl, child: Text('$rank')),
             Expanded(
               flex: 3,
               child: Text(
@@ -686,7 +796,7 @@ class _Metric extends StatelessWidget {
           fontSize: 16,
         ),
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: TokenfrontSpacing.xs),
       Text(
         label,
         style: TokenfrontType.instrument.copyWith(

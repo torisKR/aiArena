@@ -486,7 +486,7 @@ void main() {
     },
   );
 
-  test('schema 2 round trip restores campaign and reward ledger', () async {
+  test('schema 3 round trip restores campaign and reward ledger', () async {
     final store = _MemoryStateStore();
     final runtime = await TokenfrontRuntime.restore(
       platform: ClientPlatform.web,
@@ -538,6 +538,105 @@ void main() {
         'chronicle-directive-lastInstruction',
       ]),
     );
+  });
+
+  test('schema 2 migrates a valid story with absent signal routes', () async {
+    final store = _MemoryStateStore.withValue(
+      _schema2Fixture(
+        story: const <String, Object?>{
+          'campaignFaction': 'amethyst',
+          'concludedOperations': ['wake'],
+          'medals': ['wake'],
+          'recoveredTransmissions': ['wake'],
+          'ending': null,
+        },
+      ),
+    );
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: store,
+    );
+    addTearDown(runtime.dispose);
+
+    expect(runtime.storyProgress.currentOperation, StoryOperationId.echo);
+    expect(runtime.storyProgress.signalRoutes, isEmpty);
+    await runtime.flushLocalState();
+    final persisted = jsonDecode(store.value!) as Map<String, dynamic>;
+    expect(persisted['version'], 3);
+    expect(
+      (persisted['story'] as Map<String, dynamic>)['signalRoutes'],
+      isEmpty,
+    );
+  });
+
+  test(
+    'schema 3 round trip preserves signal routes and derived doctrine',
+    () async {
+      final store = _MemoryStateStore.withValue(
+        _schema3Fixture(
+          story: const <String, Object?>{
+            'campaignFaction': 'amethyst',
+            'concludedOperations': ['wake', 'echo'],
+            'medals': ['wake'],
+            'recoveredTransmissions': ['wake', 'echo'],
+            'ending': null,
+            'signalRoutes': {'wake': 'preserve', 'echo': 'force'},
+          },
+        ),
+      );
+      final runtime = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(runtime.dispose);
+
+      expect(runtime.storyProgress.signalRoutes, {
+        StoryOperationId.wake: RelayRoute.preserve,
+        StoryOperationId.echo: RelayRoute.force,
+      });
+      expect(runtime.storyProgress.signalDoctrine, SignalDoctrine.balanced);
+      await runtime.flushLocalState();
+
+      final restored = await TokenfrontRuntime.restore(
+        platform: ClientPlatform.web,
+        stateStore: store,
+      );
+      addTearDown(restored.dispose);
+      expect(
+        restored.storyProgress.signalRoutes,
+        runtime.storyProgress.signalRoutes,
+      );
+      expect(restored.storyProgress.signalDoctrine, SignalDoctrine.balanced);
+      expect(restored.storyProgress.currentOperation, StoryOperationId.split);
+      final persisted = jsonDecode(store.value!) as Map<String, dynamic>;
+      expect(persisted['version'], 3);
+    },
+  );
+
+  test('malformed schema 3 signal routes reset only story', () async {
+    final runtime = await TokenfrontRuntime.restore(
+      platform: ClientPlatform.web,
+      stateStore: _MemoryStateStore.withValue(
+        _schema3Fixture(
+          story: const <String, Object?>{
+            'campaignFaction': 'amethyst',
+            'concludedOperations': ['wake'],
+            'medals': ['wake'],
+            'recoveredTransmissions': ['wake'],
+            'ending': null,
+            'signalRoutes': {'wake': 'unknown'},
+          },
+        ),
+      ),
+    );
+    addTearDown(runtime.dispose);
+
+    expect(runtime.storyProgress, StoryProgress.initial());
+    expect(
+      runtime.rewardLedger.claimedDirectiveBonusIds,
+      contains('chronicle-directive-wake'),
+    );
+    _expectNonDefaultPersistedSections(runtime);
   });
 
   test('flush and recreate restores the first incomplete operation', () async {
@@ -1004,8 +1103,23 @@ String _schema2Fixture({
   Object? rewardLedger = const <String, Object?>{
     'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
   },
+}) => _schemaFixture(version: 2, story: story, rewardLedger: rewardLedger);
+
+String _schema3Fixture({
+  required Map<String, Object?> story,
+  Object? rewardLedger = const <String, Object?>{
+    'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
+  },
+}) => _schemaFixture(version: 3, story: story, rewardLedger: rewardLedger);
+
+String _schemaFixture({
+  required int version,
+  required Map<String, Object?> story,
+  Object? rewardLedger = const <String, Object?>{
+    'claimedDirectiveBonusIds': ['chronicle-directive-wake'],
+  },
 }) => jsonEncode(<String, Object?>{
-  'version': 2,
+  'version': version,
   'wallet': <String, Object?>{
     'balance': 275,
     'unlockedIds': ['color_relay_ivory', 'trail_relay_tape', 'death_fracture'],

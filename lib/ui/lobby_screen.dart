@@ -70,8 +70,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     final viewport = MediaQuery.sizeOf(context);
-    final compact = viewport.width < 720;
-    final dense = viewport.height < 700;
+    final compact = viewport.width < TokenfrontBreakpoints.compact;
+    final dense = viewport.height < TokenfrontBreakpoints.stackedActions;
     final copy = StoryLocalizations(context.l10n);
     final lockedCore = widget.storyProgress.campaignFaction;
     final selectedCore = lockedCore ?? widget.selectedChronicleFaction;
@@ -86,8 +86,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: compact ? 16 : 34,
-                vertical: compact ? 16 : 26,
+                horizontal: compact
+                    ? TokenfrontSpacing.lg
+                    : TokenfrontSpacing.xxl,
+                vertical: compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xl,
               ),
               child: Center(
                 child: ConstrainedBox(
@@ -96,14 +98,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _Header(compact: compact, mode: mode),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: TokenfrontSpacing.md),
                       _UtilityRail(
                         compact: compact,
                         warTokenBalance: widget.warTokenBalance,
                         onOpenSettings: widget.onOpenSettings,
                         onOpenLocker: widget.onOpenLocker,
                       ),
-                      SizedBox(height: compact ? 22 : 42),
+                      SizedBox(
+                        height: compact
+                            ? TokenfrontSpacing.lg + TokenfrontSpacing.xs
+                            : TokenfrontSpacing.xxl - TokenfrontSpacing.xs,
+                      ),
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -125,8 +131,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: TokenfrontSpacing.lg),
                       if (mode == GameMode.chronicle) ...[
+                        _StoryRole(copy: copy, compact: compact),
+                        const SizedBox(height: TokenfrontSpacing.lg),
                         if (lockedCore == null && operation != null) ...[
                           _Prologue(prologue: copy.prologue),
                           ExcludeSemantics(
@@ -163,21 +171,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             widget.onSelectChronicleCore(faction);
                           },
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: TokenfrontSpacing.lg),
                         _ProtocolPanel(faction: selectedCore),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: TokenfrontSpacing.lg),
                         if (!pendingEnding)
                           TacticalButton(
                             key: const Key('chronicle-deploy'),
                             expanded: compact,
                             label: operation == null
                                 ? context.l10n.chronicleUnavailable
-                                : context.l10n.deployOperation(
-                                    (operation.index + 1).toString().padLeft(
-                                      2,
-                                      '0',
-                                    ),
-                                  ),
+                                : 'BRIEF OP-${(operation.index + 1).toString().padLeft(2, '0')}',
                             color: selectedCore.visual.color,
                             onPressed: operation == null
                                 ? null
@@ -248,7 +251,7 @@ class _Prologue extends StatelessWidget {
   final String prologue;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
+    padding: const EdgeInsets.only(bottom: TokenfrontSpacing.md),
     child: Text(
       prologue,
       style: TokenfrontType.body.copyWith(
@@ -259,26 +262,62 @@ class _Prologue extends StatelessWidget {
   );
 }
 
+class _StoryRole extends StatelessWidget {
+  const _StoryRole({required this.copy, required this.compact});
+
+  final StoryLocalizations copy;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        copy.storyRoleTitle,
+        key: const Key('story-role-title'),
+        style: TokenfrontType.display.copyWith(fontSize: compact ? 24 : 32),
+      ),
+      const SizedBox(height: TokenfrontSpacing.sm),
+      ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Text(
+          copy.storyRoleBody,
+          key: const Key('story-role-body'),
+          style: TokenfrontType.body.copyWith(
+            fontSize: compact ? 12 : 14,
+            color: TokenfrontColors.archiveAsh,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
 class _Briefing extends StatelessWidget {
   const _Briefing({required this.operation, required this.copy});
   final StoryOperation operation;
   final StoryLocalizations copy;
   @override
   Widget build(BuildContext context) => TacticalPanel(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    padding: const EdgeInsets.symmetric(
+      horizontal: TokenfrontSpacing.md,
+      vertical: TokenfrontSpacing.sm + TokenfrontSpacing.xs,
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           copy.operationTitle(operation.id),
+          key: const Key('current-operation-title'),
           style: TokenfrontType.instrument.copyWith(fontSize: 13),
         ),
         const SizedBox(height: 7),
         Text(
-          copy.briefing(operation.id),
+          copy.incident(operation.id),
+          key: const Key('current-operation-incident'),
           style: TokenfrontType.body.copyWith(
-            fontSize: 10,
-            color: TokenfrontColors.quietText,
+            fontSize: 12,
+            color: TokenfrontColors.relayIvory,
           ),
         ),
         const SizedBox(height: 7),
@@ -571,6 +610,16 @@ class _ProtocolPanel extends StatelessWidget {
                   style: TokenfrontType.body.copyWith(
                     color: TokenfrontColors.quietText,
                     fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '“${copy.coreVoice(faction)}”',
+                  key: const Key('core-voice'),
+                  style: TokenfrontType.body.copyWith(
+                    color: TokenfrontColors.threadCyan,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
                 const SizedBox(height: 5),

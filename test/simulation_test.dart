@@ -44,6 +44,8 @@ void main() {
           contains('codex'),
           contains('grok'),
           contains('gemini'),
+          contains('chatgpt'),
+          contains('openai'),
         ),
       ),
     );
@@ -56,7 +58,26 @@ void main() {
       expect(simulation.units, hasLength(4000));
       for (final faction in Faction.values) {
         expect(simulation.aliveUnits(faction), hasLength(1000));
+        expect(simulation.liveTokenSupply(faction), 1000);
+        expect(simulation.burnedTokenSupply(faction), 0);
       }
+    });
+
+    test('destroyed units burn that AI core token supply', () {
+      final simulation = BattleSimulation(
+        seed: 4,
+        config: const BattleConfig(unitsPerFaction: 2),
+      );
+      final burned = simulation.aliveUnits(Faction.amethyst).first;
+
+      burned
+        ..alive = false
+        ..state = AiState.dead;
+
+      expect(simulation.liveTokenSupply(Faction.amethyst), 1);
+      expect(simulation.burnedTokenSupply(Faction.amethyst), 1);
+      expect(simulation.liveTokenSupply(Faction.cobalt), 2);
+      expect(simulation.burnedTokenSupply(Faction.cobalt), 0);
     });
 
     test('every faction gets the same uniform Lv.1-10 distribution', () {
@@ -655,6 +676,8 @@ void main() {
       expect(fallen.alive, isFalse);
       expect(simulation.controlledUnitId, successor.id);
       expect(simulation.handoffLog, hasLength(1));
+      expect(simulation.handoffLog.single.kind, HandoffKind.casualty);
+      expect(simulation.handoffLog.single.route, isNull);
       expect(
         simulation.handoffLog.single.timestamp,
         lessThanOrEqualTo(config.handoffDeadlineSeconds),
@@ -705,6 +728,222 @@ void main() {
         expect(simulation.isSpectating, isTrue);
       },
     );
+  });
+
+  group('manual relay', () {
+    const config = BattleConfig(
+      unitsPerFaction: 4,
+      moveSpeed: 0,
+      visionRange: 1,
+      combatRange: .1,
+      separationStrength: 0,
+    );
+
+    test('preserve prioritizes safety before non-combat state', () {
+      final simulation = BattleSimulation(
+        seed: 301,
+        config: config,
+        playerFaction: Faction.amethyst,
+      );
+      final allies = simulation.aliveUnits(Faction.amethyst);
+      final source = allies[0];
+      final safe = allies[1];
+      final unsafe = allies[2];
+      final engaged = allies[3];
+      final enemy = simulation.aliveUnits(Faction.cobalt).first;
+      _leaveOnly(simulation, [source, safe, unsafe, engaged, enemy]);
+      source.position = const Vec2(400, 400);
+      safe.position = const Vec2(900, 400);
+      unsafe.position = const Vec2(520, 400);
+      engaged.position = const Vec2(1200, 400);
+      enemy.position = const Vec2(500, 400);
+      engaged.state = AiState.engage;
+      simulation.rebuildSpatialGrid();
+
+      // The engaged ally has no enemy within the bounded safety radius, so
+      // its safety score outranks the nearer non-engaged candidate.
+      expect(
+        simulation.selectManualRelay(
+          source: source,
+          route: RelayRoute.preserve,
+        ),
+        same(engaged),
+      );
+    });
+
+    test('preserve uses level as a tie-break after safety and non-combat', () {
+      final simulation = BattleSimulation(
+        seed: 3011,
+        config: config,
+        playerFaction: Faction.amethyst,
+      );
+      final allies = simulation.aliveUnits(Faction.amethyst);
+      final source = allies[0];
+      final candidates = allies.where((unit) => unit.id != source.id).toList();
+      final enemy = simulation.aliveUnits(Faction.cobalt).first;
+      _leaveOnly(simulation, [source, ...candidates, enemy]);
+      source.position = const Vec2(400, 400);
+      enemy.position = const Vec2(1800, 1800);
+      for (final candidate in candidates) {
+        candidate
+          ..position = const Vec2(900, 400)
+          ..state = AiState.seek;
+      }
+      final expected = candidates.reduce(
+        (first, second) => first.level >= second.level ? first : second,
+      );
+      simulation.rebuildSpatialGrid();
+
+      expect(
+        simulation.selectManualRelay(
+          source: source,
+          route: RelayRoute.preserve,
+        ),
+        same(expected),
+      );
+    });
+
+    test('force picks the strongest exposed ally deterministically', () {
+      final simulation = BattleSimulation(
+        seed: 302,
+        config: const BattleConfig(
+          unitsPerFaction: 4,
+          minLevel: 5,
+          maxLevel: 5,
+          moveSpeed: 0,
+          visionRange: 1,
+          combatRange: .1,
+          separationStrength: 0,
+        ),
+        playerFaction: Faction.amethyst,
+      );
+      final allies = simulation.aliveUnits(Faction.amethyst);
+      final source = allies[0];
+      final strongSafe = allies[1];
+      final strongExposed = allies[2];
+      final weakerExposed = allies[3];
+      final enemy = simulation.aliveUnits(Faction.cobalt).first;
+      _leaveOnly(simulation, [
+        source,
+        strongSafe,
+        strongExposed,
+        weakerExposed,
+        enemy,
+      ]);
+      source.position = const Vec2(400, 400);
+      strongSafe.position = const Vec2(1100, 400);
+      strongExposed.position = const Vec2(600, 400);
+      weakerExposed.position = const Vec2(900, 400);
+      enemy.position = const Vec2(520, 400);
+      // The balanced level spread gives these two allies deterministic
+      // distinct levels; make the exposed target the strongest candidate.
+      strongExposed.state = AiState.engage;
+      strongSafe.state = AiState.seek;
+      weakerExposed.state = AiState.engage;
+      simulation.rebuildSpatialGrid();
+
+      final selected = simulation.selectManualRelay(
+        source: source,
+        route: RelayRoute.force,
+      );
+      expect(selected, same(strongExposed));
+      expect(selected!.level, greaterThanOrEqualTo(weakerExposed.level));
+    });
+
+    test(
+      'source survives and manual control transfers only on a fixed tick',
+      () {
+        final simulation = BattleSimulation(
+          seed: 3031,
+          config: const BattleConfig(
+            unitsPerFaction: 2,
+            moveSpeed: 64,
+            visionRange: 1,
+            combatRange: .1,
+            separationStrength: 0,
+          ),
+          playerFaction: Faction.amethyst,
+        );
+        final source = simulation.controlledUnit!;
+        final target = simulation
+            .aliveUnits(Faction.amethyst)
+            .firstWhere((unit) => unit.id != source.id);
+        final enemy = simulation.aliveUnits(Faction.cobalt).first;
+        _leaveOnly(simulation, [source, target, enemy]);
+        source.position = const Vec2(400, 400);
+        target.position = const Vec2(700, 400);
+        enemy.position = const Vec2(1600, 1600);
+        simulation.rebuildSpatialGrid();
+        final targetStart = target.position;
+        simulation.setPlayerInput(const Vec2(1, 0), dash: true);
+
+        expect(simulation.requestManualRelay(RelayRoute.preserve), isTrue);
+        expect(simulation.manualRelayPending, isTrue);
+        expect(simulation.controlledUnitId, source.id);
+        simulation.step(1 / 60);
+        expect(simulation.simulationTickCount, 0);
+        expect(simulation.controlledUnitId, source.id);
+        simulation.step(1 / 60);
+
+        expect(simulation.simulationTickCount, 1);
+        expect(source.alive, isTrue);
+        expect(simulation.controlledUnitId, target.id);
+        expect(target.position, targetStart);
+        expect(simulation.manualRelayPending, isFalse);
+        expect(simulation.handoffLog.single.kind, HandoffKind.manual);
+        expect(simulation.handoffLog.single.route, RelayRoute.preserve);
+      },
+    );
+
+    test('invalid, duplicate, and no-candidate requests fail safely', () {
+      final noCandidate = BattleSimulation(
+        seed: 304,
+        config: const BattleConfig(
+          unitsPerFaction: 2,
+          moveSpeed: 0,
+          visionRange: 1,
+          combatRange: .1,
+          separationStrength: 0,
+        ),
+        playerFaction: Faction.amethyst,
+      );
+      final sole = noCandidate.controlledUnit!;
+      final enemy = noCandidate.aliveUnits(Faction.cobalt).first;
+      _leaveOnly(noCandidate, [sole, enemy]);
+      expect(noCandidate.requestManualRelay(RelayRoute.force), isTrue);
+      expect(noCandidate.manualRelayPending, isTrue);
+      noCandidate.step(1 / 30);
+      expect(noCandidate.manualRelayPending, isFalse);
+      expect(noCandidate.handoffLog, isEmpty);
+      expect(noCandidate.controlledUnitId, sole.id);
+
+      final duplicate = BattleSimulation(
+        seed: 305,
+        config: const BattleConfig(
+          unitsPerFaction: 2,
+          moveSpeed: 0,
+          visionRange: 1,
+          combatRange: .1,
+          separationStrength: 0,
+        ),
+        playerFaction: Faction.amethyst,
+      );
+      final source = duplicate.controlledUnit!;
+      final ally = duplicate
+          .aliveUnits(Faction.amethyst)
+          .firstWhere((unit) => unit.id != source.id);
+      final foe = duplicate.aliveUnits(Faction.cobalt).first;
+      _leaveOnly(duplicate, [source, ally, foe]);
+      expect(duplicate.requestManualRelay(RelayRoute.preserve), isTrue);
+      expect(duplicate.requestManualRelay(RelayRoute.force), isFalse);
+      duplicate.step(1 / 30);
+      source.alive = false;
+      source.state = AiState.dead;
+      duplicate.controlledUnitId = source.id;
+      expect(duplicate.requestManualRelay(RelayRoute.force), isFalse);
+      duplicate.finished = true;
+      expect(duplicate.requestManualRelay(RelayRoute.force), isFalse);
+    });
   });
 
   group('15-minute ranking', () {

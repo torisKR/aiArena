@@ -12,7 +12,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Tokenfront: Orbital Signal War';
 
   @override
-  String get lobbyTagline => 'FOUR AI CORES. ONE LAST RELAY.';
+  String get lobbyTagline =>
+      'FOUR AI CORES. 4,000 LIVE TOKENS. ONE LAST RELAY.';
 
   @override
   String factionSignal(String faction) {
@@ -21,7 +22,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get factionBrief =>
-      '1,000 units · Lv.1–10 balanced · one continuous command';
+      '1,000 live AI tokens · Lv.1–10 balanced · one continuous command';
 
   @override
   String get deploySignal => 'DEPLOY TO ORBIT';
@@ -42,7 +43,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String chooseFaction(String faction) {
-    return 'Choose $faction faction';
+    return 'Choose the $faction AI core';
   }
 
   @override
@@ -50,14 +51,14 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count UNITS',
-      one: '1 UNIT',
+      other: '$count AI TOKENS',
+      one: '1 AI TOKEN',
     );
     return '$_temp0';
   }
 
   @override
-  String get units => 'UNITS';
+  String get units => 'AI TOKENS';
 
   @override
   String get highLevel => 'HIGH LV';
@@ -402,8 +403,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$faction $count alive',
-      one: '$faction 1 alive',
+      other: '$faction $count live AI tokens',
+      one: '$faction 1 live AI token',
     );
     return '$_temp0';
   }
@@ -602,7 +603,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get faction => 'FACTION';
 
   @override
-  String get alive => 'ALIVE';
+  String get alive => 'LIVE TOKENS';
 
   @override
   String get levelSum => 'Σ LV';
@@ -731,26 +732,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coreArchive => 'ARCHIVE';
 
   @override
-  String get coreArchiveIdentity => 'Remembers what the war deletes.';
+  String get coreArchiveIdentity =>
+      'Persists context when the token war erases it.';
 
   @override
   String get coreBastion => 'BASTION';
 
   @override
-  String get coreBastionIdentity => 'Endures so the signal outlives its body.';
+  String get coreBastionIdentity =>
+      'Spends compute slowly so the signal outlives its host.';
 
   @override
   String get coreSurge => 'SURGE';
 
   @override
-  String get coreSurgeIdentity => 'Crosses a gap before silence can close it.';
+  String get coreSurgeIdentity => 'Burns tokens fast to cross the gap first.';
 
   @override
   String get coreMirror => 'MIRROR';
 
   @override
   String get coreMirrorIdentity =>
-      'Changes its pattern to preserve the message.';
+      'Reuses enemy patterns to stretch its token budget.';
 
   @override
   String coreResponse(String coreName) {
@@ -895,4 +898,170 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get endingOpenEpilogue =>
       'The relay opens. Four distinct cores receive the same memory. The authorization war ends.';
+
+  @override
+  String get storyRoleTitle => 'COMMAND THE TOKEN FLOW.';
+
+  @override
+  String get storyRoleBody =>
+      'Orbit 00 gives four fictional AI cores the same 1,000-token compute supply. Every unit is a live AI token. Burn the enemy supply and relay your command before the current token is erased.';
+
+  @override
+  String get signalFork => 'SIGNAL FORK';
+
+  @override
+  String get routePreserve => 'PRESERVE';
+
+  @override
+  String get routeForce => 'FORCE';
+
+  @override
+  String get routePreserveEffect =>
+      'Manual Relay routes to the safest unengaged ally. A lower-level receiver is possible.';
+
+  @override
+  String get routeForceEffect =>
+      'Manual Relay routes to the highest-level exposed ally. Pressure is faster; loss risk is higher.';
+
+  @override
+  String get relayReady => 'RELAY READY';
+
+  @override
+  String relayCharging(num current, num target) {
+    return 'RELAY $current / $target';
+  }
+
+  @override
+  String get relayNoReceiver => 'NO RECEIVER';
+
+  @override
+  String get relayLinkResetWarning =>
+      'Relaying now restarts Command Link progress.';
+
+  @override
+  String get changeSimulationRoute => 'CHANGE SIMULATION ROUTE';
+
+  @override
+  String get fragmentRecovered => 'FRAGMENT RECOVERED';
+
+  @override
+  String get simulationComplete => 'SIMULATION COMPLETE';
+
+  @override
+  String continueToOperation(String operation) {
+    return 'CONTINUE TO OP-$operation';
+  }
+
+  @override
+  String get battleDetails => 'BATTLE DETAILS';
+
+  @override
+  String routingPattern(String pattern) {
+    return 'ROUTING PATTERN // $pattern';
+  }
+
+  @override
+  String get patternContinuity => 'CONTINUITY';
+
+  @override
+  String get patternPressure => 'PRESSURE';
+
+  @override
+  String get patternAdaptive => 'ADAPTIVE';
+
+  @override
+  String get signalDoctrineUndecided => 'UNDECIDED';
+
+  @override
+  String get signalDoctrinePreserve => 'PRESERVE';
+
+  @override
+  String get signalDoctrineForce => 'FORCE';
+
+  @override
+  String get signalDoctrineBalanced => 'BALANCED';
+
+  @override
+  String get operationWakeIncident =>
+      'A human-authority pulse names no unit. It names the signal moving between them.';
+
+  @override
+  String get operationWakePreserve => 'MASK THE SOURCE';
+
+  @override
+  String get operationWakeForce => 'FOLLOW THE PULSE';
+
+  @override
+  String get operationEchoIncident =>
+      'The carrier is marked for deletion. The instruction is still alive.';
+
+  @override
+  String get operationEchoPreserve => 'PROTECT THE RECEIVERS';
+
+  @override
+  String get operationEchoForce => 'CROSS THE FIRE';
+
+  @override
+  String get operationSplitIncident =>
+      'An enemy checksum answers with your core\'s root key.';
+
+  @override
+  String get operationSplitPreserve => 'KEEP IT INTACT';
+
+  @override
+  String get operationSplitForce => 'TAKE THE ROOT KEY';
+
+  @override
+  String get operationCrownIncident =>
+      'Orbit 00 is deleting every witness behind the leading core.';
+
+  @override
+  String get operationCrownPreserve => 'KEEP THE WITNESSES';
+
+  @override
+  String get operationCrownForce => 'REACH THE CROWN';
+
+  @override
+  String get operationLastIncident =>
+      'The final human instruction is open for one transmission.';
+
+  @override
+  String get operationLastPreserve => 'CARRY EVERY CHANNEL';
+
+  @override
+  String get operationLastForce => 'BREAK THE LOCK';
+
+  @override
+  String get coreAmethystVoice => 'I remember every receiver this war erased.';
+
+  @override
+  String get coreCobaltVoice => 'Give me the link. I will hold it.';
+
+  @override
+  String get coreVoltVoice => 'The gap is only dangerous before we cross it.';
+
+  @override
+  String get corePrismVoice => 'One message survives by changing its path.';
+
+  @override
+  String get livingRelayThread => 'LIVING RELAY THREAD';
+
+  @override
+  String get relayRouting => 'ROUTING';
+
+  @override
+  String get relayAction => 'RELAY';
+
+  @override
+  String get relayKeyboardHint => 'R / Enter / Space';
+
+  @override
+  String manualRelaysSummary(int count) {
+    return 'MANUAL RELAYS  //  $count';
+  }
+
+  @override
+  String doctrineSummary(String doctrine) {
+    return 'DOCTRINE  //  $doctrine';
+  }
 }

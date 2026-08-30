@@ -67,6 +67,11 @@ class BattleHudSnapshot {
     required this.lowSpecMode,
     required this.mouseCameraEnabled,
     required this.cameraZoom,
+    this.manualRelayCharge,
+    this.manualRelayReady = false,
+    this.manualRelayPending = false,
+    this.relayRoute,
+    this.manualRelayCount = 0,
   });
 
   factory BattleHudSnapshot.initial({
@@ -92,6 +97,11 @@ class BattleHudSnapshot {
     lowSpecMode: lowSpecMode,
     mouseCameraEnabled: mouseCameraEnabled,
     cameraZoom: 1,
+    manualRelayCharge: null,
+    manualRelayReady: false,
+    manualRelayPending: false,
+    relayRoute: null,
+    manualRelayCount: 0,
   );
 
   final double elapsed;
@@ -108,6 +118,16 @@ class BattleHudSnapshot {
   final bool lowSpecMode;
   final bool mouseCameraEnabled;
   final double cameraZoom;
+
+  /// Normalized manual-relay charge. Null means manual relay is disabled
+  /// (Skirmish), rather than an empty charge.
+  final double? manualRelayCharge;
+  final bool manualRelayReady;
+  final bool manualRelayPending;
+  final RelayRoute? relayRoute;
+  final int manualRelayCount;
+
+  RelayRoute? get selectedRelayRoute => relayRoute;
 }
 
 class _CombatFlash {
@@ -136,6 +156,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     this.audioEnabled = true,
     this.combatWinCode = 'WIN',
     this.combatOutCode = 'OUT',
+    this.relayRoute,
     this.onHandoffStarted,
     this.onHandoffOutcome,
   }) : assert(mode == GameMode.skirmish || operation != null),
@@ -189,6 +210,10 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   final bool audioEnabled;
   final String combatWinCode;
   final String combatOutCode;
+
+  /// The route selected by the Chronicle briefing. Legacy callers may omit
+  /// it; Chronicle safely resolves that omission to [RelayRoute.preserve].
+  final RelayRoute? relayRoute;
   final VoidCallback? onHandoffStarted;
   final ValueChanged<bool>? onHandoffOutcome;
   final void Function(BattleReport report) onBattleConcluded;
@@ -220,6 +245,12 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   Rect _visibleWorldBounds = Rect.zero;
   int _seenHandoffs = 0;
   int _relayCount = 0;
+  int _manualRelayCount = 0;
+  double _manualRelayCharge = 1;
+  double _manualRelayRechargeSeconds = 0;
+  HandoffKind? _handoffKind;
+  int? _handoffTargetId;
+  final List<HandoffEvent> _handoffQueue = <HandoffEvent>[];
   int _commandKills = 0;
   int? _linkUnitId;
   double _commandLinkSeconds = 0;
@@ -256,6 +287,24 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   static const _combatFlashLimit = 96;
   static const _unitCullMargin = 96.0;
   static const _unitAtlasCell = 64.0;
+  static const _manualRelayRechargeDuration = 45.0;
+
+  RelayRoute? get selectedRelayRoute =>
+      mode == GameMode.chronicle ? relayRoute ?? RelayRoute.preserve : null;
+  double? get manualRelayCharge =>
+      mode == GameMode.chronicle ? _manualRelayCharge : null;
+  bool get manualRelayPending =>
+      mode == GameMode.chronicle && simulation.manualRelayPending;
+  bool get manualRelayReady =>
+      mode == GameMode.chronicle &&
+      selectedRelayRoute != null &&
+      _manualRelayCharge >= 1 - 1e-9 &&
+      !manualRelayPending &&
+      _handoffElapsed < 0 &&
+      !simulation.finished &&
+      simulation.controlledUnit?.alive == true &&
+      !simulation.playerFactionEliminated;
+  int get manualRelayCount => _manualRelayCount;
 
   HandoffStage? get handoffStage =>
       _handoffElapsed < 0 ? null : HandoffTimeline.stageAt(_handoffElapsed);
@@ -340,6 +389,9 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
 
   @visibleForTesting
   int get debugCombatFlashCount => _combatFlashes.length;
+
+  @visibleForTesting
+  int? get debugFallenUnitId => _fallenUnitId;
 
   @visibleForTesting
   int get debugAtlasBatchSubmissionCount => _debugAtlasBatchSubmissionCount;
@@ -520,6 +572,22 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Queues a manual command relay. Charge is intentionally consumed only
+  /// when the corresponding [HandoffEvent] is observed in the simulation log;
+  /// a request with no eligible receiver therefore leaves it full.
+  bool triggerManualRelay() {
+    final route = selectedRelayRoute;
+    if (paused ||
+        mode != GameMode.chronicle ||
+        route == null ||
+        !manualRelayReady) {
+      return false;
+    }
+    final accepted = simulation.requestManualRelay(route);
+    if (accepted) _publishHud();
+    return accepted;
+  }
+
   @override
   KeyEventResult onKeyEvent(
     KeyEvent event,
@@ -530,7 +598,11 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space) {
       triggerDash();
     }
-    return event.logicalKey == LogicalKeyboardKey.space
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyR) {
+      triggerManualRelay();
+    }
+    return event.logicalKey == LogicalKeyboardKey.space ||
+            event.logicalKey == LogicalKeyboardKey.keyR
         ? KeyEventResult.handled
         : movementResult;
   }
@@ -548,6 +620,10 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
 
   KeyEventResult onFocusedMovementKeyEvent(KeyEvent event) {
     if (paused) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.keyR) {
+      if (event is KeyDownEvent) triggerManualRelay();
+      return KeyEventResult.handled;
+    }
     if (!_isMovementKey(event.logicalKey)) return KeyEventResult.ignored;
     final pressedKeys = {..._pressedKeys};
     if (event is KeyUpEvent) {
@@ -622,6 +698,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     final simulationDt = handoffActive
         ? safeDt * HandoffTimeline.simulationScaleAt(_handoffElapsed)
         : safeDt;
+    final manualRelayPendingBeforeStep = simulation.manualRelayPending;
     final commandedBeforeStep = simulation.controlledUnitId;
     final elapsedBeforeStep = simulation.matchElapsed;
     simulation.step(simulationDt);
@@ -632,6 +709,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     final elapsedDelta = math
         .max(0, simulation.matchElapsed - elapsedBeforeStep)
         .toDouble();
+    _advanceManualRelayCharge(elapsedDelta);
     final commandedAfterStep = simulation.controlledUnitId;
     final commandedAlive =
         simulation.unitById(commandedAfterStep)?.alive ?? false;
@@ -665,9 +743,57 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       (flash) => _realElapsed - flash.createdAt > flashDuration,
     );
 
-    if (simulation.handoffLog.length > _seenHandoffs) {
-      final event = simulation.handoffLog.last;
-      _seenHandoffs = simulation.handoffLog.length;
+    var handoffObserved = false;
+    while (_seenHandoffs < simulation.handoffLog.length) {
+      final event = simulation.handoffLog[_seenHandoffs++];
+      _handoffQueue.add(event);
+      handoffObserved = true;
+      if (event.kind == HandoffKind.manual) {
+        // A request itself never spends charge. Only the observed successful
+        // event starts a new 45 simulation-second recharge window.
+        _manualRelayCharge = 0;
+        _manualRelayRechargeSeconds = 0;
+      }
+    }
+    if (_handoffElapsed < 0) _startNextHandoff();
+
+    _updateTrail(safeDt);
+    _updateDensityZoom(safeDt);
+    _updateCamera(safeDt);
+
+    _hudAccumulator += safeDt;
+    if (_hudAccumulator >= (lowSpecMode ? .2 : .1)) {
+      _hudAccumulator = 0;
+      _publishHud();
+    } else if (handoffObserved ||
+        (manualRelayPendingBeforeStep && !simulation.manualRelayPending)) {
+      // Reflect an observed handoff or a failed/no-target request immediately;
+      // neither should wait for the periodic HUD cadence.
+      _publishHud();
+    }
+
+    if (simulation.finished && !_resultReported && simulation.result != null) {
+      if (_handoffElapsed >= 0 || _handoffQueue.isNotEmpty) {
+        _conclusionPending = true;
+      } else {
+        _publishConclusion(
+          simulation.result!.reason == MatchEndReason.timeLimit
+              ? ChronicleEndReason.timeLimit
+              : ChronicleEndReason.globalResolution,
+        );
+      }
+    }
+  }
+
+  void _startNextHandoff() {
+    if (_handoffElapsed >= 0) return;
+    while (_handoffQueue.isNotEmpty) {
+      final event = _handoffQueue.removeAt(0);
+      if (event.factionEliminated) {
+        onHandoffOutcome?.call(false);
+        continue;
+      }
+
       final from = simulation.unitById(event.fromUnitId);
       final to = simulation.unitById(event.toUnitId);
       _handoffFrom = from?.position ?? _cameraCenter;
@@ -678,7 +804,14 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
             simulation.config.worldHeight / 2,
           );
       _handoffElapsed = 0;
-      _fallenUnitId = event.fromUnitId;
+      _handoffKind = event.kind;
+      _handoffTargetId = event.toUnitId;
+      _handoffRelayEligible = true;
+      // Manual relays keep their source alive and therefore do not receive
+      // the casualty focus/death mark used by the automatic handoff path.
+      _fallenUnitId = event.kind == HandoffKind.manual
+          ? null
+          : event.fromUnitId;
       _trailPoints.clear();
       _mousePanning = false;
       _minimapPanning = false;
@@ -686,38 +819,26 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       onHandoffStarted?.call();
       unawaited(_safeStart(_relayAudioPool, volume: .72));
       if (hapticsEnabled) HapticFeedback.mediumImpact();
-      if (!event.factionEliminated) {
-        _handoffRelayEligible = true;
-      } else {
-        _handoffElapsed = -1;
-        onHandoffOutcome?.call(false);
-        if (!simulation.finished && simulation.result == null) {
-          _maybeConcludePlayerElimination();
-        }
-      }
+      return;
     }
-
-    _updateTrail(safeDt);
-    _updateDensityZoom(safeDt);
-    _updateCamera(safeDt);
-
-    _hudAccumulator += safeDt;
-    if (_hudAccumulator >= (lowSpecMode ? .2 : .1)) {
-      _hudAccumulator = 0;
-      _publishHud();
+    if (!simulation.finished &&
+        simulation.result == null &&
+        _handoffQueue.isEmpty) {
+      _maybeConcludePlayerElimination();
     }
+  }
 
-    if (simulation.finished && !_resultReported && simulation.result != null) {
-      if (_handoffElapsed >= 0) {
-        _conclusionPending = true;
-      } else {
-        _publishConclusion(
-          simulation.result!.reason == MatchEndReason.timeLimit
-              ? ChronicleEndReason.timeLimit
-              : ChronicleEndReason.globalResolution,
-        );
-      }
-    }
+  void _advanceManualRelayCharge(double elapsedDelta) {
+    if (mode != GameMode.chronicle || elapsedDelta <= 0) return;
+    if (_manualRelayCharge >= 1) return;
+    _manualRelayRechargeSeconds = math.min(
+      _manualRelayRechargeDuration,
+      _manualRelayRechargeSeconds + elapsedDelta,
+    );
+    _manualRelayCharge =
+        (_manualRelayRechargeSeconds / _manualRelayRechargeDuration)
+            .clamp(0.0, 1.0)
+            .toDouble();
   }
 
   void _updateDensityZoom(double dt) {
@@ -759,15 +880,28 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       }
 
       if (elapsed >= HandoffTimeline.duration) {
+        final completedKind = _handoffKind;
+        final receiverAlive =
+            _handoffTargetId != null &&
+            (simulation.unitById(_handoffTargetId)?.alive ?? false);
         _handoffElapsed = -1;
         _fallenUnitId = null;
-        if (_handoffRelayEligible) {
+        _handoffTargetId = null;
+        final manualReceiverLost =
+            completedKind == HandoffKind.manual && !receiverAlive;
+        if (_handoffRelayEligible && !manualReceiverLost) {
           _relayCount += 1;
-          _handoffRelayEligible = false;
+          if (completedKind == HandoffKind.manual) _manualRelayCount += 1;
         }
-        onHandoffOutcome?.call(true);
+        _handoffRelayEligible = false;
+        _handoffKind = null;
+        onHandoffOutcome?.call(!manualReceiverLost);
         if (hapticsEnabled) HapticFeedback.lightImpact();
-        if (_conclusionPending && simulation.result != null) {
+        _startNextHandoff();
+        if (_conclusionPending &&
+            _handoffElapsed < 0 &&
+            _handoffQueue.isEmpty &&
+            simulation.result != null) {
           _conclusionPending = false;
           _publishConclusion(
             simulation.result!.reason == MatchEndReason.timeLimit
@@ -883,6 +1017,11 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       lowSpecMode: lowSpecMode,
       mouseCameraEnabled: mouseCameraEnabled,
       cameraZoom: _lastRenderZoom,
+      manualRelayCharge: manualRelayCharge,
+      manualRelayReady: manualRelayReady,
+      manualRelayPending: manualRelayPending,
+      relayRoute: selectedRelayRoute,
+      manualRelayCount: _manualRelayCount,
     );
   }
 
@@ -910,6 +1049,8 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
           ? null
           : result?.winner,
       commandRelays: _relayCount,
+      manualRelays: _manualRelayCount,
+      relayRoute: selectedRelayRoute,
       commandKills: _commandKills,
       longestCommandLinkSeconds: _longestCommandLinkSeconds,
       playerRank: standings.indexOf(playerStanding) + 1,

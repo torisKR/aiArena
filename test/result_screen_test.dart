@@ -22,6 +22,7 @@ void main() {
 
       expect(find.byKey(const Key('chronicle-debrief')), findsOneWidget);
       expect(find.text(copy.reveal(id)), findsOneWidget);
+      expect(find.text('LIVE TOKENS'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });

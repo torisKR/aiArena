@@ -468,7 +468,7 @@ final class _TokenfrontLocalState {
         rewardLedger: runtime.rewardLedger,
       );
 
-  static const _version = 2;
+  static const _version = 3;
 
   final int walletBalance;
   final Set<String> unlockedIds;
@@ -521,7 +521,8 @@ final class _TokenfrontLocalState {
       if (version is int && version > _version) {
         throw _UnsupportedSchemaVersion(version);
       }
-      if (version is! int || (version != 1 && version != _version)) {
+      if (version is! int ||
+          (version != 1 && version != 2 && version != _version)) {
         return _TokenfrontLocalState.defaults();
       }
       final wallet = _decodeWallet(decoded['wallet']);

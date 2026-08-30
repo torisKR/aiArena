@@ -44,6 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .gstack/
+.omo/
 .wrangler/
 .playwright-cli/
 graphify-out/

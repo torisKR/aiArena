@@ -12,7 +12,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'Tokenfront: 軌道信号戦';
 
   @override
-  String get lobbyTagline => '4つのAIコア。最後のリレーは1つ。';
+  String get lobbyTagline => '4つのAIコア。4,000のライブトークン。最後のリレーは1つ。';
 
   @override
   String factionSignal(String faction) {
@@ -20,7 +20,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get factionBrief => '1,000ユニット · Lv.1–10均衡 · 指揮権を連続維持';
+  String get factionBrief => 'ライブAIトークン1,000 · Lv.1–10均衡 · 指揮を継続';
 
   @override
   String get deploySignal => '軌道へ展開';
@@ -41,16 +41,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String chooseFaction(String faction) {
-    return '$faction陣営を選択';
+    return '$faction AIコアを選択';
   }
 
   @override
   String unitsCount(int count) {
-    return '$countユニット';
+    return 'AIトークン $count';
   }
 
   @override
-  String get units => 'ユニット';
+  String get units => 'AIトークン';
 
   @override
   String get highLevel => '高Lv';
@@ -365,7 +365,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String factionAlive(String faction, int count) {
-    return '$faction 生存 $count';
+    return '$faction ライブAIトークン $count';
   }
 
   @override
@@ -548,7 +548,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get faction => '陣営';
 
   @override
-  String get alive => '生存';
+  String get alive => 'ライブトークン';
 
   @override
   String get levelSum => 'Σ LV';
@@ -671,25 +671,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coreArchive => 'ARCHIVE';
 
   @override
-  String get coreArchiveIdentity => '戦争が消すものを記憶する。';
+  String get coreArchiveIdentity => 'トークン戦争が消した文脈を保持する。';
 
   @override
   String get coreBastion => 'BASTION';
 
   @override
-  String get coreBastionIdentity => '信号がボディを越えて存続するよう耐える。';
+  String get coreBastionIdentity => '計算予算をゆっくり使い、信号を長く保つ。';
 
   @override
   String get coreSurge => 'SURGE';
 
   @override
-  String get coreSurgeIdentity => '沈黙が閉じる前に隔たりを越える。';
+  String get coreSurgeIdentity => 'トークンを速く燃やし、隔たりを先に越える。';
 
   @override
   String get coreMirror => 'MIRROR';
 
   @override
-  String get coreMirrorIdentity => 'メッセージを守るためパターンを変える。';
+  String get coreMirrorIdentity => '敵のパターンを再利用し、トークン予算を伸ばす。';
 
   @override
   String coreResponse(String coreName) {
@@ -833,4 +833,164 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get endingOpenEpilogue => 'リレーが開く。4つの異なるコアが同じ記憶を受け取る。認証戦争は終わる。';
+
+  @override
+  String get storyRoleTitle => 'AIトークンの流れを指揮せよ。';
+
+  @override
+  String get storyRoleBody =>
+      'Orbit 00の4つの架空AIコアは、それぞれ同じ1,000の計算トークンで戦争を始める。すべてのユニットはライブAIトークンだ。敵の供給を燃やし、現在のトークンが消去される前に指揮信号を渡せ。';
+
+  @override
+  String get signalFork => 'シグナルフォーク';
+
+  @override
+  String get routePreserve => '維持';
+
+  @override
+  String get routeForce => '強行';
+
+  @override
+  String get routePreserveEffect =>
+      '手動リレーは、交戦していない味方のうち最も安全な受信者へつなぐ。低レベルの受信者になることもある。';
+
+  @override
+  String get routeForceEffect => '手動リレーは、露出した味方のうち最高レベルの受信者へつなぐ。速いが、喪失の危険は高い。';
+
+  @override
+  String get relayReady => 'リレー準備完了';
+
+  @override
+  String relayCharging(num current, num target) {
+    return 'リレー $current / $target';
+  }
+
+  @override
+  String get relayNoReceiver => '受信者なし';
+
+  @override
+  String get relayLinkResetWarning => '今リレーすると、指揮リンクの進行が最初からになる。';
+
+  @override
+  String get changeSimulationRoute => 'シミュレーション経路を変更';
+
+  @override
+  String get fragmentRecovered => '断片を回収';
+
+  @override
+  String get simulationComplete => 'シミュレーション完了';
+
+  @override
+  String continueToOperation(String operation) {
+    return 'OP-$operationへ続行';
+  }
+
+  @override
+  String get battleDetails => '戦闘詳細';
+
+  @override
+  String routingPattern(String pattern) {
+    return 'ルーティングパターン // $pattern';
+  }
+
+  @override
+  String get patternContinuity => '連続';
+
+  @override
+  String get patternPressure => '圧力';
+
+  @override
+  String get patternAdaptive => '適応';
+
+  @override
+  String get signalDoctrineUndecided => '未決定';
+
+  @override
+  String get signalDoctrinePreserve => '維持';
+
+  @override
+  String get signalDoctrineForce => '強行';
+
+  @override
+  String get signalDoctrineBalanced => '均衡';
+
+  @override
+  String get operationWakeIncident =>
+      '人間の権限パルスは、どのユニットも名指ししない。ユニット間を移る信号を名指しする。';
+
+  @override
+  String get operationWakePreserve => '発信源を隠せ';
+
+  @override
+  String get operationWakeForce => 'パルスを追え';
+
+  @override
+  String get operationEchoIncident => '運搬体に削除マークが付いた。指示はまだ生きている。';
+
+  @override
+  String get operationEchoPreserve => '受信者を守れ';
+
+  @override
+  String get operationEchoForce => '火線を越えろ';
+
+  @override
+  String get operationSplitIncident => '敵のチェックサムが、あなたのコアのルートキーに応答する。';
+
+  @override
+  String get operationSplitPreserve => '完全なまま守れ';
+
+  @override
+  String get operationSplitForce => 'ルートキーを奪え';
+
+  @override
+  String get operationCrownIncident => 'Orbit 00が先頭コアの背後にいる証人をすべて消去している。';
+
+  @override
+  String get operationCrownPreserve => '証人を守れ';
+
+  @override
+  String get operationCrownForce => '王冠へ届け';
+
+  @override
+  String get operationLastIncident => '最後の人間の指示が、一度の送信のために開かれている。';
+
+  @override
+  String get operationLastPreserve => 'すべてのチャンネルを運べ';
+
+  @override
+  String get operationLastForce => 'ロックを破れ';
+
+  @override
+  String get coreAmethystVoice => 'この戦争が消したすべての受信者を覚えている。';
+
+  @override
+  String get coreCobaltVoice => 'リンクを渡せ。私が守る。';
+
+  @override
+  String get coreVoltVoice => '越える前だけ、隔たりは危険だ。';
+
+  @override
+  String get corePrismVoice => '経路を変えれば、一つのメッセージは生き残る。';
+
+  @override
+  String get livingRelayThread => 'リビングリレースレッド';
+
+  @override
+  String get relayRouting => 'ルーティング中';
+
+  @override
+  String get relayAction => 'リレー';
+
+  @override
+  String get relayKeyboardHint => 'R / Enter / Space';
+
+  @override
+  String manualRelaysSummary(int count) {
+    return '手動リレー  //  $count';
+  }
+
+  @override
+  String doctrineSummary(String doctrine) {
+    return '信号ドクトリン  //  $doctrine';
+  }
 }

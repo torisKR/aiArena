@@ -111,7 +111,7 @@ abstract class AppLocalizations {
   /// Short product tagline on the lobby header.
   ///
   /// In en, this message translates to:
-  /// **'FOUR AI CORES. ONE LAST RELAY.'**
+  /// **'FOUR AI CORES. 4,000 LIVE TOKENS. ONE LAST RELAY.'**
   String get lobbyTagline;
 
   /// Selected faction signal heading.
@@ -123,7 +123,7 @@ abstract class AppLocalizations {
   /// Short description of the selected army.
   ///
   /// In en, this message translates to:
-  /// **'1,000 units · Lv.1–10 balanced · one continuous command'**
+  /// **'1,000 live AI tokens · Lv.1–10 balanced · one continuous command'**
   String get factionBrief;
 
   /// Primary button that starts a battle.
@@ -159,19 +159,19 @@ abstract class AppLocalizations {
   /// Accessibility label for a faction selection card.
   ///
   /// In en, this message translates to:
-  /// **'Choose {faction} faction'**
+  /// **'Choose the {faction} AI core'**
   String chooseFaction(String faction);
 
   /// Visible number of units in an army.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 UNIT} other{{count} UNITS}}'**
+  /// **'{count, plural, =1{1 AI TOKEN} other{{count} AI TOKENS}}'**
   String unitsCount(int count);
 
   /// Rules-strip label for units.
   ///
   /// In en, this message translates to:
-  /// **'UNITS'**
+  /// **'AI TOKENS'**
   String get units;
 
   /// Rules-strip label for a higher-level unit.
@@ -765,7 +765,7 @@ abstract class AppLocalizations {
   /// Screen-reader count of surviving units in a faction.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{{faction} 1 alive} other{{faction} {count} alive}}'**
+  /// **'{count, plural, =1{{faction} 1 live AI token} other{{faction} {count} live AI tokens}}'**
   String factionAlive(String faction, int count);
 
   /// Compact battle control for mouse camera.
@@ -1096,10 +1096,10 @@ abstract class AppLocalizations {
   /// **'FACTION'**
   String get faction;
 
-  /// Result standings survivor column.
+  /// Result standings live AI-token supply column.
   ///
   /// In en, this message translates to:
-  /// **'ALIVE'**
+  /// **'LIVE TOKENS'**
   String get alive;
 
   /// Result standings sum-of-levels column.
@@ -1309,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @coreArchiveIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Remembers what the war deletes.'**
+  /// **'Persists context when the token war erases it.'**
   String get coreArchiveIdentity;
 
   /// No description provided for @coreBastion.
@@ -1321,7 +1321,7 @@ abstract class AppLocalizations {
   /// No description provided for @coreBastionIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Endures so the signal outlives its body.'**
+  /// **'Spends compute slowly so the signal outlives its host.'**
   String get coreBastionIdentity;
 
   /// No description provided for @coreSurge.
@@ -1333,7 +1333,7 @@ abstract class AppLocalizations {
   /// No description provided for @coreSurgeIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Crosses a gap before silence can close it.'**
+  /// **'Burns tokens fast to cross the gap first.'**
   String get coreSurgeIdentity;
 
   /// No description provided for @coreMirror.
@@ -1345,7 +1345,7 @@ abstract class AppLocalizations {
   /// No description provided for @coreMirrorIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Changes its pattern to preserve the message.'**
+  /// **'Reuses enemy patterns to stretch its token budget.'**
   String get coreMirrorIdentity;
 
   /// Selected core name in the debrief response.
@@ -1566,6 +1566,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The relay opens. Four distinct cores receive the same memory. The authorization war ends.'**
   String get endingOpenEpilogue;
+
+  /// No description provided for @storyRoleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMAND THE TOKEN FLOW.'**
+  String get storyRoleTitle;
+
+  /// No description provided for @storyRoleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Orbit 00 gives four fictional AI cores the same 1,000-token compute supply. Every unit is a live AI token. Burn the enemy supply and relay your command before the current token is erased.'**
+  String get storyRoleBody;
+
+  /// No description provided for @signalFork.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGNAL FORK'**
+  String get signalFork;
+
+  /// No description provided for @routePreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'PRESERVE'**
+  String get routePreserve;
+
+  /// No description provided for @routeForce.
+  ///
+  /// In en, this message translates to:
+  /// **'FORCE'**
+  String get routeForce;
+
+  /// No description provided for @routePreserveEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Relay routes to the safest unengaged ally. A lower-level receiver is possible.'**
+  String get routePreserveEffect;
+
+  /// No description provided for @routeForceEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Relay routes to the highest-level exposed ally. Pressure is faster; loss risk is higher.'**
+  String get routeForceEffect;
+
+  /// No description provided for @relayReady.
+  ///
+  /// In en, this message translates to:
+  /// **'RELAY READY'**
+  String get relayReady;
+
+  /// No description provided for @relayCharging.
+  ///
+  /// In en, this message translates to:
+  /// **'RELAY {current} / {target}'**
+  String relayCharging(num current, num target);
+
+  /// No description provided for @relayNoReceiver.
+  ///
+  /// In en, this message translates to:
+  /// **'NO RECEIVER'**
+  String get relayNoReceiver;
+
+  /// No description provided for @relayLinkResetWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Relaying now restarts Command Link progress.'**
+  String get relayLinkResetWarning;
+
+  /// No description provided for @changeSimulationRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'CHANGE SIMULATION ROUTE'**
+  String get changeSimulationRoute;
+
+  /// No description provided for @fragmentRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'FRAGMENT RECOVERED'**
+  String get fragmentRecovered;
+
+  /// No description provided for @simulationComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'SIMULATION COMPLETE'**
+  String get simulationComplete;
+
+  /// No description provided for @continueToOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE TO OP-{operation}'**
+  String continueToOperation(String operation);
+
+  /// No description provided for @battleDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'BATTLE DETAILS'**
+  String get battleDetails;
+
+  /// No description provided for @routingPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'ROUTING PATTERN // {pattern}'**
+  String routingPattern(String pattern);
+
+  /// No description provided for @patternContinuity.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUITY'**
+  String get patternContinuity;
+
+  /// No description provided for @patternPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'PRESSURE'**
+  String get patternPressure;
+
+  /// No description provided for @patternAdaptive.
+  ///
+  /// In en, this message translates to:
+  /// **'ADAPTIVE'**
+  String get patternAdaptive;
+
+  /// No description provided for @signalDoctrineUndecided.
+  ///
+  /// In en, this message translates to:
+  /// **'UNDECIDED'**
+  String get signalDoctrineUndecided;
+
+  /// No description provided for @signalDoctrinePreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'PRESERVE'**
+  String get signalDoctrinePreserve;
+
+  /// No description provided for @signalDoctrineForce.
+  ///
+  /// In en, this message translates to:
+  /// **'FORCE'**
+  String get signalDoctrineForce;
+
+  /// No description provided for @signalDoctrineBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'BALANCED'**
+  String get signalDoctrineBalanced;
+
+  /// No description provided for @operationWakeIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'A human-authority pulse names no unit. It names the signal moving between them.'**
+  String get operationWakeIncident;
+
+  /// No description provided for @operationWakePreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'MASK THE SOURCE'**
+  String get operationWakePreserve;
+
+  /// No description provided for @operationWakeForce.
+  ///
+  /// In en, this message translates to:
+  /// **'FOLLOW THE PULSE'**
+  String get operationWakeForce;
+
+  /// No description provided for @operationEchoIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'The carrier is marked for deletion. The instruction is still alive.'**
+  String get operationEchoIncident;
+
+  /// No description provided for @operationEchoPreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'PROTECT THE RECEIVERS'**
+  String get operationEchoPreserve;
+
+  /// No description provided for @operationEchoForce.
+  ///
+  /// In en, this message translates to:
+  /// **'CROSS THE FIRE'**
+  String get operationEchoForce;
+
+  /// No description provided for @operationSplitIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'An enemy checksum answers with your core\'\'s root key.'**
+  String get operationSplitIncident;
+
+  /// No description provided for @operationSplitPreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'KEEP IT INTACT'**
+  String get operationSplitPreserve;
+
+  /// No description provided for @operationSplitForce.
+  ///
+  /// In en, this message translates to:
+  /// **'TAKE THE ROOT KEY'**
+  String get operationSplitForce;
+
+  /// No description provided for @operationCrownIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'Orbit 00 is deleting every witness behind the leading core.'**
+  String get operationCrownIncident;
+
+  /// No description provided for @operationCrownPreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'KEEP THE WITNESSES'**
+  String get operationCrownPreserve;
+
+  /// No description provided for @operationCrownForce.
+  ///
+  /// In en, this message translates to:
+  /// **'REACH THE CROWN'**
+  String get operationCrownForce;
+
+  /// No description provided for @operationLastIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'The final human instruction is open for one transmission.'**
+  String get operationLastIncident;
+
+  /// No description provided for @operationLastPreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'CARRY EVERY CHANNEL'**
+  String get operationLastPreserve;
+
+  /// No description provided for @operationLastForce.
+  ///
+  /// In en, this message translates to:
+  /// **'BREAK THE LOCK'**
+  String get operationLastForce;
+
+  /// No description provided for @coreAmethystVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'I remember every receiver this war erased.'**
+  String get coreAmethystVoice;
+
+  /// No description provided for @coreCobaltVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Give me the link. I will hold it.'**
+  String get coreCobaltVoice;
+
+  /// No description provided for @coreVoltVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'The gap is only dangerous before we cross it.'**
+  String get coreVoltVoice;
+
+  /// No description provided for @corePrismVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'One message survives by changing its path.'**
+  String get corePrismVoice;
+
+  /// No description provided for @livingRelayThread.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVING RELAY THREAD'**
+  String get livingRelayThread;
+
+  /// No description provided for @relayRouting.
+  ///
+  /// In en, this message translates to:
+  /// **'ROUTING'**
+  String get relayRouting;
+
+  /// No description provided for @relayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'RELAY'**
+  String get relayAction;
+
+  /// No description provided for @relayKeyboardHint.
+  ///
+  /// In en, this message translates to:
+  /// **'R / Enter / Space'**
+  String get relayKeyboardHint;
+
+  /// No description provided for @manualRelaysSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'MANUAL RELAYS  //  {count}'**
+  String manualRelaysSummary(int count);
+
+  /// No description provided for @doctrineSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'DOCTRINE  //  {doctrine}'**
+  String doctrineSummary(String doctrine);
 }
 
 class _AppLocalizationsDelegate

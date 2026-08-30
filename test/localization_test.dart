@@ -8,6 +8,7 @@ import 'package:tokenfront/app/tokenfront_state_store.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/main.dart';
 import 'package:tokenfront/services/privacy/privacy_state.dart';
+import 'package:tokenfront/game/simulation.dart';
 import 'package:tokenfront/story/story_localizations.dart';
 import 'package:tokenfront/story/story_models.dart';
 
@@ -52,12 +53,16 @@ void main() {
     const productContracts = <String, (String, String, String)>{
       'en': (
         'Tokenfront: Orbital Signal War',
-        'FOUR AI CORES. ONE LAST RELAY.',
+        'FOUR AI CORES. 4,000 LIVE TOKENS. ONE LAST RELAY.',
         'DEPLOY TO ORBIT',
       ),
-      'ko': ('Tokenfront: 궤도 신호전', '네 AI 코어. 단 하나의 최후 릴레이.', '궤도 투입'),
-      'ja': ('Tokenfront: 軌道信号戦', '4つのAIコア。最後のリレーは1つ。', '軌道へ展開'),
-      'zh': ('Tokenfront：轨道信号战', '四个AI核心，最后一座中继站。', '部署至轨道'),
+      'ko': (
+        'Tokenfront: 궤도 신호전',
+        '네 AI 코어. 4,000개의 활성 토큰. 단 하나의 최후 릴레이.',
+        '궤도 투입',
+      ),
+      'ja': ('Tokenfront: 軌道信号戦', '4つのAIコア。4,000のライブトークン。最後のリレーは1つ。', '軌道へ展開'),
+      'zh': ('Tokenfront：轨道信号战', '四个AI核心，4,000个活跃代币，最后一座中继站。', '部署至轨道'),
     };
 
     for (final locale in AppLocalizations.supportedLocales) {
@@ -496,6 +501,131 @@ void main() {
     expect(find.text('SIGNAL CONDITIONING'), findsNothing);
   });
 
+  testWidgets('Story and Fun redesign copy is exhaustive in every locale', (
+    tester,
+  ) async {
+    const hudCopy =
+        <
+          String,
+          ({
+            String thread,
+            String routing,
+            String action,
+            String hint,
+            String relays,
+            String doctrine,
+          })
+        >{
+          'en': (
+            thread: 'LIVING RELAY THREAD',
+            routing: 'ROUTING',
+            action: 'RELAY',
+            hint: 'R / Enter / Space',
+            relays: 'MANUAL RELAYS  //  2',
+            doctrine: 'DOCTRINE  //  BALANCED',
+          ),
+          'ko': (
+            thread: '살아 있는 릴레이 스레드',
+            routing: '라우팅 중',
+            action: '릴레이',
+            hint: 'R / Enter / Space',
+            relays: '수동 릴레이  //  2',
+            doctrine: '신호 교리  //  균형',
+          ),
+          'ja': (
+            thread: 'リビングリレースレッド',
+            routing: 'ルーティング中',
+            action: 'リレー',
+            hint: 'R / Enter / Space',
+            relays: '手動リレー  //  2',
+            doctrine: '信号ドクトリン  //  均衡',
+          ),
+          'zh': (
+            thread: '活跃中继线',
+            routing: '路由中',
+            action: '中继',
+            hint: 'R / Enter / Space',
+            relays: '手动中继  //  2',
+            doctrine: '信号纲领  //  均衡',
+          ),
+        };
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final copy = StoryLocalizations(context.l10n);
+              expect(copy.storyRoleTitle, isNotEmpty);
+              expect(copy.storyRoleBody, isNotEmpty);
+              expect(copy.signalFork, isNotEmpty);
+              expect(copy.relayReady, isNotEmpty);
+              expect(copy.relayNoReceiver, isNotEmpty);
+              expect(copy.relayLinkResetWarning, isNotEmpty);
+              final expectedHud = hudCopy[locale.languageCode]!;
+              expect(copy.livingRelayThread, expectedHud.thread);
+              expect(copy.relayRouting, expectedHud.routing);
+              expect(copy.relayAction, expectedHud.action);
+              expect(copy.relayKeyboardHint, expectedHud.hint);
+              expect(copy.manualRelaysSummary(2), expectedHud.relays);
+              expect(
+                copy.doctrineSummary(SignalDoctrine.balanced),
+                expectedHud.doctrine,
+              );
+              expect(copy.fragmentRecovered, isNotEmpty);
+              expect(copy.simulationComplete, isNotEmpty);
+              expect(copy.battleDetails, isNotEmpty);
+              expect(copy.relayCharging(44.999, 45.0), contains('44.999'));
+              expect(copy.relayCharging(44.999, 45.0), contains('45'));
+              expect(
+                copy.continueToOperation(StoryOperationId.lastInstruction),
+                contains('5'),
+              );
+              const expectedContinue = <String, String>{
+                'en': 'CONTINUE TO OP-02',
+                'ko': 'OP-02(으)로 계속',
+                'ja': 'OP-02へ続行',
+                'zh': '继续前往 OP-02',
+              };
+              expect(
+                copy.continueToOperation(StoryOperationId.echo),
+                expectedContinue[locale.languageCode],
+              );
+              for (final operation in StoryOperationId.values) {
+                expect(copy.incident(operation), isNotEmpty);
+                for (final route in RelayRoute.values) {
+                  expect(copy.routeAction(operation, route), isNotEmpty);
+                }
+              }
+              for (final route in RelayRoute.values) {
+                expect(copy.routeLabel(route), isNotEmpty);
+                expect(copy.routeEffect(route), isNotEmpty);
+              }
+              for (final faction in Faction.values) {
+                expect(copy.coreVoice(faction), isNotEmpty);
+              }
+              for (final doctrine in SignalDoctrine.values) {
+                expect(copy.signalDoctrineLabel(doctrine), isNotEmpty);
+              }
+              for (final pattern in const <String>[
+                'CONTINUITY',
+                'PRESSURE',
+                'ADAPTIVE',
+              ]) {
+                expect(copy.patternLabel(pattern), isNotEmpty);
+                expect(copy.routingPattern(pattern), contains(pattern));
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+  });
+
   for (final localeCase
       in const <({String code, String deploy, String status, String tune})>[
         (code: 'ko', deploy: '궤도 투입', status: '처치', tune: '조정'),
@@ -532,7 +662,10 @@ void main() {
       await tester.ensureVisible(find.text(localeCase.deploy));
       await tester.tap(find.text(localeCase.deploy));
       await tester.pump();
-      expect(find.textContaining(localeCase.status), findsOneWidget);
+      final visualStatus = tester.widget<Text>(
+        find.byKey(const Key('battle-controlled-unit-visual-status')),
+      );
+      expect(visualStatus.data, contains(localeCase.status));
       expect(tester.takeException(), isNull);
     });
   }

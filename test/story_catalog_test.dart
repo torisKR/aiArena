@@ -138,4 +138,218 @@ void main() {
       throwsUnsupportedError,
     );
   });
+
+  test('signal routes round-trip in canonical operation order', () {
+    final progress = StoryProgress(
+      campaignFaction: Faction.amethyst,
+      concludedOperations: const {StoryOperationId.wake, StoryOperationId.echo},
+      medals: const {StoryOperationId.wake, StoryOperationId.echo},
+      recoveredTransmissions: const {
+        StoryOperationId.wake,
+        StoryOperationId.echo,
+      },
+      ending: null,
+      signalRoutes: const {
+        StoryOperationId.echo: RelayRoute.force,
+        StoryOperationId.wake: RelayRoute.preserve,
+      },
+    );
+
+    final decoded = StoryProgress.fromJson(progress.toJson());
+    expect(decoded, progress);
+    expect(
+      decoded.signalRoutes.keys,
+      orderedEquals(const [StoryOperationId.wake, StoryOperationId.echo]),
+    );
+    expect(decoded.signalDoctrine, SignalDoctrine.balanced);
+    final changed = progress.copyWith(
+      signalRoutes: const {StoryOperationId.wake: RelayRoute.force},
+    );
+    expect(progress, isNot(changed));
+    expect(progress.hashCode, isNot(changed.hashCode));
+    expect((progress.toJson()['signalRoutes']! as Map<String, Object?>), {
+      'wake': 'preserve',
+      'echo': 'force',
+    });
+  });
+
+  test('old story JSON migrates with undecided signal doctrine', () {
+    final oldJson = <String, Object?>{
+      'campaignFaction': 'amethyst',
+      'concludedOperations': ['wake'],
+      'medals': ['wake'],
+      'recoveredTransmissions': ['wake'],
+      'ending': null,
+    };
+    final progress = StoryProgress.fromJson(oldJson);
+    expect(progress.signalRoutes, isEmpty);
+    expect(progress.signalDoctrine, SignalDoctrine.undecided);
+  });
+
+  test('signal routes defensively copy and reject unconcluded history', () {
+    final routes = <StoryOperationId, RelayRoute>{
+      StoryOperationId.wake: RelayRoute.preserve,
+    };
+    final progress = StoryProgress(
+      campaignFaction: Faction.amethyst,
+      concludedOperations: const {StoryOperationId.wake},
+      medals: const {StoryOperationId.wake},
+      recoveredTransmissions: const {StoryOperationId.wake},
+      ending: null,
+      signalRoutes: routes,
+    );
+    routes[StoryOperationId.echo] = RelayRoute.force;
+    expect(progress.signalRoutes, {StoryOperationId.wake: RelayRoute.preserve});
+    expect(
+      () => progress.signalRoutes[StoryOperationId.echo] = RelayRoute.force,
+      throwsUnsupportedError,
+    );
+    final encoded = progress.toJson();
+    (encoded['signalRoutes']! as Map<String, Object?>)['wake'] = 'force';
+    expect(progress.signalRoutes[StoryOperationId.wake], RelayRoute.preserve);
+
+    final invalid = progress.copyWith(
+      signalRoutes: const {StoryOperationId.echo: RelayRoute.force},
+    );
+    expect(invalid.isSemanticallyValid, isFalse);
+    expect(
+      () => StoryProgress.fromJson({
+        ...progress.toJson(),
+        'signalRoutes': {'echo': 'force'},
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => StoryProgress.fromJson({
+        ...progress.toJson(),
+        'signalRoutes': {'wake': 'unknown'},
+      }),
+      throwsFormatException,
+    );
+  });
+
+  test(
+    'signal doctrine distinguishes preserve, force, balanced and undecided',
+    () {
+      StoryProgress make(Map<StoryOperationId, RelayRoute> routes) =>
+          StoryProgress(
+            campaignFaction: Faction.amethyst,
+            concludedOperations: const {
+              StoryOperationId.wake,
+              StoryOperationId.echo,
+              StoryOperationId.split,
+            },
+            medals: const {
+              StoryOperationId.wake,
+              StoryOperationId.echo,
+              StoryOperationId.split,
+            },
+            recoveredTransmissions: const {
+              StoryOperationId.wake,
+              StoryOperationId.echo,
+              StoryOperationId.split,
+            },
+            ending: null,
+            signalRoutes: routes,
+          );
+
+      expect(StoryProgress.initial().signalDoctrine, SignalDoctrine.undecided);
+      expect(
+        make({StoryOperationId.wake: RelayRoute.preserve}).signalDoctrine,
+        SignalDoctrine.preserve,
+      );
+      expect(
+        make({StoryOperationId.wake: RelayRoute.force}).signalDoctrine,
+        SignalDoctrine.force,
+      );
+      expect(
+        make({
+          StoryOperationId.wake: RelayRoute.preserve,
+          StoryOperationId.echo: RelayRoute.force,
+        }).signalDoctrine,
+        SignalDoctrine.balanced,
+      );
+      expect(
+        make({
+          StoryOperationId.wake: RelayRoute.preserve,
+          StoryOperationId.echo: RelayRoute.preserve,
+          StoryOperationId.split: RelayRoute.force,
+        }).signalDoctrine,
+        SignalDoctrine.preserve,
+      );
+      expect(
+        make({
+          StoryOperationId.wake: RelayRoute.preserve,
+          StoryOperationId.echo: RelayRoute.force,
+          StoryOperationId.split: RelayRoute.force,
+        }).signalDoctrine,
+        SignalDoctrine.force,
+      );
+    },
+  );
+
+  test('battle report accounts for manual and casualty relays', () {
+    const standing = FactionStanding(
+      faction: Faction.amethyst,
+      survivors: 10,
+      levelSum: 50,
+      kills: 3,
+    );
+    final report = BattleReport(
+      endReason: ChronicleEndReason.timeLimit,
+      standingsAtConclusion: const [standing],
+      globalWinner: Faction.amethyst,
+      commandRelays: 5,
+      manualRelays: 2,
+      relayRoute: RelayRoute.force,
+      commandKills: 3,
+      longestCommandLinkSeconds: 45,
+      playerRank: 1,
+      playerSurvivors: 10,
+    );
+    expect(report.casualtyRelays, 3);
+    expect(
+      report,
+      BattleReport(
+        endReason: ChronicleEndReason.timeLimit,
+        standingsAtConclusion: const [standing],
+        globalWinner: Faction.amethyst,
+        commandRelays: 5,
+        manualRelays: 2,
+        relayRoute: RelayRoute.force,
+        commandKills: 3,
+        longestCommandLinkSeconds: 45,
+        playerRank: 1,
+        playerSurvivors: 10,
+      ),
+    );
+    final changedReport = BattleReport(
+      endReason: ChronicleEndReason.timeLimit,
+      standingsAtConclusion: const [standing],
+      globalWinner: Faction.amethyst,
+      commandRelays: 5,
+      manualRelays: 1,
+      relayRoute: RelayRoute.force,
+      commandKills: 3,
+      longestCommandLinkSeconds: 45,
+      playerRank: 1,
+      playerSurvivors: 10,
+    );
+    expect(report, isNot(changedReport));
+    expect(report.hashCode, isNot(changedReport.hashCode));
+    expect(
+      BattleReport(
+        endReason: ChronicleEndReason.timeLimit,
+        standingsAtConclusion: const [standing],
+        globalWinner: Faction.amethyst,
+        commandRelays: 1,
+        manualRelays: 4,
+        commandKills: 3,
+        longestCommandLinkSeconds: 45,
+        playerRank: 1,
+        playerSurvivors: 10,
+      ).casualtyRelays,
+      0,
+    );
+  });
 }

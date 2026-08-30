@@ -132,9 +132,9 @@ class TacticalPanel extends StatelessWidget {
   const TacticalPanel({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(TokenfrontSpacing.lg),
     this.color = TokenfrontColors.panel,
-    this.borderColor = const Color(0x4DF2E9D1),
+    this.borderColor = TokenfrontColors.panelBorder,
   });
 
   final Widget child;
@@ -149,7 +149,9 @@ class TacticalPanel extends StatelessWidget {
       color: color,
       shape: BeveledRectangleBorder(
         side: BorderSide(color: borderColor),
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.all(
+          Radius.circular(TokenfrontRadii.narrative),
+        ),
       ),
     ),
     child: child,
@@ -182,9 +184,12 @@ class TacticalButton extends StatelessWidget {
       child: FilledButton(
         onPressed: onPressed,
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(Size(124, 50)),
+          minimumSize: const WidgetStatePropertyAll(TokenfrontSizes.buttonSize),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+            EdgeInsets.symmetric(
+              horizontal: TokenfrontSpacing.buttonHorizontal,
+              vertical: TokenfrontSpacing.buttonVertical,
+            ),
           ),
           backgroundColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.disabled)
@@ -207,7 +212,9 @@ class TacticalButton extends StatelessWidget {
           ),
           shape: const WidgetStatePropertyAll(
             BeveledRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
+              borderRadius: BorderRadius.all(
+                Radius.circular(TokenfrontRadii.control),
+              ),
             ),
           ),
           textStyle: const WidgetStatePropertyAll(TokenfrontType.instrument),
@@ -216,7 +223,10 @@ class TacticalButton extends StatelessWidget {
           mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (icon != null) ...[icon!, const SizedBox(width: 9)],
+            if (icon != null) ...[
+              icon!,
+              const SizedBox(width: TokenfrontSpacing.buttonIconGap),
+            ],
             if (expanded)
               Expanded(
                 child: Text(

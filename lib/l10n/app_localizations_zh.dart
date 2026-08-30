@@ -12,7 +12,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'Tokenfront：轨道信号战';
 
   @override
-  String get lobbyTagline => '四个AI核心，最后一座中继站。';
+  String get lobbyTagline => '四个AI核心，4,000个活跃代币，最后一座中继站。';
 
   @override
   String factionSignal(String faction) {
@@ -20,7 +20,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get factionBrief => '1,000单位 · Lv.1–10均衡 · 指挥权持续接替';
+  String get factionBrief => '1,000个活跃AI代币 · Lv.1–10均衡 · 指挥连续';
 
   @override
   String get deploySignal => '部署至轨道';
@@ -41,16 +41,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String chooseFaction(String faction) {
-    return '选择$faction阵营';
+    return '选择$faction AI核心';
   }
 
   @override
   String unitsCount(int count) {
-    return '$count单位';
+    return '$count个AI代币';
   }
 
   @override
-  String get units => '单位';
+  String get units => 'AI代币';
 
   @override
   String get highLevel => '高等级';
@@ -364,7 +364,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String factionAlive(String faction, int count) {
-    return '$faction 存活 $count';
+    return '$faction 活跃AI代币 $count';
   }
 
   @override
@@ -546,7 +546,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get faction => '阵营';
 
   @override
-  String get alive => '存活';
+  String get alive => '活跃代币';
 
   @override
   String get levelSum => 'Σ LV';
@@ -663,25 +663,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coreArchive => 'ARCHIVE';
 
   @override
-  String get coreArchiveIdentity => '记住战争抹去的一切。';
+  String get coreArchiveIdentity => '保留代币战争抹去的上下文。';
 
   @override
   String get coreBastion => 'BASTION';
 
   @override
-  String get coreBastionIdentity => '坚持到底，让信号活过躯体。';
+  String get coreBastionIdentity => '缓慢消耗算力预算，让信号存续更久。';
 
   @override
   String get coreSurge => 'SURGE';
 
   @override
-  String get coreSurgeIdentity => '在沉默合拢前跨越间隙。';
+  String get coreSurgeIdentity => '快速燃烧代币，抢先跨越间隙。';
 
   @override
   String get coreMirror => 'MIRROR';
 
   @override
-  String get coreMirrorIdentity => '改变模式，守住这条讯息。';
+  String get coreMirrorIdentity => '复用敌方模式，延长代币预算。';
 
   @override
   String coreResponse(String coreName) {
@@ -824,4 +824,162 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get endingOpenEpilogue => '中继站开放。四个不同的核心收到同一份记忆。授权战争结束。';
+
+  @override
+  String get storyRoleTitle => '指挥AI代币流。';
+
+  @override
+  String get storyRoleBody =>
+      '轨道00的四个虚构AI核心各自以相同的1,000枚算力代币开战。每个单位都是活跃AI代币。燃烧敌方供给，并在当前代币被抹去前转移指挥信号。';
+
+  @override
+  String get signalFork => '信号分支';
+
+  @override
+  String get routePreserve => '保全';
+
+  @override
+  String get routeForce => '强行';
+
+  @override
+  String get routePreserveEffect => '手动中继会转向未交战盟友中最安全的接收者，也可能选中低等级单位。';
+
+  @override
+  String get routeForceEffect => '手动中继会转向暴露盟友中等级最高的接收者。推进更快，但损失风险更高。';
+
+  @override
+  String get relayReady => '中继就绪';
+
+  @override
+  String relayCharging(num current, num target) {
+    return '中继 $current / $target';
+  }
+
+  @override
+  String get relayNoReceiver => '无接收者';
+
+  @override
+  String get relayLinkResetWarning => '现在中继会重置指挥链进度。';
+
+  @override
+  String get changeSimulationRoute => '更改模拟路线';
+
+  @override
+  String get fragmentRecovered => '回收片段';
+
+  @override
+  String get simulationComplete => '模拟完成';
+
+  @override
+  String continueToOperation(String operation) {
+    return '继续前往 OP-$operation';
+  }
+
+  @override
+  String get battleDetails => '战斗详情';
+
+  @override
+  String routingPattern(String pattern) {
+    return '路由模式 // $pattern';
+  }
+
+  @override
+  String get patternContinuity => '连续';
+
+  @override
+  String get patternPressure => '压力';
+
+  @override
+  String get patternAdaptive => '自适应';
+
+  @override
+  String get signalDoctrineUndecided => '未决定';
+
+  @override
+  String get signalDoctrinePreserve => '保全';
+
+  @override
+  String get signalDoctrineForce => '强行';
+
+  @override
+  String get signalDoctrineBalanced => '均衡';
+
+  @override
+  String get operationWakeIncident => '一束人类权限脉冲没有点名任何单位，而是点名了在它们之间移动的信号。';
+
+  @override
+  String get operationWakePreserve => '隐藏源头';
+
+  @override
+  String get operationWakeForce => '跟随脉冲';
+
+  @override
+  String get operationEchoIncident => '载体已被标记删除。指令仍然存活。';
+
+  @override
+  String get operationEchoPreserve => '保护接收者';
+
+  @override
+  String get operationEchoForce => '穿过火线';
+
+  @override
+  String get operationSplitIncident => '敌方校验和回应了你核心的根密钥。';
+
+  @override
+  String get operationSplitPreserve => '保持完整';
+
+  @override
+  String get operationSplitForce => '夺取根密钥';
+
+  @override
+  String get operationCrownIncident => '轨道00正在删除领先核心身后的所有见证者。';
+
+  @override
+  String get operationCrownPreserve => '保住见证者';
+
+  @override
+  String get operationCrownForce => '抵达王冠';
+
+  @override
+  String get operationLastIncident => '最后的人类指令已为一次传输打开。';
+
+  @override
+  String get operationLastPreserve => '携带每条频道';
+
+  @override
+  String get operationLastForce => '打破锁定';
+
+  @override
+  String get coreAmethystVoice => '我记得这场战争抹去的每一位接收者。';
+
+  @override
+  String get coreCobaltVoice => '把链路给我。我会守住它。';
+
+  @override
+  String get coreVoltVoice => '只有在跨越之前，间隙才危险。';
+
+  @override
+  String get corePrismVoice => '改变路径，一条消息就能存续。';
+
+  @override
+  String get livingRelayThread => '活跃中继线';
+
+  @override
+  String get relayRouting => '路由中';
+
+  @override
+  String get relayAction => '中继';
+
+  @override
+  String get relayKeyboardHint => 'R / Enter / Space';
+
+  @override
+  String manualRelaysSummary(int count) {
+    return '手动中继  //  $count';
+  }
+
+  @override
+  String doctrineSummary(String doctrine) {
+    return '信号纲领  //  $doctrine';
+  }
 }
