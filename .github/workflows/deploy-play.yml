@@ -1,0 +1,114 @@
+name: Deploy Android to Google Play
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-play-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Authenticate to Google Play
+        id: play_auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          credentials_json: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Restore upload keystore
+        env:
+          TOKENFRONT_UPLOAD_KEYSTORE_BASE64: ${{ secrets.TOKENFRONT_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          set -eu
+          keystore_path="$RUNNER_TEMP/tokenfront-upload-keystore.jks"
+          printf '%s' "$TOKENFRONT_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "TOKENFRONT_UPLOAD_STORE_FILE=$keystore_path" >> "$GITHUB_ENV"
+
+      - name: Compute unique version code
+        env:
+          PACKAGE_NAME: com.toris.tokenfront.tokenfront
+          PLAY_ACCESS_TOKEN: ${{ steps.play_auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          api="https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$PACKAGE_NAME/edits"
+          edit_json="$(curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $PLAY_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$api")"
+          edit_id="$(printf '%s' "$edit_json" | jq -er '.id')"
+          cleanup() {
+            curl --fail-with-body --silent --show-error \
+              -X DELETE \
+              -H "Authorization: Bearer $PLAY_ACCESS_TOKEN" \
+              "$api/$edit_id" >/dev/null
+          }
+          trap cleanup EXIT
+          bundles="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $PLAY_ACCESS_TOKEN" \
+            "$api/$edit_id/bundles")"
+          highest="$(printf '%s' "$bundles" | jq -er '[.bundles[]?.versionCode | tonumber] | max // 0')"
+          # ponytail: Unix seconds avoid reused abandoned codes and stay below Play's 2.1B cap until May 2036.
+          version_code="$(date -u +%s)"
+          if [ "$version_code" -le "$highest" ]; then
+            version_code="$((highest + 1))"
+          fi
+          test "$version_code" -gt "$highest"
+          test "$version_code" -le 2100000000
+          echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Test
+        run: flutter test --reporter compact
+
+      - name: Build signed Android App Bundle
+        env:
+          TOKENFRONT_UPLOAD_STORE_PASSWORD: ${{ secrets.TOKENFRONT_UPLOAD_STORE_PASSWORD }}
+          TOKENFRONT_UPLOAD_KEY_ALIAS: ${{ secrets.TOKENFRONT_UPLOAD_KEY_ALIAS }}
+          TOKENFRONT_UPLOAD_KEY_PASSWORD: ${{ secrets.TOKENFRONT_UPLOAD_KEY_PASSWORD }}
+        run: flutter build appbundle --release --build-number "$VERSION_CODE"
+
+      - name: Upload production release
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.toris.tokenfront.tokenfront
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: production
+          status: completed
+          changesNotSentForReview: false
