@@ -10,8 +10,8 @@
 
 ## Global Constraints
 
-- Execute in four phases: (A) finish Signal Chronicle; (B) execute this plan Task 1, then Task 2's single publishing/legal preflight and package-identity discovery or one-time app creation, then Tasks 3–6 through Notion publication, in-app policy/NoOp UX, localized listing, and store assets; (C) feed `docs/play-store/play-identity-preflight.md` into the Android production-release plan, build against that exact highest-version/upload-certificate state, and stop only at `Release classification: PLAY HANDOFF READY — NOT UPLOADED`; (D) resume this plan at Task 7, prove the Android handoff rows and exact-AAB Data Safety/network evidence, redeploy the same-source Web build, then complete declarations, testing, production submission, publication, and public verification.
-- The production submission is blocked until the Android release plan records a green physical/emulated Android integration run. The current baseline is not releasable: 118 Flutter tests pass and one web-only test is skipped, but `integration_test/app_smoke_test.dart:36` currently fails on the missing pause overlay after resume and later reports a disposed `FocusManager`.
+- Execute the Android release phases only: (A) finish Signal Chronicle; (B) execute this plan's privacy, Play identity, policy, listing, and asset tasks; (C) feed `docs/play-store/play-identity-preflight.md` into the Android production-release plan, build against that exact highest-version/upload-certificate state, and stop only at `Release classification: PLAY HANDOFF READY — NOT UPLOADED`; (D) complete the exact-AAB Data Safety/network evidence and Play submission tasks. The former Web parity/deployment phase is archived historical evidence and is not a live Android instruction.
+- The production submission is blocked until the Android release plan records a green physical/emulated Android integration run. The current checkpoint records **269 Flutter VM tests passed**, plus the Android integration suites passing **10/10** and **1/1** on `emulator-5586`; the former 118-test/Web-skip baseline and its integration failures are historical pre-fix context only.
 - The final declaration applies only after Task 7 re-audits the exact AAB whose SHA-256 is recorded in the Android release evidence and records a zero-app-traffic device observation; Tasks 1–6 establish source/policy/UI/Play-identity inputs before that AAB exists.
 - In that build, wallet, cosmetics, settings, language, accessibility, audio, privacy choices, and Signal Chronicle progress remain on-device in SharedPreferences on Android; web localStorage is relevant to the web build but not to the Play AAB.
 - Analytics events are held in a bounded in-memory buffer of 500 entries. The production default is `NoOpAnalyticsAdapter`, and consent is off by default; no event transport exists in the Play build.
@@ -90,7 +90,6 @@
 - Create: `docs/privacy/release-data-inventory.md`
 - Read: `lib/app/tokenfront_runtime.dart`
 - Read: `lib/app/tokenfront_state_store_native.dart`
-- Read: `lib/app/tokenfront_state_store_web.dart`
 - Read: `lib/services/analytics/analytics_service.dart`
 - Read: `lib/services/ads/ad_service.dart`
 - Read: `pubspec.yaml`
@@ -1212,7 +1211,7 @@ git commit -m "docs: add localized Play Store listing copy"
 - Create: `store-assets/android/phone-04-debrief-1920x1080.jpg`
 - Create: `store-assets/android/phone-05-archive-1920x1080.jpg`
 - Read: `assets/blender/tokenfront_keyart.png`
-- Read: `web/icons/Icon-maskable-512.png`
+- Read: `store-assets/android/icon-512.png`
 
 **Interfaces:**
 - Consumes: final Orbital Signal War key art, the neutral signal-core icon source, fixed composition constants, `ffmpeg`, and a release-mode build with deterministic Chronicle seeds.
@@ -1303,7 +1302,7 @@ void main() {
       final result = await Process.run('python3', <String>[
         'tooling/compose_play_store_graphics.py',
         '--keyart', 'assets/blender/tokenfront_keyart.png',
-        '--icon-source', 'web/icons/Icon-maskable-512.png',
+         '--icon-source', 'store-assets/android/icon-512.png',
         '--out-dir', out.path,
       ]);
       expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
@@ -1379,7 +1378,7 @@ Create `tooling/compose_play_store_graphics.py` using only the Python standard l
 ```text
 python3 tooling/compose_play_store_graphics.py \
   --keyart assets/blender/tokenfront_keyart.png \
-  --icon-source web/icons/Icon-maskable-512.png \
+  --icon-source store-assets/android/icon-512.png \
   --out-dir <existing or creatable directory>
 ```
 
@@ -1401,8 +1400,8 @@ Run twice into clean temporary directories and require byte identity before copy
 
 ```bash
 test -x /opt/homebrew/bin/ffmpeg
-python3 tooling/compose_play_store_graphics.py --keyart assets/blender/tokenfront_keyart.png --icon-source web/icons/Icon-maskable-512.png --out-dir /tmp/tokenfront-play-art-a
-python3 tooling/compose_play_store_graphics.py --keyart assets/blender/tokenfront_keyart.png --icon-source web/icons/Icon-maskable-512.png --out-dir /tmp/tokenfront-play-art-b
+python3 tooling/compose_play_store_graphics.py --keyart assets/blender/tokenfront_keyart.png --icon-source store-assets/android/icon-512.png --out-dir /tmp/tokenfront-play-art-a
+python3 tooling/compose_play_store_graphics.py --keyart assets/blender/tokenfront_keyart.png --icon-source store-assets/android/icon-512.png --out-dir /tmp/tokenfront-play-art-b
 cmp /tmp/tokenfront-play-art-a/icon-512.png /tmp/tokenfront-play-art-b/icon-512.png
 cmp /tmp/tokenfront-play-art-a/feature-graphic-1024x500.jpg /tmp/tokenfront-play-art-b/feature-graphic-1024x500.jpg
 cmp /tmp/tokenfront-play-art-a/feature-wordmark-mask.png /tmp/tokenfront-play-art-b/feature-wordmark-mask.png
@@ -1455,7 +1454,18 @@ git commit -m "feat: compose reproducible Play Store graphics"
 
 ---
 
-### Task 7: Prove AAB/Web Source Parity and Redeploy the Final Privacy Build
+### Archived Task 7: Prove AAB/Web Source Parity and Redeploy the Final Privacy Build (historical Web work)
+
+> **Archive notice:** This task documents retired Web parity/deployment work for
+> traceability. It is not a current Android release requirement. Do not restore
+> deleted `web/index.html`, `web/manifest.json`, Web tests, Web deployment, or
+> browser product support to execute it. Current Android release work resumes
+> with the exact-AAB evidence and Play submission records below this archive.
+
+Everything through the archived Web evidence rows in this task is historical
+reference material. The `Files`, `Interfaces`, and numbered steps below are not
+an active execution checklist for the Android release; retain them only to
+explain why the old Web evidence is not being recreated.
 
 **Files:**
 - Create: `tooling/audit_release_data_surface.dart`

@@ -772,6 +772,28 @@ void main() {
     },
   );
 
+  test(
+    'result ad preparation delegates without consuming interstitial cadence',
+    () async {
+      final adapter = FakeAdService(platform: ClientPlatform.android);
+      final runtime = TokenfrontRuntime(
+        platform: ClientPlatform.android,
+        adAdapter: adapter,
+      )..setAdRequestsAllowed(true);
+      addTearDown(runtime.dispose);
+
+      final prepared = await runtime.prepareResultAds(completedMatches: 2);
+      final shown = await runtime.closeResult(completedMatches: 2);
+
+      expect(prepared.status, AdStatus.shown);
+      expect(shown.status, AdStatus.shown);
+      expect(
+        adapter.calls.where((call) => call.format == AdFormat.interstitial),
+        hasLength(2),
+      );
+    },
+  );
+
   test('frequency-blocked interstitial is not reported as eligible', () async {
     final runtime =
         TokenfrontRuntime(
@@ -872,6 +894,57 @@ void main() {
       AnalyticsAdAction.rewardOptIn.name,
       AnalyticsAdAction.rewardEarned.name,
     ]);
+  });
+
+  test('concurrent rewarded claims allow one ad and one bonus', () async {
+    final adapter = FakeAdService(platform: ClientPlatform.web);
+    final runtime = TokenfrontRuntime(
+      platform: ClientPlatform.web,
+      adAdapter: adapter,
+    )..setAdRequestsAllowed(true);
+    addTearDown(runtime.dispose);
+    runtime.claimBaseReward(matchId: 'concurrent', amount: 40);
+
+    final claims = await Future.wait([
+      runtime.claimRewardedBonus(
+        matchId: 'concurrent',
+        baseAmount: 40,
+        completedMatches: 1,
+      ),
+      runtime.claimRewardedBonus(
+        matchId: 'concurrent',
+        baseAmount: 40,
+        completedMatches: 1,
+      ),
+    ]);
+
+    expect(claims.where((claim) => claim.earned), hasLength(1));
+    expect(runtime.wallet.balance, 80);
+    expect(
+      adapter.calls.where((call) => call.format == AdFormat.rewarded),
+      hasLength(1),
+    );
+  });
+
+  test('replay rewarded claim never requests an ad or adds WT', () async {
+    final adapter = FakeAdService(platform: ClientPlatform.web);
+    final runtime = TokenfrontRuntime(
+      platform: ClientPlatform.web,
+      adAdapter: adapter,
+    )..setAdRequestsAllowed(true);
+    addTearDown(runtime.dispose);
+    runtime.claimBaseReward(matchId: 'replay', amount: 40);
+
+    final claim = await runtime.claimRewardedBonus(
+      matchId: 'replay',
+      baseAmount: 40,
+      completedMatches: 1,
+      replay: true,
+    );
+
+    expect(claim.alreadyClaimed, isTrue);
+    expect(runtime.wallet.balance, 40);
+    expect(adapter.calls, isEmpty);
   });
 
   test(

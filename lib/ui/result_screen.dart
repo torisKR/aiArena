@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../app/tokenfront_runtime.dart';
 import '../design/tokens.dart';
 import '../game/faction_visuals.dart';
 import '../game/simulation.dart';
+import '../game/recovery.dart';
 import '../l10n/l10n.dart';
 import '../services/ads/ad_service.dart';
 import '../story/campaign_controller.dart';
@@ -23,6 +25,7 @@ class ResultScreen extends StatefulWidget {
     required this.baseReward,
     required this.warTokenBalance,
     required this.bannerVisible,
+    this.bannerAd,
     this.rewardedAdsAvailable = true,
     required this.onDoubleReward,
     required this.onOpenSettings,
@@ -39,9 +42,13 @@ class ResultScreen extends StatefulWidget {
     this.onCommandDeck,
     this.manualRelays = 0,
     this.relayRoute,
+    this.recoveryOutcome,
+    this.recoveredSignals = 0,
   });
 
   final MatchResult result;
+  final RecoveryOutcome? recoveryOutcome;
+  final int recoveredSignals;
   final String matchId;
   final Faction playerFaction;
   final int relays;
@@ -49,6 +56,7 @@ class ResultScreen extends StatefulWidget {
   final int baseReward;
   final int warTokenBalance;
   final bool bannerVisible;
+  final BannerAd? bannerAd;
   final bool rewardedAdsAvailable;
   final Future<RewardedClaim> Function() onDoubleReward;
   final VoidCallback onOpenSettings;
@@ -78,6 +86,13 @@ class _ResultScreenState extends State<ResultScreen> {
   bool doubled = false;
   bool requestingReward = false;
   String? rewardMessage;
+  bool leaving = false;
+
+  void _navigate(VoidCallback? action) {
+    if (requestingReward || leaving || action == null) return;
+    setState(() => leaving = true);
+    action();
+  }
 
   String get duration {
     final total = widget.elapsed.floor();
@@ -86,7 +101,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _doubleReward() async {
-    if (requestingReward || doubled) return;
+    if (requestingReward || doubled || leaving) return;
     setState(() {
       requestingReward = true;
       rewardMessage = null;
@@ -160,7 +175,14 @@ class _ResultScreenState extends State<ResultScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            won ? l10n.signalSurvived : l10n.signalLost,
+                            widget.recoveryOutcome != null
+                                ? widget.recoveryOutcome ==
+                                          RecoveryOutcome.recovered
+                                      ? l10n.recoveryWon
+                                      : l10n.recoveryLost
+                                : won
+                                ? l10n.signalSurvived
+                                : l10n.signalLost,
                             textAlign: TextAlign.center,
                             style: TokenfrontType.display.copyWith(
                               color:
@@ -171,7 +193,12 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                           const SizedBox(height: TokenfrontSpacing.sm),
                           Text(
-                            winner == null
+                            widget.recoveryOutcome != null
+                                ? widget.recoveryOutcome ==
+                                          RecoveryOutcome.recovered
+                                      ? '${l10n.recoveryProgress(widget.recoveredSignals)} · $duration'
+                                      : '${widget.recoveryOutcome == RecoveryOutcome.timeout ? l10n.recoveryTimeout : l10n.recoveryAlliesLost} · ${l10n.recoveryProgress(widget.recoveredSignals)} · $duration'
+                                : winner == null
                                 ? l10n.drawSummary(
                                     duration,
                                     widget.matchId.toUpperCase(),
@@ -189,20 +216,25 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                           const SizedBox(height: TokenfrontSpacing.xl),
                           if (chronicle) ...[
-                            LivingRelayThread(
-                              key: const Key('living-relay-thread'),
-                              variant: LivingRelayThreadVariant.compactFragment,
-                              progress: 1,
-                              fragment: copy.reveal(operation.id),
-                              semanticLabel: context.l10n.livingRelayThread,
-                              reducedMotion: MediaQuery.disableAnimationsOf(
-                                context,
+                            if (widget.recoveryOutcome == null ||
+                                widget.recoveryOutcome ==
+                                    RecoveryOutcome.recovered)
+                              LivingRelayThread(
+                                key: const Key('living-relay-thread'),
+                                variant:
+                                    LivingRelayThreadVariant.compactFragment,
+                                progress: 1,
+                                fragment: copy.reveal(operation.id),
+                                semanticLabel: context.l10n.livingRelayThread,
+                                reducedMotion: MediaQuery.disableAnimationsOf(
+                                  context,
+                                ),
+                                lowSpec: false,
+                                animate: false,
                               ),
-                              lowSpec: false,
-                              animate: false,
-                            ),
                             const SizedBox(height: TokenfrontSpacing.md),
                             _ChronicleDebriefPanel(
+                              recovery: widget.recoveryOutcome != null,
                               operation: operation,
                               playerFaction: widget.playerFaction,
                               directiveSucceeded: directiveSucceeded,
@@ -302,10 +334,11 @@ class _ResultScreenState extends State<ResultScreen> {
                                   label: chronicle
                                       ? copy.continueCampaign
                                       : 'CONTINUE',
-                                  onPressed: widget.onContinue,
+                                  onPressed: () => _navigate(widget.onContinue),
                                   color: TokenfrontColors.relayIvory,
                                 ),
-                              if (widget.rewardedAdsAvailable)
+                              if (widget.rewardedAdsAvailable &&
+                                  widget.baseReward > 0)
                                 TacticalButton(
                                   key: const Key('double-reward-button'),
                                   label: requestingReward
@@ -332,12 +365,13 @@ class _ResultScreenState extends State<ResultScreen> {
                               if (!chronicle)
                                 TacticalButton(
                                   label: l10n.rematch,
-                                  onPressed: widget.onRematch,
+                                  onPressed: () => _navigate(widget.onRematch),
                                   color: widget.playerFaction.visual.color,
                                 ),
                               OutlinedButton(
-                                onPressed:
-                                    widget.onCommandDeck ?? widget.onLobby,
+                                onPressed: () => _navigate(
+                                  widget.onCommandDeck ?? widget.onLobby,
+                                ),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: TokenfrontSizes.buttonSize,
                                   foregroundColor: TokenfrontColors.relayIvory,
@@ -369,7 +403,7 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                           if (widget.bannerVisible) ...[
                             const SizedBox(height: TokenfrontSpacing.lg),
-                            const _ResultSponsorRail(),
+                            _ResultSponsorRail(ad: widget.bannerAd),
                           ],
                           const SizedBox(
                             key: Key('result-scroll-end'),
@@ -381,12 +415,14 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ),
               ),
-              if (chronicle && (widget.onContinue != null || showEndingChoices))
+              if (chronicle &&
+                  (widget.onContinue != null ||
+                      showEndingChoices))
                 _ChronicleActionLayer(
                   showEndingChoices: showEndingChoices,
-                  onContinue: widget.onContinue,
+                  onContinue: () => _navigate(widget.onContinue),
                   continueLabel: continueLabel,
-                  onRetry: widget.onRematch,
+                  onRetry: () => _navigate(widget.onRematch),
                   retryColor: widget.playerFaction.visual.color,
                   onChooseEnding: widget.onChooseEnding,
                 ),
@@ -421,7 +457,8 @@ String _rewardFailureCopy(AppLocalizations l10n, AdStatus status) =>
     };
 
 class _ResultSponsorRail extends StatelessWidget {
-  const _ResultSponsorRail();
+  const _ResultSponsorRail({this.ad});
+  final BannerAd? ad;
 
   @override
   Widget build(BuildContext context) => TacticalPanel(
@@ -430,19 +467,26 @@ class _ResultSponsorRail extends StatelessWidget {
       vertical: TokenfrontSpacing.sm,
     ),
     color: TokenfrontColors.deepField.withValues(alpha: .72),
-    child: Text(
-      context.l10n.resultSponsorPlacement,
-      textAlign: TextAlign.center,
-      style: TokenfrontType.instrument.copyWith(
-        color: TokenfrontColors.quietText,
-        fontSize: 9,
-      ),
-    ),
+    child: ad == null
+        ? Text(
+            context.l10n.resultSponsorPlacement,
+            textAlign: TextAlign.center,
+            style: TokenfrontType.instrument.copyWith(
+              color: TokenfrontColors.quietText,
+              fontSize: 9,
+            ),
+          )
+        : SizedBox(
+            width: ad!.size.width.toDouble(),
+            height: ad!.size.height.toDouble(),
+            child: AdWidget(ad: ad!),
+          ),
   );
 }
 
 class _ChronicleDebriefPanel extends StatelessWidget {
   const _ChronicleDebriefPanel({
+    this.recovery = false,
     required this.operation,
     required this.playerFaction,
     required this.directiveSucceeded,
@@ -455,6 +499,7 @@ class _ChronicleDebriefPanel extends StatelessWidget {
   });
 
   final StoryOperation operation;
+  final bool recovery;
   final Faction playerFaction;
   final bool directiveSucceeded;
   final bool bonusClaimed;
@@ -467,10 +512,12 @@ class _ChronicleDebriefPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = StoryLocalizations(context.l10n);
-    final directive = copy.directiveLabel(
-      operation.directive.kind,
-      target: operation.directive.target,
-    );
+    final directive = recovery
+        ? context.l10n.recoveryTitle
+        : copy.directiveLabel(
+            operation.directive.kind,
+            target: operation.directive.target,
+          );
     final medal = directiveSucceeded
         ? context.l10n.medalEarned
         : copy.directiveMissed;
@@ -518,7 +565,7 @@ class _ChronicleDebriefPanel extends StatelessWidget {
             color: TokenfrontColors.divider,
             height: TokenfrontSpacing.xl,
           ),
-          if (relayRoute case final route?) ...[
+          if (relayRoute case final route? when !recovery) ...[
             Text(
               '${copy.routeLabel(route)}  //  ${copy.routeAction(operation.id, route)}',
               style: TokenfrontType.instrument.copyWith(
@@ -528,21 +575,23 @@ class _ChronicleDebriefPanel extends StatelessWidget {
             ),
             const SizedBox(height: TokenfrontSpacing.sm),
           ],
-          Text(
-            copy.manualRelaysSummary(manualRelays),
-            style: TokenfrontType.instrument.copyWith(
-              color: TokenfrontColors.quietText,
-              fontSize: 10,
+          if (!recovery)
+            Text(
+              copy.manualRelaysSummary(manualRelays),
+              style: TokenfrontType.instrument.copyWith(
+                color: TokenfrontColors.quietText,
+                fontSize: 10,
+              ),
             ),
-          ),
           const SizedBox(height: TokenfrontSpacing.sm),
-          Text(
-            copy.doctrineSummary(doctrine),
-            style: TokenfrontType.instrument.copyWith(
-              color: TokenfrontColors.quietText,
-              fontSize: 10,
+          if (!recovery)
+            Text(
+              copy.doctrineSummary(doctrine),
+              style: TokenfrontType.instrument.copyWith(
+                color: TokenfrontColors.quietText,
+                fontSize: 10,
+              ),
             ),
-          ),
           const SizedBox(height: TokenfrontSpacing.sm),
           Text(
             '$directive  //  $medal  //  $bonus',
@@ -682,17 +731,18 @@ class _ChronicleActionLayer extends StatelessWidget {
                 spacing: TokenfrontSpacing.sm,
                 runSpacing: TokenfrontSpacing.sm,
                 children: [
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: TokenfrontSizes.buttonHeight,
+                  if (onContinue != null)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: TokenfrontSizes.buttonHeight,
+                      ),
+                      child: TacticalButton(
+                        label: continueLabel,
+                        onPressed: onContinue,
+                        color: TokenfrontColors.relayIvory,
+                        expanded: true,
+                      ),
                     ),
-                    child: TacticalButton(
-                      label: continueLabel,
-                      onPressed: onContinue,
-                      color: TokenfrontColors.relayIvory,
-                      expanded: true,
-                    ),
-                  ),
                   ConstrainedBox(
                     constraints: const BoxConstraints(
                       minHeight: TokenfrontSizes.buttonHeight,

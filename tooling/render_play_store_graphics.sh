@@ -30,19 +30,18 @@ mkdir -p "$OUTPUT_DIR"
 mv "$OUTPUT_DIR/icon-512-rgba.png" "$OUTPUT_DIR/icon-512.png"
 
 sips -z 192 192 "$OUTPUT_DIR/icon-512.png" \
-  --out "$ROOT/web/icons/Icon-192.png" >/dev/null
-cp "$OUTPUT_DIR/icon-512.png" "$ROOT/web/icons/Icon-512.png"
+  --out "$OUTPUT_DIR/icon-192.png" >/dev/null
 
-MASKABLE_512="$ROOT/web/icons/Icon-maskable-512.png"
+MASKABLE_512="$OUTPUT_DIR/icon-maskable-512.png"
 "$CHROME_BIN" --headless=new --disable-gpu --hide-scrollbars \
   --default-background-color=070b16ff \
   --force-device-scale-factor=1 --window-size=512,512 \
   --screenshot="$MASKABLE_512" \
   "file://$SOURCE_DIR/icon-render.html"
 sips -z 192 192 "$MASKABLE_512" \
-  --out "$ROOT/web/icons/Icon-maskable-192.png" >/dev/null
+  --out "$OUTPUT_DIR/icon-maskable-192.png" >/dev/null
 sips -z 32 32 "$OUTPUT_DIR/icon-512.png" \
-  --out "$ROOT/web/favicon.png" >/dev/null
+  --out "$OUTPUT_DIR/favicon-32.png" >/dev/null
 
 for spec in \
   "48 mipmap-mdpi" \

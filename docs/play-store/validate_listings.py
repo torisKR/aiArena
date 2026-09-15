@@ -51,7 +51,7 @@ def main() -> int:
         assert len(short) <= 80, (locale, "short", len(short))
         assert len(full) <= 4000, (locale, "full", len(full))
         assert len(notes) <= 500, (locale, "release notes", len(notes))
-        assert "4,000" in full and "1,000" in full, locale
+        assert "400" in full, locale
         assert NO_ACCOUNT[locale] in full, locale
         assert "online multiplayer" not in full.lower(), locale
         lines.append(
@@ -68,7 +68,7 @@ def main() -> int:
     lines.append(
         "screenshot_alt_text=" + ",".join(str(len(value)) for value in alt_texts)
     )
-    lines.append("PASS: all four locales satisfy 30/80/4000 listing limits and consistency checks")
+    lines.append("PASS: all four locales satisfy 30/80/4000-character listing limits and current gameplay consistency checks")
     print("\n".join(lines))
     return 0
 

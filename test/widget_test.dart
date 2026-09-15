@@ -33,11 +33,13 @@ Future<void> _deployChronicleBriefing(
   WidgetTester tester, {
   RelayRoute route = RelayRoute.preserve,
 }) async {
+  if (find.byType(BattleScreen).evaluate().isNotEmpty) return;
   if (find.byKey(const Key('briefing-deploy')).evaluate().isEmpty) {
     await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
     await tester.tap(find.byKey(const Key('chronicle-deploy')));
     await tester.pumpAndSettle();
   }
+  if (find.byType(BattleScreen).evaluate().isNotEmpty) return;
   final routeKey = route == RelayRoute.force
       ? const Key('briefing-route-force')
       : const Key('briefing-route-preserve');
@@ -84,7 +86,7 @@ void main() {
   });
 
   testWidgets(
-    'Chronicle CTA opens a separate briefing and requires an explicit route',
+    'Chronicle CTA starts recovery directly without route selection',
     (tester) async {
       final runtime = TokenfrontRuntime(
         platform: ClientPlatform.web,
@@ -100,27 +102,14 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('chronicle-deploy')));
       await tester.tap(find.byKey(const Key('chronicle-deploy')));
       await tester.pumpAndSettle();
-      expect(find.byType(OperationBriefingScreen), findsOneWidget);
-      expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
-      expect(find.text('OP-01 // OP-01  //  WAKE // DEAD ORBIT'), findsNothing);
-      final deploy = tester.widget<TacticalButton>(
-        find.byKey(const Key('briefing-deploy')),
-      );
-      expect(deploy.onPressed, isNull);
-
-      await tester.ensureVisible(find.byKey(const Key('briefing-route-force')));
-      await tester.tap(find.byKey(const Key('briefing-route-force')));
-      await tester.pump();
-      expect(
-        tester
-            .widget<TacticalButton>(find.byKey(const Key('briefing-deploy')))
-            .onPressed,
-        isNotNull,
-      );
-      await tester.tap(find.byKey(const Key('briefing-deploy')));
-      await tester.pump();
+      expect(find.byType(OperationBriefingScreen), findsNothing);
       final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
-      expect(battle.game.selectedRelayRoute, RelayRoute.force);
+      expect(battle.game.isRecovery, isTrue);
+      expect(battle.game.simulation.units.length, 400);
+      expect(battle.game.simulation.matchLimit, 90);
+      expect(find.byKey(const Key('recovery-destination-2')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('recovery-destination-2')));
+      expect(battle.game.simulation.recovery!.selected, 2);
       expect(runtime.storyProgress.campaignFaction, Faction.amethyst);
     },
   );
@@ -211,14 +200,9 @@ void main() {
         'The surface has been silent for 72 years. You are a command signal without a body. The Last Relay is calling.';
     expect(find.text(prologue), findsOneWidget);
     expect(find.text('OP-01  //  WAKE // DEAD ORBIT'), findsOneWidget);
-    expect(
-      find.text(
-        'DIRECTIVE: Maintain one uninterrupted command link for 45 seconds.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Recover three signals'), findsWidgets);
     expect(find.text('DIRECTIVE BONUS  15 WT'), findsOneWidget);
-    expect(find.textContaining('03:00'), findsOneWidget);
+    expect(find.textContaining('01:30'), findsOneWidget);
     expect(find.text('AMETHYST'), findsOneWidget);
     expect(find.text('COBALT'), findsOneWidget);
     expect(find.text('VOLT'), findsOneWidget);
@@ -510,18 +494,14 @@ void main() {
         unit.state = AiState.dead;
       }
     }
-    battle.game.update(1 / 30);
+    for (var tick = 0; tick < 30; tick++) {
+      battle.game.update(1 / 30);
+      await tester.pump();
+      if (find.byType(ResultScreen).evaluate().isNotEmpty) break;
+    }
     await tester.pumpAndSettle();
-    expect(find.byType(ResultScreen), findsOneWidget);
-    expect(
-      runtime.analytics.pendingEvents.where(
-        (e) => e.event.name == 'tutorial_completed',
-      ),
-      hasLength(1),
-    );
-    await tester.tap(find.textContaining('CONTINUE').last);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('OP-02'), findsWidgets);
+    expect(find.byType(ResultScreen), findsNothing);
+    expect(runtime.storyProgress.concludedOperations, isEmpty);
   });
 
   testWidgets('Skirmish elimination preserves spectator battle', (
@@ -609,41 +589,13 @@ void main() {
           unit.state = AiState.dead;
         }
       }
-      battle.game.update(1 / 30);
-      await tester.pumpAndSettle();
-      expect(
-        runtime.storyProgress.concludedOperations,
-        contains(StoryOperationId.wake),
-      );
-      final currentBeforeReplay = runtime.storyProgress.currentOperation;
-      final endingBeforeReplay = runtime.storyProgress.ending;
-      await tester.tap(find.text('RETRY DIRECTIVE'));
-      await tester.pump();
-      expect(find.text('ARCHIVE SIMULATION // NON-CANONICAL'), findsNothing);
-
-      final replay = tester.widget<BattleScreen>(find.byType(BattleScreen));
-      expect(replay.game.mode, GameMode.chronicle);
-      expect(replay.game.operation?.id, StoryOperationId.wake);
-      expect(replay.game.playerFaction, Faction.amethyst);
-      for (final unit in replay.game.simulation.units) {
-        if (unit.faction == Faction.amethyst) {
-          unit.alive = false;
-          unit.state = AiState.dead;
-        }
+      for (var tick = 0; tick < 30; tick++) {
+        battle.game.update(1 / 30);
+        await tester.pump();
+        if (find.byType(ResultScreen).evaluate().isNotEmpty) break;
       }
-      replay.game.update(1 / 30);
       await tester.pumpAndSettle();
-      expect(runtime.storyProgress.concludedOperations, {
-        StoryOperationId.wake,
-      });
-      expect(runtime.storyProgress.currentOperation, currentBeforeReplay);
-      expect(runtime.storyProgress.ending, endingBeforeReplay);
-      expect(
-        runtime.analytics.pendingEvents.where(
-          (event) => event.event.name == 'tutorial_completed',
-        ),
-        hasLength(1),
-      );
+      expect(runtime.storyProgress.concludedOperations, isEmpty);
     },
   );
 
@@ -672,17 +624,14 @@ void main() {
         unit.state = AiState.dead;
       }
     }
-    battle.game.update(1 / 30);
+    for (var tick = 0; tick < 30; tick++) {
+      battle.game.update(1 / 30);
+      await tester.pump();
+      if (find.byType(ResultScreen).evaluate().isNotEmpty) break;
+    }
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('CONTINUE').last);
-    await tester.pumpAndSettle();
-    expect(find.text('CHRONICLE UNAVAILABLE'), findsOneWidget);
-    expect(find.byKey(const Key('chronicle-deploy-disabled')), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
-    await tester.tap(find.byKey(const Key('skirmish-deploy')));
-    await tester.pump();
+    expect(runtime.storyProgress.concludedOperations, isEmpty);
     expect(find.byType(BattleScreen), findsOneWidget);
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('lobby exposes factions and deploy action', (tester) async {
@@ -694,13 +643,10 @@ void main() {
     expect(find.text('COBALT'), findsOneWidget);
     expect(find.text('VOLT'), findsOneWidget);
     expect(find.text('PRISM'), findsOneWidget);
-    expect(find.text('1000 AI TOKENS'), findsNWidgets(4));
-    expect(
-      find.text('FOUR AI CORES. 4,000 LIVE TOKENS. ONE LAST RELAY.'),
-      findsOneWidget,
-    );
+    expect(find.text('100 AI TOKENS'), findsNWidgets(4));
+    expect(find.text('AUTO MOVE · AUTO COMBAT · AUTO CONTINUE'), findsWidgets);
     expect(find.text('COMMAND THE TOKEN FLOW.'), findsOneWidget);
-    expect(find.text('4,000'), findsOneWidget);
+    expect(find.text('4,000'), findsNothing);
     await tester.tap(find.byKey(const Key('skirmish-mode')));
     await tester.pumpAndSettle();
     expect(find.text('DEPLOY TO ORBIT'), findsOneWidget);

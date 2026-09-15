@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../design/tokens.dart';
 import '../game/faction_visuals.dart';
@@ -27,6 +28,7 @@ class LobbyScreen extends StatefulWidget {
     required this.onOpenSettings,
     required this.onOpenLocker,
     required this.bannerVisible,
+    this.bannerAd,
     this.onChooseEnding,
     this.chronicleAvailable = true,
     this.lowSpec = false,
@@ -47,6 +49,7 @@ class LobbyScreen extends StatefulWidget {
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLocker;
   final bool bannerVisible;
+  final BannerAd? bannerAd;
   final ValueChanged<EndingChoice>? onChooseEnding;
   final bool chronicleAvailable;
   final bool lowSpec;
@@ -172,7 +175,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           },
                         ),
                         const SizedBox(height: TokenfrontSpacing.lg),
-                        _ProtocolPanel(faction: selectedCore),
+                        TacticalPanel(
+                          child: Text(
+                            context.l10n.recoveryInstruction,
+                            style: TokenfrontType.body,
+                          ),
+                        ),
                         const SizedBox(height: TokenfrontSpacing.lg),
                         if (!pendingEnding)
                           TacticalButton(
@@ -180,7 +188,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             expanded: compact,
                             label: operation == null
                                 ? context.l10n.chronicleUnavailable
-                                : 'BRIEF OP-${(operation.index + 1).toString().padLeft(2, '0')}',
+                                : context.l10n.recoveryTitle,
                             color: selectedCore.visual.color,
                             onPressed: operation == null
                                 ? null
@@ -227,12 +235,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             icon: const Icon(Icons.archive_outlined, size: 17),
                             label: Text(copy.archive),
                           ),
-                          const _RulesStrip(),
+                          if (mode == GameMode.skirmish) const _RulesStrip(),
                         ],
                       ),
                       if (widget.bannerVisible) ...[
                         const SizedBox(height: 18),
-                        const _SponsorRail(),
+                        _SponsorRail(ad: widget.bannerAd),
                       ],
                     ],
                   ),
@@ -281,7 +289,7 @@ class _StoryRole extends StatelessWidget {
       ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
         child: Text(
-          copy.storyRoleBody,
+          context.l10n.recoveryAutomatic,
           key: const Key('story-role-body'),
           style: TokenfrontType.body.copyWith(
             fontSize: compact ? 12 : 14,
@@ -322,7 +330,7 @@ class _Briefing extends StatelessWidget {
         ),
         const SizedBox(height: 7),
         Text(
-          '${copy.directiveHeading}: ${copy.directiveLabel(operation.directive.kind, target: operation.directive.target)}',
+          context.l10n.recoveryTitle,
           style: TokenfrontType.body.copyWith(
             fontSize: 10,
             color: TokenfrontColors.relayIvory,
@@ -512,7 +520,7 @@ class _CoreCard extends StatelessWidget {
                 ),
               ),
               Text(
-                context.l10n.unitsCount(1000),
+                      context.l10n.unitsCount(100),
                 style: TokenfrontType.body.copyWith(
                   fontSize: compact ? 8 : 9,
                   color: TokenfrontColors.quietText,
@@ -659,7 +667,9 @@ class _Header extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              context.l10n.lobbyTagline,
+              mode == GameMode.chronicle
+                  ? context.l10n.recoveryAutomatic
+                  : context.l10n.lobbyTagline,
               style: TokenfrontType.instrument.copyWith(
                 fontSize: compact ? 9 : 12,
                 color: TokenfrontColors.quietText,
@@ -671,7 +681,7 @@ class _Header extends StatelessWidget {
       TacticalPanel(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Text(
-          '${context.l10n.offline}\n${mode == GameMode.chronicle ? '03:00' : '15:00'}',
+          '${context.l10n.offline}\n${mode == GameMode.chronicle ? '01:30' : '15:00'}',
           textAlign: TextAlign.right,
           style: TokenfrontType.instrument.copyWith(fontSize: 10, height: 1.3),
         ),
@@ -773,17 +783,24 @@ class _Rule extends StatelessWidget {
 }
 
 class _SponsorRail extends StatelessWidget {
-  const _SponsorRail();
+  const _SponsorRail({this.ad});
+  final BannerAd? ad;
   @override
   Widget build(BuildContext context) => Semantics(
     label: context.l10n.sponsorBannerArea,
     child: TacticalPanel(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      child: Text(
-        '${context.l10n.sponsorSignal}  /  ${context.l10n.lobbyPlacement}',
-        textAlign: TextAlign.center,
-        style: TokenfrontType.instrument.copyWith(fontSize: 9),
-      ),
+      child: ad == null
+          ? Text(
+              '${context.l10n.sponsorSignal}  /  ${context.l10n.lobbyPlacement}',
+              textAlign: TextAlign.center,
+              style: TokenfrontType.instrument.copyWith(fontSize: 9),
+            )
+          : SizedBox(
+              width: ad!.size.width.toDouble(),
+              height: ad!.size.height.toDouble(),
+              child: AdWidget(ad: ad!),
+            ),
     ),
   );
 }

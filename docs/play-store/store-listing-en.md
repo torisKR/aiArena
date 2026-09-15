@@ -3,12 +3,12 @@
 Status: PLAY CONSOLE DRAFT — localized text saved on 2026-08-05; graphics and final review remain pending.
 
 Title: Tokenfront: Orbital Signal War
-Short description: Command a living signal through a 4,000-unit offline orbital war.
+Short description: Command a living signal through a 400-unit offline orbital war.
 
 Full description:
 A command signal awakens above a silent planet. Four autonomous cores are trapped in an orbital authorization war, and the Last Relay is calling.
 
-Lead 1,000 units inside a 4,000-unit real-time battlefield. Move freely, transfer command to a surviving unit when your body falls, and complete five three-minute Signal Chronicle operations to reconstruct the final human instruction.
+Lead a core inside a 400-unit real-time battlefield. Move, dash, and let command recover automatically when your controlled unit falls. Complete five 90-second Signal Chronicle operations to reconstruct the final human instruction.
 
 • Offline single-player combat
 • Four visually distinct cores with equal combat rules

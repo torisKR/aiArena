@@ -22,7 +22,10 @@ val releaseSigningValues = completeSigningValues(environmentSigningValues)
 val releaseSigningError =
     "Release signing requires TOKENFRONT_UPLOAD_STORE_FILE, " +
         "TOKENFRONT_UPLOAD_STORE_PASSWORD, TOKENFRONT_UPLOAD_KEY_ALIAS, " +
-        "and TOKENFRONT_UPLOAD_KEY_PASSWORD."
+    "and TOKENFRONT_UPLOAD_KEY_PASSWORD."
+
+val testAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
+val productionAdMobAppId = "ca-app-pub-3004906966180197~5057217646"
 
 // Resolve task abbreviations (for example assembleRel) before enforcing release signing.
 // The task graph is ready before any task executes, so this catches every app release
@@ -56,6 +59,7 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = testAdMobAppId
     }
 
     signingConfigs {
@@ -76,6 +80,7 @@ android {
 
     buildTypes {
         release {
+            manifestPlaceholders["admobAppId"] = productionAdMobAppId
             releaseSigningValues?.let {
                 signingConfig = signingConfigs.getByName("release")
             }

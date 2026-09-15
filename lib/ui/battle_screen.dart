@@ -9,6 +9,7 @@ import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/services.dart';
 
 import '../design/tokens.dart';
+import '../services/audio/game_audio_service.dart';
 import '../game/faction_visuals.dart';
 import '../game/simulation.dart';
 import '../game/tokenfront_game.dart';
@@ -18,6 +19,7 @@ import '../story/story_localizations.dart';
 import '../story/story_models.dart';
 import 'living_relay_thread.dart';
 import 'primitives.dart';
+import 'recovery_hud.dart';
 
 class BattleScreen extends StatefulWidget {
   const BattleScreen({
@@ -58,6 +60,7 @@ class BattleScreenState extends State<BattleScreen>
         ? WidgetsBinding.instance.lifecycleState ?? widget.lifecycleState
         : widget.lifecycleState;
     _lifecyclePaused = initialLifecycleState != AppLifecycleState.resumed;
+    _syncLifecycleAudio(_lifecyclePaused);
     if (_lifecyclePaused) {
       game.clearInputs();
       game.endMouseCameraPan();
@@ -101,6 +104,7 @@ class BattleScreenState extends State<BattleScreen>
   void handleLifecycleState(AppLifecycleState state) {
     if (!mounted || _disposing) return;
     final paused = state != AppLifecycleState.resumed;
+    _syncLifecycleAudio(paused);
     if (paused) {
       game.clearInputs();
       game.endMouseCameraPan();
@@ -121,15 +125,25 @@ class BattleScreenState extends State<BattleScreen>
   void _toggleUserPause() {
     if (_lifecyclePaused) return;
     if (_userPaused) {
+      game.audio?.resume(AudioSuspensionReason.manualPause);
       game.resumeEngine();
       setState(() => _userPaused = false);
     } else {
+      unawaited(game.audio?.suspend(AudioSuspensionReason.manualPause));
       game.clearInputs();
       game.endMouseCameraPan();
       game.endMinimapCameraPan();
       _mousePanPointer = null;
       game.pauseEngine();
       setState(() => _userPaused = true);
+    }
+  }
+
+  void _syncLifecycleAudio(bool paused) {
+    if (paused) {
+      unawaited(game.audio?.suspend(AudioSuspensionReason.lifecycle));
+    } else {
+      game.audio?.resume(AudioSuspensionReason.lifecycle);
     }
   }
 
@@ -180,6 +194,7 @@ class BattleScreenState extends State<BattleScreen>
     game.endMouseCameraPan();
     game.endMinimapCameraPan();
     game.dispose();
+    game.audio?.resume(AudioSuspensionReason.manualPause);
     super.dispose();
   }
 
@@ -242,126 +257,138 @@ class BattleScreenState extends State<BattleScreen>
                   minimum: EdgeInsets.all(short ? 6 : 10),
                   child: ValueListenableBuilder<BattleHudSnapshot>(
                     valueListenable: game.hud,
-                    builder: (context, snapshot, _) => Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: _CommandRail(
-                            snapshot: snapshot,
-                            compact: compact,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: compact ? (short ? 6 : 10) : 10,
-                              left: 10,
-                            ),
-                            child: _PauseButton(
-                              paused: _userPaused,
-                              enabled: !_lifecyclePaused,
-                              onPressed: _toggleUserPause,
-                            ),
-                          ),
-                        ),
-                        if (snapshot.directiveProgress != null)
-                          Align(
-                            alignment: Alignment.topCenter,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                top: compact ? (short ? 62 : 72) : 58,
-                              ),
-                              child: _DirectiveRail(
-                                game: game,
-                                snapshot: snapshot,
-                                compact: compact,
-                                operation: game.operation,
-                              ),
-                            ),
-                          ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: compact ? (short ? 66 : 78) : 0,
-                            ),
-                            child: _ViewRail(
-                              game: game,
-                              snapshot: snapshot,
-                              vertical: compact,
-                              preferences: widget.preferences,
-                              enabled: _gameplayInputEnabled,
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: _PlayerControls(
+                    builder: (context, snapshot, _) => game.isRecovery
+                        ? RecoveryHud(
                             game: game,
                             snapshot: snapshot,
-                            joystickSize: joystickSize,
-                            compact: compactControls,
+                            paused: game.paused,
                             enabled: _gameplayInputEnabled,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: EdgeInsets.only(right: minimapWidth + 10),
-                            child: _ActionCluster(
-                              game: game,
-                              snapshot: snapshot,
-                              dashSize: dashSize,
-                              enabled: _gameplayInputEnabled,
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: _BattleMinimap(
-                            game: game,
-                            snapshot: snapshot,
-                            width: minimapWidth,
-                            height: minimapHeight,
-                            enabled: _gameplayInputEnabled,
-                          ),
-                        ),
-                        if (snapshot.handoffProgress case final progress?)
-                          Center(
-                            child: _RelayReadout(
-                              progress: progress,
-                              stage:
-                                  snapshot.handoffStage ??
-                                  HandoffStage.impactHold,
-                              reduceMotion: game.reduceMotion,
-                            ),
-                          ),
-                        if (snapshot.playerEliminated)
-                          Align(
-                            alignment: const Alignment(0, -.68),
-                            child: TacticalPanel(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              borderColor: TokenfrontColors.danger,
-                              child: Text(
-                                context.l10n.signalLostObserving,
-                                style: TokenfrontType.instrument.copyWith(
-                                  color: TokenfrontColors.danger,
-                                  fontSize: 11,
+                            onPause: _toggleUserPause,
+                          )
+                        : Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Align(
+                                alignment: Alignment.topCenter,
+                                child: _CommandRail(
+                                  snapshot: snapshot,
+                                  compact: compact,
                                 ),
                               ),
-                            ),
+                              Align(
+                                alignment: Alignment.topLeft,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    top: compact ? (short ? 6 : 10) : 10,
+                                    left: 10,
+                                  ),
+                                  child: _PauseButton(
+                                    paused: _userPaused,
+                                    enabled: !_lifecyclePaused,
+                                    onPressed: _toggleUserPause,
+                                  ),
+                                ),
+                              ),
+                              if (snapshot.directiveProgress != null)
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      top: compact ? (short ? 62 : 72) : 58,
+                                    ),
+                                    child: _DirectiveRail(
+                                      game: game,
+                                      snapshot: snapshot,
+                                      compact: compact,
+                                      operation: game.operation,
+                                    ),
+                                  ),
+                                ),
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    top: compact ? (short ? 66 : 78) : 0,
+                                  ),
+                                  child: _ViewRail(
+                                    game: game,
+                                    snapshot: snapshot,
+                                    vertical: compact,
+                                    preferences: widget.preferences,
+                                    enabled: _gameplayInputEnabled,
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomLeft,
+                                child: _PlayerControls(
+                                  game: game,
+                                  snapshot: snapshot,
+                                  joystickSize: joystickSize,
+                                  compact: compactControls,
+                                  enabled: _gameplayInputEnabled,
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: minimapWidth + 10,
+                                  ),
+                                  child: _ActionCluster(
+                                    game: game,
+                                    snapshot: snapshot,
+                                    dashSize: dashSize,
+                                    enabled: _gameplayInputEnabled,
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: _BattleMinimap(
+                                  game: game,
+                                  snapshot: snapshot,
+                                  width: minimapWidth,
+                                  height: minimapHeight,
+                                  enabled: _gameplayInputEnabled,
+                                ),
+                              ),
+                              if (snapshot.handoffProgress case final progress?)
+                                Center(
+                                  child: _RelayReadout(
+                                    progress: progress,
+                                    stage:
+                                        snapshot.handoffStage ??
+                                        HandoffStage.impactHold,
+                                    reduceMotion: game.reduceMotion,
+                                  ),
+                                ),
+                              if (snapshot.playerEliminated)
+                                Align(
+                                  alignment: const Alignment(0, -.68),
+                                  child: TacticalPanel(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    borderColor: TokenfrontColors.danger,
+                                    child: Text(
+                                      context.l10n.signalLostObserving,
+                                      style: TokenfrontType.instrument.copyWith(
+                                        color: TokenfrontColors.danger,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (game.paused)
+                                Center(
+                                  child: _PausedReadout(
+                                    userPaused: _userPaused,
+                                  ),
+                                ),
+                            ],
                           ),
-                        if (game.paused)
-                          Center(
-                            child: _PausedReadout(userPaused: _userPaused),
-                          ),
-                      ],
-                    ),
                   ),
                 ),
               ],

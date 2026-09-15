@@ -52,8 +52,8 @@ void main() {
         find.byKey(const Key('current-operation-incident')),
         findsOneWidget,
       );
-      expect(find.text('BRIEF OP-01'), findsOneWidget);
-      expect(find.textContaining('I remember every receiver'), findsOneWidget);
+      expect(find.text('Recover three signals'), findsNWidgets(2));
+      expect(find.textContaining('Tap 1, 2 or 3'), findsOneWidget);
     },
   );
 

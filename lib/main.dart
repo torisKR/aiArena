@@ -9,15 +9,19 @@ import 'design/tokens.dart';
 import 'economy/cosmetic_catalog.dart';
 import 'game/faction_visuals.dart';
 import 'game/simulation.dart';
+import 'game/recovery.dart';
 import 'game/tokenfront_game.dart';
 import 'story/story_models.dart';
 import 'story/campaign_controller.dart';
 import 'story/story_catalog.dart';
 import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
+import 'services/audio/game_audio_service.dart';
+import 'services/ads/admob_ad_service.dart';
 import 'services/analytics/analytics_event.dart';
 import 'services/battle_orientation_controller.dart';
 import 'services/privacy/privacy_link_actions.dart';
+import 'services/privacy/privacy_state.dart';
 import 'ui/armory_sheet.dart';
 import 'ui/archive_sheet.dart';
 import 'ui/battle_screen.dart';
@@ -29,8 +33,18 @@ import 'ui/settings_sheet.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  final runtime = await TokenfrontRuntime.restore();
-  runApp(TokenfrontApp(runtime: runtime, disposeRuntime: true));
+  final adService = AdMobAdService();
+  final runtime = await TokenfrontRuntime.restore(
+    platform: ClientPlatform.android,
+    adAdapter: adService,
+  );
+  runApp(
+    TokenfrontApp(
+      runtime: runtime,
+      disposeRuntime: true,
+      capabilities: androidAdMobTestCapabilities,
+    ),
+  );
 }
 
 class TokenfrontApp extends StatefulWidget {
@@ -159,6 +173,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   String currentMatchId = '';
   bool bannerVisible = false;
   bool _startingMatch = false;
+  bool _leavingResult = false;
+  RecoveryOutcome? recoveryOutcome;
+  int recoveredSignals = 0;
   bool _requireLandscapeForBattle = false;
   int _battleRequest = 0;
   AppLifecycleState _lifecycleState = AppLifecycleState.resumed;
@@ -170,6 +187,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   void initState() {
     super.initState();
+    unawaited(runtime.audio.initialize());
     _lifecycleState =
         WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     try {
@@ -186,6 +204,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     }
     WidgetsBinding.instance.addObserver(this);
     runtime.addListener(_runtimeChanged);
+    _syncAudioLifecycle(_lifecycleState);
     runtime.record(AnalyticsEvent.tutorialStarted());
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
   }
@@ -228,6 +247,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _syncAudioLifecycle(state);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       unawaited(runtime.flushLocalState());
@@ -243,15 +263,28 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     if (mounted) setState(() {});
   }
 
+  void _syncAudioLifecycle(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      runtime.audio.resume(AudioSuspensionReason.lifecycle);
+    } else {
+      unawaited(runtime.audio.suspend(AudioSuspensionReason.lifecycle));
+    }
+  }
+
   Future<void> _requestBanner() async {
     if (!widget.capabilities.adInventoryAvailable) {
       if (mounted && bannerVisible) setState(() => bannerVisible = false);
       return;
     }
+    if (!runtime.adRequestsAllowed) {
+      runtime.ads.clearBanner();
+      if (mounted && bannerVisible) setState(() => bannerVisible = false);
+      return;
+    }
+    if (screen != _Screen.lobby && screen != _Screen.result) return;
     final surface = screen == _Screen.result
         ? AdSurface.result
         : AdSurface.lobby;
-    if (screen == _Screen.battle) return;
     final adResult = await runtime.requestBanner(
       surface: surface,
       completedMatches: completedMatches,
@@ -268,9 +301,20 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       analyticsSharingAllowed: runtime.analyticsSharingAllowed,
       adRequestsAllowed: runtime.adRequestsAllowed,
       onAnalyticsChanged: runtime.setAnalyticsSharingAllowed,
-      onAdRequestsChanged: runtime.setAdRequestsAllowed,
+      onAdRequestsChanged: (allowed) {
+        runtime.setAdRequestsAllowed(allowed);
+        if (!allowed) setState(() => bannerVisible = false);
+        if (allowed) unawaited(_requestBanner());
+      },
       capabilities: widget.capabilities,
       privacyLinkActions: widget.privacyLinkActions,
+      onShowPrivacyOptions: widget.capabilities.adInventoryAvailable
+          ? () async {
+              final allowed = await runtime.showPrivacyOptions();
+              if (mounted && !allowed) setState(() => bannerVisible = false);
+              return allowed;
+            }
+          : null,
     );
   }
 
@@ -361,22 +405,17 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   Future<void> _openChronicleBriefing() async {
     final operation = _resolveCurrentOperation();
     if (!chronicleAvailable || operation == null) return;
-    setState(() {
-      briefingOperation = operation;
-      briefingRoute = null;
-      screen = _Screen.briefing;
-    });
+    briefingOperation = operation;
+    await _startChronicle(chronicleFaction);
   }
 
   Future<void> _startChronicle(Faction faction) async {
     final operation = briefingOperation;
-    final route = briefingRoute;
-    if (!chronicleAvailable || operation == null || route == null) return;
+    if (!chronicleAvailable || operation == null) return;
     await _startBattle(
       mode: GameMode.chronicle,
       faction: faction,
       operation: operation,
-      relayRoute: route,
     );
   }
 
@@ -393,7 +432,6 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     RelayRoute? relayRoute,
     bool replay = false,
   }) async {
-    if (mode == GameMode.chronicle && relayRoute == null) return;
     if (_startingMatch) return;
     _startingMatch = true;
     final request = ++_battleRequest;
@@ -415,6 +453,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
         : faction;
     selectedFaction = battleFaction;
     result = null;
+    recoveryOutcome = null;
+    recoveredSignals = 0;
     relays = 0;
     elapsed = 0;
     baseReward = 0;
@@ -422,6 +462,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     reportRoute = null;
     campaignTransition = null;
     bannerVisible = false;
+    runtime.ads.clearBanner();
     attemptNumber += 1;
     final seed = operation?.seed ?? 20260715 + (++matchIndex);
     currentMatchId = [
@@ -452,13 +493,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       playerFaction: battleFaction,
       mode: mode,
       operation: operation,
+      recoveryMode: mode == GameMode.chronicle,
       relayRoute: mode == GameMode.chronicle ? relayRoute : null,
       seed: seed,
-      config: operation == null
-          ? const BattleConfig()
-          : BattleConfig(
-              matchLimitSeconds: operation.duration.inSeconds.toDouble(),
-            ),
+      config: operation == null ? const BattleConfig() : RecoveryState.config,
       reduceMotion: runtime.preferences.reducedMotionFor(
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
       ),
@@ -467,6 +505,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       cosmeticLoadout: CosmeticLoadout.fromWallet(runtime.wallet),
       hapticsEnabled: runtime.preferences.hapticsEnabled,
       audioEnabled: runtime.preferences.audioEnabled,
+      audio: runtime.audio,
       combatWinCode: l10n.combatWinCode,
       combatOutCode: l10n.combatOutCode,
       onHandoffStarted: () => runtime.record(AnalyticsEvent.handoffStarted()),
@@ -479,7 +518,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       ),
       onBattleConcluded: (report) {
         final matchResult = MatchResult(
-          reason: report.endReason == ChronicleEndReason.timeLimit
+          reason: report.recoveryOutcome != null
+              ? MatchEndReason.recovery
+              : report.endReason == ChronicleEndReason.timeLimit
               ? MatchEndReason.timeLimit
               : MatchEndReason.elimination,
           winner: report.globalWinner,
@@ -505,7 +546,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       (standing) => standing.faction == selectedFaction,
     );
     final matchElapsed = endedGame.simulation.matchElapsed;
-    final reward = 40 + report.casualtyRelays * 8 + (playerStanding.kills ~/ 5);
+    final reward = report.recoveryOutcome != null
+        ? report.recoveredSignals * 20
+        : 40 + report.casualtyRelays * 8 + (playerStanding.kills ~/ 5);
     completedMatches += 1;
     runtime.claimBaseReward(matchId: currentMatchId, amount: reward);
     final active = activeBattle;
@@ -550,6 +593,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     setState(() {
       game = null;
       result = matchResult;
+      recoveryOutcome = report.recoveryOutcome;
+      recoveredSignals = report.recoveredSignals;
       relays = report.commandRelays;
       manualRelays = report.manualRelays;
       reportRoute = report.relayRoute;
@@ -559,33 +604,48 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       screen = _Screen.result;
     });
     briefingOperation = _resolveCurrentOperation();
+    if (widget.capabilities.adInventoryAvailable &&
+        !(activeBattle?.replay ?? false)) {
+      unawaited(runtime.prepareResultAds(completedMatches: completedMatches));
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
   }
 
   Future<void> _leaveResult({required bool rematch}) async {
-    await runtime.closeResult(completedMatches: completedMatches);
-    if (!mounted) return;
-    if (rematch) {
-      final active = activeBattle;
-      await _startBattle(
-        mode: active?.mode ?? GameMode.skirmish,
-        faction: active?.faction ?? selectedFaction,
-        operation: active?.operation,
-        relayRoute: active?.relayRoute,
-        replay: active?.mode == GameMode.chronicle
-            ? true
-            : active?.replay ?? false,
-      );
-      return;
+    if (_leavingResult || screen != _Screen.result) return;
+    _leavingResult = true;
+    try {
+      if (!(activeBattle?.replay ?? false)) {
+        await runtime.closeResult(completedMatches: completedMatches);
+      }
+      if (!mounted) return;
+      if (rematch) {
+        final active = activeBattle;
+        final priorAttemptSucceeded =
+            recoveryOutcome == RecoveryOutcome.recovered ||
+            (campaignTransition?.directiveSucceeded ?? false);
+        await _startBattle(
+          mode: active?.mode ?? GameMode.skirmish,
+          faction: active?.faction ?? selectedFaction,
+          operation: active?.operation,
+          relayRoute: active?.relayRoute,
+          replay: active?.mode == GameMode.chronicle
+              ? active?.replay == true || priorAttemptSucceeded
+              : active?.replay ?? false,
+        );
+        return;
+      }
+      await _restoreBattleOrientation(activeGame: game);
+      if (!mounted) return;
+      setState(() {
+        game = null;
+        activeBattle = null;
+        screen = _Screen.lobby;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
+    } finally {
+      _leavingResult = false;
     }
-    await _restoreBattleOrientation(activeGame: game);
-    if (!mounted) return;
-    setState(() {
-      game = null;
-      activeBattle = null;
-      screen = _Screen.lobby;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _requestBanner());
   }
 
   Future<void> _continueFromResult() async {
@@ -602,14 +662,14 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       });
       return;
     }
-    await runtime.closeResult(completedMatches: completedMatches);
     if (!mounted) return;
     final nextOperation = _resolveCurrentOperation();
     setState(() {
       game = null;
       briefingRoute = null;
-      screen = nextOperation == null ? _Screen.lobby : _Screen.briefing;
+      screen = _Screen.lobby;
     });
+    if (nextOperation != null) await _openChronicleBriefing();
   }
 
   void _chooseEnding(EndingChoice choice) {
@@ -642,6 +702,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       bannerVisible: bannerVisible,
+      bannerAd: runtime.ads.banner,
       onChooseEnding: _chooseEnding,
       lowSpec: runtime.preferences.lowSpecMode,
       reduceMotion: runtime.preferences.reducedMotionFor(
@@ -668,6 +729,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
               onOpenSettings: _openSettings,
               onOpenLocker: _openLocker,
               bannerVisible: bannerVisible,
+              bannerAd: runtime.ads.banner,
               onChooseEnding: _chooseEnding,
               lowSpec: runtime.preferences.lowSpecMode,
               reduceMotion: runtime.preferences.reducedMotionFor(
@@ -718,6 +780,8 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     ),
     _Screen.result => ResultScreen(
       result: result!,
+      recoveryOutcome: recoveryOutcome,
+      recoveredSignals: recoveredSignals,
       matchId: currentMatchId,
       playerFaction: selectedFaction,
       relays: relays,
@@ -727,18 +791,23 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       baseReward: baseReward,
       warTokenBalance: runtime.wallet.balance,
       bannerVisible: bannerVisible,
-      rewardedAdsAvailable: widget.capabilities.adInventoryAvailable,
+      bannerAd: runtime.ads.banner,
+      rewardedAdsAvailable:
+          widget.capabilities.adInventoryAvailable &&
+          !(activeBattle?.replay ?? false),
       onDoubleReward: () => runtime.claimRewardedBonus(
         matchId: currentMatchId,
         baseAmount: baseReward,
         completedMatches: completedMatches,
+        replay: activeBattle?.replay ?? false,
       ),
       onOpenSettings: _openSettings,
       onOpenLocker: _openLocker,
       onRematch: () => _leaveResult(rematch: true),
       onLobby: () => _leaveResult(rematch: false),
       onContinue:
-          activeBattle?.mode == GameMode.chronicle &&
+          recoveryOutcome == RecoveryOutcome.recovered &&
+              activeBattle?.mode == GameMode.chronicle &&
               !(activeBattle?.operation?.id ==
                       StoryOperationId.lastInstruction &&
                   runtime.storyProgress.ending == null)
@@ -760,15 +829,15 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = runtime.preferences.reducedMotionFor(
-      systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
-    );
-    final transitionDuration = reduceMotion
-        ? Duration.zero
-        : TokenfrontMotion.screenTransition;
+    // Platform ad views cannot be mounted on outgoing and incoming screens.
     return AnimatedSwitcher(
-      duration: transitionDuration,
-      reverseDuration: transitionDuration,
+      duration:
+          runtime.preferences.reducedMotionFor(
+            systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
+          )
+          ? Duration.zero
+          : TokenfrontMotion.screenTransition,
+      layoutBuilder: (current, previous) => current ?? const SizedBox.shrink(),
       child: KeyedSubtree(
         key: ValueKey<_Screen>(screen),
         child: _buildScreen(context),

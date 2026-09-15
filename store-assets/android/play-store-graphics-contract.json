@@ -40,7 +40,7 @@
     },
     "render_play_store_graphics.sh": {
       "path": "tooling/render_play_store_graphics.sh",
-      "sha256": "8668744447cd7ec87aa9757aa148cc6c6da626c4d15fbbdd6a87fe34944f7f37"
+      "sha256": "f6b8428510c00fdcda091ae2d03b0baaaabb06b148676078f7bd9221edabb34d"
     }
   },
   "outputs": {

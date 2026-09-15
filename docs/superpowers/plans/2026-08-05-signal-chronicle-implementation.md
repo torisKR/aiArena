@@ -28,7 +28,7 @@
 - This plan fixes the lifecycle/input regression and may smoke it on an available emulator. The Android production-release plan Task 5 exclusively owns API 36 emulator plus physical-device acceptance and release evidence.
 - Do not add accounts, online inference, multiplayer, faction abilities, capture points, ship physics, live ad credentials, purchases, or new analytics events.
 - Execute from baseline commit 024c6d2 or a descendant that preserves it. Before Task 1, inspect git status and preserve all later user/agent changes; never stage broad directories. Every commit below uses only the exact listed paths.
-- Verified baseline is 118 Flutter tests passing, one Web-only test skipped, and flutter analyze clean. Android integration currently fails at integration_test/app_smoke_test.dart:36 because the paused overlay is missing, followed by FocusManager use after disposal; Task 10 owns that regression.
+- Historical pre-fix baseline: 118 Flutter tests passing, one Web-only test skipped, and flutter analyze clean. The current Android checkpoint is 269 VM tests plus integration suites passing 10/10 and 1/1 on emulator-5586; the former integration failures at `integration_test/app_smoke_test.dart:36` and the disposed `FocusManager` are resolved historical context.
 
 ---
 

@@ -5,12 +5,13 @@ Flutter와 Flame으로 만든 오프라인 **AI 토큰 전쟁 시뮬레이션**�
 
 - 4개 AI 코어 × 1,000개 활성 토큰의 결정론적 전투 시뮬레이션
 - 30Hz 게임 루프, 공간 그리드 근접 탐색, 추적·회피 AI
-- 모바일 조이스틱·대시와 웹/데스크톱 키보드·마우스 카메라
+- Android 모바일 조이스틱·대시와 터치 기반 카메라 조작
 - 로비·전투 HUD·결과 화면, 미니맵, 가로 전투 레이아웃
 - 영어·한국어·일본어·중국어(간체)와 접근성/저사양 설정
 - War Token 보상과 장식 아이템 해금·장착을 기기 로컬에 저장
 
-광고와 분석은 어댑터 경계만 제공하며 기본 빌드는 외부 네트워크로 전송하지 않습니다. 계정 동기화·서버 원장·IAP는 연결되어 있지 않습니다.
+분석은 여전히 외부 전송 없이 동작합니다. Android 디버그 AdMob 통합은 Google 테스트 광고만 사용하며,
+동의가 준비되지 않았거나 오프라인이면 광고를 건너뛰고 게임을 계속합니다. 계정 동기화·서버 원장·IAP는 연결되어 있지 않습니다.
 
 ## 토큰 용어
 
@@ -32,16 +33,8 @@ Flutter와 Flame으로 만든 오프라인 **AI 토큰 전쟁 시뮬레이션**�
 flutter pub get
 flutter analyze
 flutter test
-flutter run -d chrome
+flutter run -d <android-device-id>
+flutter build apk --debug
 ```
 
-Android 확인은 `flutter run -d <device-id>`, iOS 시뮬레이터 확인은 `flutter run -d <simulator-id>`를 사용합니다. 스토어 번들은 서명 환경을 준비한 뒤 `flutter build appbundle --release`로 생성합니다.
-
-## 웹 배포 자동화
-
-`main`에 푸시하거나 GitHub에서 수동 실행하면 `.github/workflows/deploy-web.yml`이 분석, 전체 테스트, Flutter 웹 릴리스 빌드 후 `tokenfront-orbital-war` Cloudflare Pages 프로젝트에 배포합니다.
-
-GitHub Actions 시크릿 두 개가 필요합니다.
-
-- `CLOUDFLARE_API_TOKEN`: 해당 계정의 Cloudflare Pages 쓰기 권한만 가진 토큰
-- `CLOUDFLARE_ACCOUNT_ID`: Pages 프로젝트가 속한 Cloudflare 계정 ID
+Android 기기 확인은 `flutter run -d <android-device-id>`를 사용합니다. 스토어 번들은 서명 환경을 준비한 뒤 `flutter build appbundle --release`로 생성합니다.

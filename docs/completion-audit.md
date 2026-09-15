@@ -5,26 +5,22 @@
 - Repository root: `/Users/toris/projects/aiArena`
 - Audited product: Flutter + Flame offline single-player MVP
 
-**Web release status: PRIVACY-COMPLETE PRODUCTION DEPLOYMENT VERIFIED.** Commit
-`c3a294f` was built as version `1.1.0+2` and deployed to the
-retained `tokenfront-orbital-war` Cloudflare Pages project. The immutable
-deployment is <https://57b98656.tokenfront-orbital-war.pages.dev/> and the
-canonical production URL is <https://tokenfront-orbital-war.pages.dev/>. The
-public policy is available at
-<https://tokenfront-orbital-war.pages.dev/privacy.html>. Local, canonical, and
-immutable policy responses were byte-identical: 14,317 bytes with SHA-256
-`1f0f9bfe4bd51f4786a27467780527d864d71cd1cb2edc0b757fe8a543777d6d`.
+**Current release scope: Android-only.** The active product and release gates
+are the Android APK/AAB, Android privacy contract, Play metadata, and Android
+device QA. The former Web deployment evidence below is retained as historical
+record only; it is not an active product, deployment, or acceptance claim.
 
 This is an evidence audit, not a store-release declaration. “Verified” means the current workspace contains the implementation plus a relevant passing automated test, successful build/runtime command, or a recorded hands-on target-platform check. Browser visual QA is identified as hands-on rather than automated.
 
 ## Executive status
 
-The gameplay MVP and requested performance architecture are implemented and automated-test verified. The current build has a deterministic 4,000-unit battle (1,000 per faction), fixed 30Hz simulation, 10–15Hz tactical AI, approximately 5Hz far-idle AI, faction-partitioned spatial queries, a fixed unit pool, conservative render culling, an expanded camera with a right-side tactical minimap, sub-600dp Android/iOS/Web landscape requests and portrait gating, Blender-authored runtime atlas rendering, the complete handoff experience, responsive input/UI, offline-safe monetization boundaries, and privacy-gated analytics buffering. Current 4,000-unit physical-device performance acceptance remains open.
+The gameplay MVP and requested performance architecture are implemented and automated-test verified. The current Android build has a deterministic 4,000-unit battle (1,000 per faction), fixed 30Hz simulation, 10–15Hz tactical AI, approximately 5Hz far-idle AI, faction-partitioned spatial queries, a fixed unit pool, conservative render culling, an expanded camera with a right-side tactical minimap, Android landscape requests and portrait gating, Blender-authored runtime atlas rendering, the complete handoff experience, responsive mobile input/UI, offline-safe monetization boundaries, and privacy-gated analytics buffering. Current 4,000-unit physical-device performance acceptance remains open.
 
-Historical 2026-07-16 web evidence for the retired
+**Historical only — not a current Android release gate.** The following
+2026-07-16 Web evidence for the retired
 `tokenfront-ai-arena` Pages project includes:
 
-- a successful `flutter build web --release` using the current 4,000-unit code;
+- a successful `flutter build web --release` using the then-current 4,000-unit code;
 - the former Cloudflare Pages deployment at [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev), which returned HTTP 200 and matched that historical local release's `index.html` and `main.dart.js` SHA-256 hashes; this is not the current product project or release evidence;
 - current-build Brave checks at 844×390 confirming the four 1,000-unit lobby entries, 4,000-unit total, battle HUD, right-side tactical minimap, controls, and zero browser-console errors or warnings;
 - a local fresh-match seconds 3–8 `requestAnimationFrame` diagnostic of 58.197 average FPS, approximately 29.499 FPS 1% low, 34ms maximum frame time, and 58 frames above 25ms. This short headless desktop-browser diagnostic is not physical-device or endurance acceptance.
@@ -44,8 +40,9 @@ The remaining work is launch integration and acceptance work, not missing core g
 | Evidence | Current result | Classification |
 |---|---|---|
 | `flutter analyze` | Exit 0: `No issues found!` | **Verified** |
-| `flutter test` | Exit 0 on 2026-08-05: **190 VM tests passed; 1 Web-only test skipped** | **Verified checkpoint; Web-only test remains a separate browser invocation** |
-| Current Brave release QA | 844×390 local release and Cloudflare production checks confirm 4×1,000 lobby data, battle HUD, tactical minimap, controls, and 0 console errors/warnings | **Verified current hands-on browser QA** |
+| `flutter test` | Current Android checkpoint: **269 VM tests passed** | **Verified current Android gate** |
+| Historical `flutter test` checkpoint | Exit 0 on 2026-08-05: **190 VM tests passed; 1 Web-only test skipped** | **Historical checkpoint; Web-only test and Web product surface are retired** |
+| Retired Web Brave release QA | 844×390 local release and Cloudflare production checks confirm 4×1,000 lobby data, battle HUD, tactical minimap, controls, and 0 console errors/warnings | **Historical Web evidence only; not a current Android gate** |
 | Historical Cloudflare Pages deployment | The retired [tokenfront-ai-arena.pages.dev](https://tokenfront-ai-arena.pages.dev) project matched its 2026-07-16 build; it is not the current product project or final release | **Historical evidence only** |
 | Android integration test | `integration_test/app_smoke_test.dart` passed on physical SM A175N / Android 16 on 2026-07-15 | **Historical prior-build platform evidence** |
 | Android profile-mode performance | Historical SM A175N / Android 16 result for the former 400-unit build: 30-second dense sample, 2,599 frame samples, 88.38 average FPS, 45 FPS 1% low; retained in `docs/performance-profile-sm-a175n-2026-07-15.json` | **Historical baseline; current 4,000-unit device profile pending** |
@@ -54,7 +51,7 @@ The remaining work is launch integration and acceptance work, not missing core g
 | Safari hands-on QA | Rendering, keyboard/mouse input, layout/aspect, and resume checked on macOS on 2026-07-15 | **Historical prior-build browser evidence** |
 | Android debug APK | `build/app/outputs/flutter-apk/app-debug.apk` from the 2026-07-15 prior build | **Historical prior-build artifact** |
 | iOS simulator app | `build/ios/Debug-iphonesimulator/Runner.app/Runner` and `build/ios/iphonesimulator/Runner.app/Runner` from the 2026-07-15 prior build | **Historical prior-build artifact** |
-| Default web build | `build/web/main.dart.js`; standard Flutter web path uses CanvasKit | **Verified build and runtime path** |
+| Retired default Web build | `build/web/main.dart.js`; standard Flutter web path used CanvasKit | **Historical Web artifact only; Web product support is not part of this release** |
 | Optional Wasm build | `build/web_wasm/main.dart.wasm` plus compatibility JavaScript from the 2026-07-15 prior build; Wasm-capable path uses Skwasm | **Historical optional-build artifact** |
 | Blender scene/key art | Arena `.blend`, a GLB 2.0 file, and 1440×900 key art under `assets/blender/` | **Artifact presence only; no committed generation receipt ties these files to a specific current runtime** |
 | Blender generation provenance | Historical developer-local environment metadata distinguishes BlenderMCP distribution 1.6.4, MCP SDK 1.28.1, and Blender 5.1.2. No committed MCP invocation/response or clean-shutdown proof is retained. | **Historical environment metadata only** |
@@ -66,7 +63,7 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| P-01 | Flutter + Flame app targeting Android, iOS, and Web. | **Verified** | Current `lib/main.dart`, `pubspec.yaml`, platform projects, automated platform tests, and Web release/deployment; Android/iOS integration and Safari/Chrome execution are preserved 2026-07-15 prior-build evidence. |
+| P-01 | Flutter + Flame app targeting Android. | **Verified** | Current `lib/main.dart`, `pubspec.yaml`, Android project, Android contract tests, and Android QA evidence. |
 | P-02 | Four factions with commercially neutral presentation names. | **Verified** | Internal deterministic faction enum in `lib/game/simulation.dart`; Amethyst, Cobalt, Volt, and Prism presentation in `lib/game/faction_visuals.dart`; lobby widget tests. |
 | P-03 | Offline single-player; multiplayer/accounts/chat/guilds are excluded. | **Verified** | Local deterministic runtime and offline-safe defaults; no online gameplay dependency. |
 | P-04 | Select faction → spawn → move/fight → handoff → result/reward → retry. | **Verified for MVP flow** | App shell, battle, result, reward, and rematch surfaces are implemented; current widget tests cover deploy/result rewards, while the launch/settings/deploy/resume integration smoke is preserved 2026-07-15 prior-build evidence. |
@@ -83,13 +80,13 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| C-01 | Mobile joystick/dash and desktop/web WASD, arrows, Space. | **Verified** | Short/compact landscape layouts now provide a 104dp joystick and 72dp dash target; a 568×320 widget test proves both remain separate from each other and the minimap. Tests also cover normalized input, focus-safe key release, HUD Space activation, minimap key isolation, and rotation input clearing. The physical Android, iOS Simulator, and Safari/Chrome hands-on checks are preserved prior-build evidence. |
+| C-01 | Android mobile joystick/dash. | **Verified** | Short/compact landscape layouts provide a 104dp joystick and 72dp dash target; widget tests prove both remain separate from each other and the minimap. Tests also cover normalized input and rotation input clearing. |
 | C-02 | Expanded follow camera, density zoom, mouse drag, wheel zoom, and right-side tactical minimap. | **Verified** | Tests cover the closer initial zoom, clamped viewport, faction/control markers, non-overlapping responsive layout, and minimap tap/drag camera navigation even when mouse camera is disabled. |
 | C-03 | Exact 1.5-second handoff phases and time scaling. | **Verified** | `HandoffTimeline` plus phase/time-scale and reduced-motion tests. |
 | C-04 | Successor score uses level 50%, safety 30%, non-combat 20%. | **Verified** | Direct weight, candidate, and no-successor tests. |
 | C-05 | Handoff completes within 1.5 seconds without infinite wait. | **Verified** | Core transfer occurs in the combat tick; presentation preserves the full 1.5-second relay sequence. |
 | C-06 | Relay-tape path renders safely throughout a live handoff. | **Verified by current regression test; historical device evidence preserved** | The original profile run exposed illegal `PathMetrics` re-iteration. `_drawRelayTape` now consumes one iterator once, `relay tape safely renders a live handoff path` reproduces the relay-travel render path, and the preserved 2026-07-15 physical Android rerun completed without the exception recurring. |
-| C-07 | Sub-600dp Android/iOS/Web displays request landscape for battle and restore platform defaults afterward. | **Verified in automated platform-call and widget tests** | Displays below the 600dp shortest-side breakpoint request both landscape orientations before battle, restore with an empty orientation list on result/disposal, and gate battle rendering/input while portrait. Web uses the same best-effort request path; larger displays and other desktop platforms receive no request. |
+| C-07 | Sub-600dp Android displays request landscape for battle and restore platform defaults afterward. | **Verified in automated platform-call and widget tests** | Displays below the 600dp shortest-side breakpoint request both landscape orientations before battle, restore with an empty orientation list on result/disposal, and gate battle rendering/input while portrait. |
 | U-01 | Responsive dark battlefield, readable HUD, four high-contrast factions. | **Verified** | Current responsive widget tests and atlas-backed runtime rendering; the 2026-07-15 Safari/Chrome visual/layout QA is preserved prior-build evidence. |
 | U-02 | Controlled outline/direction and short combat result feedback. | **Verified in implementation and hands-on render QA** | `TokenfrontGame` renders the controlled marker and 0.38-second combat flash; browser visual QA confirmed the battle surface. |
 | U-03 | Accessibility, reduced motion, and pause/resume. | **Verified** | Current preference/semantics/lifecycle tests; the Android, iOS Simulator, Safari, and Chrome resume checks are preserved prior-build evidence. |
@@ -115,10 +112,7 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| W-01 | Standard deployable web build. | **Verified** | Default release artifact exists under `build/web/` and uses the standard CanvasKit path. |
-| W-02 | Optional modern Wasm renderer path. | **Verified build** | `build/web_wasm/main.dart.wasm` and its compatibility output exist; supported browsers may use Skwasm. This is optional, not the default deployment requirement. |
-| W-03 | Legacy HTML renderer comparison. | **Resolved as superseded** | The current Flutter toolchain no longer uses the legacy HTML-renderer workflow from the original planning note. Current choices are default CanvasKit and optional Wasm/Skwasm. |
-| W-04 | Chromium-family and Safari visual/input/aspect/resume QA. | **Current Brave core-flow evidence; historical Chrome/Safari evidence** | Current Brave checks cover the 4×1,000 lobby, battle, tactical minimap, controls, and zero console errors/warnings. Chrome and Safari were exercised locally on macOS on 2026-07-15, before the current camera/minimap/orientation changes. |
+| W-01–W-04 | Former Web build, renderer, and browser acceptance requirements. | **Historical only** | These requirements are outside the current Android-only release scope. The prior evidence remains below for traceability and must not be read as an active Web support claim. |
 
 ### 5. Blender MCP and runtime visual assets
 
@@ -145,8 +139,12 @@ The remaining work is launch integration and acceptance work, not missing core g
 
 ## Automated test inventory
 
-The 2026-08-05 integrated worktree checkpoint passed **190 VM tests** and
-skipped the one browser-only localStorage test. The inventory now covers:
+The current Android verification checkpoint passed **269 VM tests**, plus
+`integration_test/app_smoke_test.dart` at **10/10** and
+`integration_test/store_screenshot_capture_test.dart` at **1/1** on
+`emulator-5586` (2026-09-12). The browser-only localStorage test is retired
+with the Web product surface and is not a current Android requirement. The
+inventory now covers:
 
 - 4,000-unit simulation, deterministic combat, spatial-query performance,
   culling, atlas batching, input, camera, orientation, pause/resume, and
@@ -160,8 +158,9 @@ skipped the one browser-only localStorage test. The inventory now covers:
 - Blender asset dimensions/runtime sampling plus Google Play icon and feature
   graphic format/dimension contracts.
 
-The browser-only `test/tokenfront_state_store_web_test.dart` remains a separate
-Chromium invocation and is not promoted by this VM checkpoint.
+The deleted browser-only `test/tokenfront_state_store_web_test.dart` and the
+retired Web build/deployment checks are preserved only in historical evidence;
+they are not current Android release instructions.
 
 ### Task 12 execution evidence (2026-08-05)
 
@@ -175,7 +174,7 @@ Chromium invocation and is not promoted by this VM checkpoint.
 | Localization: `flutter gen-l10n` | Exit 0 | `.omo/evidence/task-12/gen-l10n.log` |
 | Analyzer: `flutter analyze` | Exit 0, `No issues found!` | `.omo/evidence/task-12/analyze.log` |
 | Full suite: `flutter test -r compact` | Exit 0, 176 passed and 1 Web-only skip | `.omo/evidence/task-12/full-test.log` |
-| Release Web build: `flutter build web --release` | Exit 0, `build/web` generated | `.omo/evidence/task-12/web-build.log` |
+| Retired Web build: `flutter build web --release` | Exit 0, `build/web` generated before Web support was retired | `.omo/evidence/task-12/web-build.log` — **historical only** |
 | Pre-deploy digest: `find build/web ... shasum -a 256` | 46 files captured before any upload attempt | `.omo/evidence/task-12/tokenfront-orbital-war-build.sha256` |
 | Cloudflare upload: `npx wrangler pages deploy build/web --project-name=tokenfront-orbital-war --branch=main` | Production deployment completed at `2026-08-04T20:53:49.386Z`; 46 files uploaded, deployment ID `e74f7d12-c7c5-40c0-9d87-83240b57de5c` | `.omo/evidence/task-12/wrangler-deploy.log` |
 | Live preview verification | Canonical index and manifest returned exit 0; both identify `Tokenfront: Orbital Signal War` | `.omo/evidence/task-12/preview-index.html`, `.omo/evidence/task-12/preview-manifest.json` |
@@ -210,6 +209,6 @@ smoke plus ten deterministic Chronicle/Skirmish scenarios):
 
 ## Audit conclusion
 
-The requested gameplay MVP, deterministic combat rules, handoff experience, responsive cross-platform controls, far-AI throttling, fixed 4,000-unit pool, expanded camera and tactical minimap, sub-600dp Android/iOS/Web landscape-request and portrait-gate flow, render culling, Blender MCP runtime atlas, offline-safe service boundaries, and automated regression suite are implemented and evidenced. The 2026-07-15 Android physical, iOS Simulator, Safari, and Chrome checks remain preserved platform evidence for the prior build. The relay-tape `PathMetrics` fix remains regression-tested, while the former SM A175N result is treated strictly as a historical 400-unit performance baseline.
+The requested gameplay MVP, deterministic combat rules, handoff experience, Android controls, far-AI throttling, fixed 4,000-unit pool, expanded camera and tactical minimap, render culling, Blender MCP runtime atlas, offline-safe service boundaries, and automated regression suite are implemented and evidenced. The 2026-07-15 Android physical, iOS Simulator, Safari, and Chrome checks remain preserved **historical platform evidence for prior builds**, not current Android acceptance. The relay-tape `PathMetrics` fix remains regression-tested, while the former SM A175N result is treated strictly as a historical 400-unit performance baseline.
 
-The offline NoOp Android release intentionally contains no live ad or analytics SDK, so provider credentials and iOS ATT are not Play-release prerequisites for this artifact. The remaining Play gates are explicit upload-key/legal confirmation, signed-AAB evidence, browser file-upload permission, IARC/Data Safety completion, release availability, and submission. Long-duration physical-device performance remains a separate acceptance risk; the current API 37 emulator integration and profile evidence are green.
+The Android release uses consent-gated AdMob test/production configuration and a NoOp analytics adapter. Provider approval, exact signed-AAB traffic, device banner QA, iOS ATT, and Play Data Safety completion remain release gates; no provider approval or delivery is claimed here. The remaining Play gates are explicit upload-key/legal confirmation, signed-AAB evidence, IARC/Data Safety completion, release availability, and submission. Long-duration physical-device performance remains a separate acceptance risk; the current API 37 emulator integration and profile evidence are green.

@@ -1,6 +1,5 @@
 import 'tokenfront_state_store_stub.dart'
     if (dart.library.io) 'tokenfront_state_store_native.dart'
-    if (dart.library.js_interop) 'tokenfront_state_store_web.dart'
     as platform;
 
 abstract interface class TokenfrontStateStore {

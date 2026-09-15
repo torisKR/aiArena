@@ -7,6 +7,7 @@ import 'package:tokenfront/game/simulation.dart';
 import '../economy/cosmetic_catalog.dart';
 import '../economy/war_token_wallet.dart';
 import '../services/ads/ad_service.dart';
+import '../services/audio/game_audio_service.dart';
 import '../services/analytics/analytics_event.dart';
 import '../services/analytics/analytics_service.dart';
 import '../services/privacy/privacy_state.dart';
@@ -41,6 +42,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
     AnalyticsAdapter? analyticsAdapter,
     GamePreferences? preferences,
     WarTokenWallet? wallet,
+    GameAudioService? audio,
     bool isOnline = true,
   }) : this._internal(
          platform: platform ?? _currentPlatform(),
@@ -48,6 +50,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
          analyticsAdapter: analyticsAdapter,
          preferences: preferences ?? GamePreferences(),
          wallet: wallet ?? WarTokenWallet(),
+         audio: audio,
          persistence: _RuntimePersistence(),
          isOnline: isOnline,
        );
@@ -58,9 +61,11 @@ final class TokenfrontRuntime extends ChangeNotifier {
     AnalyticsAdapter? analyticsAdapter,
     required this.preferences,
     required this.wallet,
+    GameAudioService? audio,
     required _RuntimePersistence persistence,
     required this.isOnline,
-  }) : _stateStore = persistence.stateStore,
+  }) : audio = audio ?? GameAudioService(muted: !preferences.audioEnabled),
+       _stateStore = persistence.stateStore,
        _analyticsSharingAllowed = persistence.analyticsSharingAllowed,
        _adRequestsAllowed = persistence.adRequestsAllowed,
        _storyProgress = persistence.storyProgress,
@@ -76,6 +81,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
     }
     CosmeticCatalog.installDefaults(wallet);
     preferences.addListener(_preferencesChanged);
+    unawaited(this.audio.setMuted(!preferences.audioEnabled));
   }
 
   static Future<TokenfrontRuntime> restore({
@@ -83,6 +89,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
     AdService? adAdapter,
     AnalyticsAdapter? analyticsAdapter,
     TokenfrontStateStore? stateStore,
+    GameAudioService? audio,
     bool isOnline = true,
   }) async {
     final resolvedStore = stateStore ?? createTokenfrontStateStore();
@@ -94,6 +101,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
       analyticsAdapter: analyticsAdapter,
       preferences: saved.createPreferences(),
       wallet: saved.createWallet(),
+      audio: audio,
       persistence: _RuntimePersistence(
         stateStore: load.canWrite ? resolvedStore : null,
         analyticsSharingAllowed: saved.analyticsSharingAllowed,
@@ -107,6 +115,21 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   final ClientPlatform platform;
   final GamePreferences preferences;
+  final GameAudioService audio;
+  int _fullScreenAudioDepth = 0;
+
+  Future<T> _withFullScreenAudio<T>(Future<T> Function() action) async {
+    _fullScreenAudioDepth++;
+    await audio.suspend(AudioSuspensionReason.fullScreenAd);
+    try {
+      return await action();
+    } finally {
+      if (--_fullScreenAudioDepth == 0) {
+        audio.resume(AudioSuspensionReason.fullScreenAd);
+      }
+    }
+  }
+
   final WarTokenWallet wallet;
   final AnalyticsService analytics;
   final bool isOnline;
@@ -122,6 +145,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
       TrackingAuthorization.notApplicable;
   final Set<String> _baseRewardClaims = <String>{};
   final Set<String> _rewardedClaims = <String>{};
+  final Set<String> _rewardClaimsInFlight = <String>{};
 
   bool get analyticsSharingAllowed => _analyticsSharingAllowed;
   bool get adRequestsAllowed => _adRequestsAllowed;
@@ -158,6 +182,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
   void setAdRequestsAllowed(bool value) {
     if (_adRequestsAllowed == value) return;
     _adRequestsAllowed = value;
+    if (!value) ads.clearBanner();
     _schedulePersist();
     notifyListeners();
   }
@@ -192,8 +217,11 @@ final class TokenfrontRuntime extends ChangeNotifier {
     required String matchId,
     required int baseAmount,
     required int completedMatches,
+    bool replay = false,
   }) async {
-    if (_rewardedClaims.contains(matchId)) {
+    if (replay ||
+        _rewardedClaims.contains(matchId) ||
+        !_rewardClaimsInFlight.add(matchId)) {
       return const RewardedClaim(
         adResult: AdResult(AdStatus.skippedFrequency),
         credited: 0,
@@ -206,33 +234,41 @@ final class TokenfrontRuntime extends ChangeNotifier {
         action: AnalyticsAdAction.rewardOptIn,
       ),
     );
-    final result = await ads.showRewarded(
-      _adContext(surface: AdSurface.result, completedMatches: completedMatches),
-    );
-    if (!result.rewardEarned) {
-      _recordAdResult(AnalyticsAdFormat.rewarded, result);
+    try {
+      final result = await _withFullScreenAudio(
+        () => ads.showRewarded(
+          _adContext(
+            surface: AdSurface.result,
+            completedMatches: completedMatches,
+          ),
+        ),
+      );
+      if (!result.rewardEarned) {
+        _recordAdResult(AnalyticsAdFormat.rewarded, result);
+        return RewardedClaim(
+          adResult: result,
+          credited: 0,
+          alreadyClaimed: false,
+        );
+      }
+      _rewardedClaims.add(matchId);
+      final credited = wallet.creditRewardedBonus(baseAmount);
+      _schedulePersist();
+      record(
+        AnalyticsEvent.adEvent(
+          format: AnalyticsAdFormat.rewarded,
+          action: AnalyticsAdAction.rewardEarned,
+        ),
+      );
+      notifyListeners();
       return RewardedClaim(
         adResult: result,
-        credited: 0,
+        credited: credited,
         alreadyClaimed: false,
       );
+    } finally {
+      _rewardClaimsInFlight.remove(matchId);
     }
-
-    _rewardedClaims.add(matchId);
-    final credited = wallet.creditRewardedBonus(baseAmount);
-    _schedulePersist();
-    record(
-      AnalyticsEvent.adEvent(
-        format: AnalyticsAdFormat.rewarded,
-        action: AnalyticsAdAction.rewardEarned,
-      ),
-    );
-    notifyListeners();
-    return RewardedClaim(
-      adResult: result,
-      credited: credited,
-      alreadyClaimed: false,
-    );
   }
 
   Future<AdResult> requestBanner({
@@ -243,6 +279,22 @@ final class TokenfrontRuntime extends ChangeNotifier {
       _adContext(surface: surface, completedMatches: completedMatches),
     );
     _recordAdResult(AnalyticsAdFormat.banner, result);
+    return result;
+  }
+
+  Future<bool> showPrivacyOptions() => ads.showPrivacyOptions();
+
+  /// Preloads a future result-exit interstitial without consuming its cadence.
+  Future<AdResult> prepareResultAds({required int completedMatches}) async {
+    final result = await ads.prepareInterstitial(
+      _adContext(
+        surface: AdSurface.resultClosed,
+        completedMatches: completedMatches,
+      ),
+    );
+    if (result.status == AdStatus.failed) {
+      _recordAdResult(AnalyticsAdFormat.interstitial, result);
+    }
     return result;
   }
 
@@ -257,7 +309,9 @@ final class TokenfrontRuntime extends ChangeNotifier {
         AnalyticsAdAction.eligible,
       );
     }
-    final result = await ads.showInterstitial(request);
+    final result = await _withFullScreenAudio(
+      () => ads.showInterstitial(request),
+    );
     _recordAdResult(AnalyticsAdFormat.interstitial, result);
     if (result.status == AdStatus.shown) {
       _recordAdAction(
@@ -354,6 +408,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
   Future<void> _persistenceTail = Future<void>.value();
 
   void _preferencesChanged() {
+    unawaited(audio.setMuted(!preferences.audioEnabled));
     _schedulePersist();
     notifyListeners();
   }
@@ -385,6 +440,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   @override
   void dispose() {
+    unawaited(audio.dispose());
+    ads.dispose();
     preferences.removeListener(_preferencesChanged);
     unawaited(flushLocalState());
     preferences.dispose();

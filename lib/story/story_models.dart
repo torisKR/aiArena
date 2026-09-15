@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show mapEquals, setEquals;
 import 'package:tokenfront/game/simulation.dart';
+import 'package:tokenfront/game/recovery.dart';
 
 enum GameMode { chronicle, skirmish }
 
@@ -15,7 +16,12 @@ enum DirectiveKind {
 
 enum EndingChoice { claimRelay, openRelay }
 
-enum ChronicleEndReason { timeLimit, globalResolution, playerEliminated }
+enum ChronicleEndReason {
+  timeLimit,
+  globalResolution,
+  playerEliminated,
+  recovery,
+}
 
 /// The campaign-level doctrine implied by the routes selected across
 /// concluded operations. This is descriptive only; it does not change combat
@@ -108,11 +114,15 @@ final class BattleReport {
     required this.playerSurvivors,
     this.manualRelays = 0,
     this.relayRoute,
+    this.recoveryOutcome,
+    this.recoveredSignals = 0,
   }) : standingsAtConclusion = List<FactionStanding>.unmodifiable(
          standingsAtConclusion,
        );
 
   final ChronicleEndReason endReason;
+  final RecoveryOutcome? recoveryOutcome;
+  final int recoveredSignals;
   final List<FactionStanding> standingsAtConclusion;
   final Faction? globalWinner;
   final int commandRelays;
@@ -136,6 +146,8 @@ final class BattleReport {
       identical(this, other) ||
       other is BattleReport &&
           endReason == other.endReason &&
+          recoveryOutcome == other.recoveryOutcome &&
+          recoveredSignals == other.recoveredSignals &&
           _standingsEqual(standingsAtConclusion, other.standingsAtConclusion) &&
           globalWinner == other.globalWinner &&
           commandRelays == other.commandRelays &&
@@ -149,6 +161,8 @@ final class BattleReport {
   @override
   int get hashCode => Object.hash(
     endReason,
+    recoveryOutcome,
+    recoveredSignals,
     Object.hashAll(standingsAtConclusion.map(_standingHash)),
     globalWinner,
     commandRelays,

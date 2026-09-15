@@ -29,7 +29,11 @@ void main() {
     tester,
   ) async {
     final runtime = TokenfrontRuntime(
-      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+      preferences: GamePreferences(
+        audioEnabled: false,
+        hapticsEnabled: false,
+        languageCode: 'en',
+      ),
     );
     addTearDown(runtime.dispose);
     await tester.pumpWidget(TokenfrontApp(runtime: runtime));
@@ -43,7 +47,9 @@ void main() {
     expect(find.byKey(const Key('ad-requests-toggle')), findsNothing);
     expect(find.text('NOT AVAILABLE IN THIS RELEASE'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('privacy-policy-button')));
+    final privacyPolicyButton = find.byKey(const Key('privacy-policy-button'));
+    await tester.ensureVisible(privacyPolicyButton);
+    await tester.tap(privacyPolicyButton);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('privacy-policy-content')), findsOneWidget);
     expect(find.text(playReleaseCapabilities.privacyPolicyUrl), findsOneWidget);
@@ -52,16 +58,22 @@ void main() {
     await tester.tap(closePrivacy);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Close settings'));
+    final closeSettings = find.byKey(const Key('close-settings'));
+    await tester.ensureVisible(closeSettings);
+    await tester.tap(closeSettings);
     await tester.pumpAndSettle();
 
     if (find.text('DEPLOY SIGNAL').evaluate().isNotEmpty) {
       await tester.ensureVisible(find.text('DEPLOY SIGNAL'));
       await tester.tap(find.text('DEPLOY SIGNAL'));
     } else {
-      await tester.tap(find.text('SKIRMISH').first);
+      final skirmishMode = find.byKey(const Key('skirmish-mode'));
+      await tester.ensureVisible(skirmishMode);
+      await tester.tap(skirmishMode);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('skirmish-deploy')));
+      final skirmishDeploy = find.byKey(const Key('skirmish-deploy'));
+      await tester.ensureVisible(skirmishDeploy);
+      await tester.tap(skirmishDeploy);
     }
     await tester.pump();
     expect(find.byType(BattleScreen), findsOneWidget);
@@ -415,6 +427,7 @@ BattleReport _deterministicReport(
       MatchEndReason.timeLimit => ChronicleEndReason.timeLimit,
       MatchEndReason.elimination => ChronicleEndReason.globalResolution,
       MatchEndReason.ongoing => ChronicleEndReason.timeLimit,
+      MatchEndReason.recovery => ChronicleEndReason.recovery,
     },
     standingsAtConclusion: result.standings,
     globalWinner: result.winner,

@@ -9,6 +9,38 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get recoveryTitle => 'Recover three signals';
+
+  @override
+  String get recoveryInstruction =>
+      'Tap 1, 2 or 3 to choose a destination. Movement and combat are automatic. If your token falls, another continues. Progress stays.';
+
+  @override
+  String get recoveryAutomatic => 'AUTO MOVE · AUTO COMBAT · AUTO CONTINUE';
+
+  @override
+  String get recoveryWon => 'SIGNALS RECOVERED';
+
+  @override
+  String get recoveryLost => 'RECOVERY ENDED';
+
+  @override
+  String get recoveryTimeout => 'TIMEOUT';
+
+  @override
+  String get recoveryAlliesLost => 'ALLIES LOST';
+
+  @override
+  String recoveryProgress(int count) {
+    return '$count/3 signals recovered';
+  }
+
+  @override
+  String recoveryDestination(int number, int seconds) {
+    return 'Signal $number: $seconds/10s';
+  }
+
+  @override
   String get appTitle => 'Tokenfront: Orbital Signal War';
 
   @override
@@ -193,11 +225,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyPolicyTitle => 'PRIVACY POLICY';
 
   @override
+  String get privacyOptions => 'AD PRIVACY OPTIONS';
+
+  @override
   String get privacyPolicyEffectiveDate => 'Effective date: 2026-08-05';
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfront: Orbital Signal War is an offline single-player game. This release does not collect or share user data off your device.';
+      'Tokenfront is an offline single-player game. Gameplay and local progress stay on your device. Optional Google AdMob test ads may process ad requests and device/ad identifiers when you enable ad requests and consent permits them.';
 
   @override
   String get privacyDataStoredTitle => 'DATA STORED ON YOUR DEVICE';
@@ -218,7 +253,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      'This release has no advertising SDK, live ad request, impression, rewarded-ad network call, or advertising identifier access.';
+      'This Android test build uses Google Mobile Ads with Google test ad units. Optional lobby and result banners, result rewarded ads, and result-exit interstitials are requested only after the Google consent flow permits them. AdMob may process ad requests, device information, and advertising identifiers as described by Google. Turning off AD REQUESTS stops app ad requests; the base War Token reward never depends on an ad.';
 
   @override
   String get privacyAccountsTitle => 'ACCOUNTS, PERMISSIONS, AND THIRD PARTIES';

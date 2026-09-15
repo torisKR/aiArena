@@ -9,6 +9,38 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get recoveryTitle => '回收三个信号';
+
+  @override
+  String get recoveryInstruction =>
+      '点击1、2或3选择目的地。移动和战斗自动进行。当前单位倒下后，其他单位会自动接手，回收进度保留。';
+
+  @override
+  String get recoveryAutomatic => '自动移动 · 自动战斗 · 自动接手';
+
+  @override
+  String get recoveryWon => '信号回收完成';
+
+  @override
+  String get recoveryLost => '回收结束';
+
+  @override
+  String get recoveryTimeout => '超时';
+
+  @override
+  String get recoveryAlliesLost => '盟友全灭';
+
+  @override
+  String recoveryProgress(int count) {
+    return '已回收 $count/3 个信号';
+  }
+
+  @override
+  String recoveryDestination(int number, int seconds) {
+    return '信号 $number：$seconds/10秒';
+  }
+
+  @override
   String get appTitle => 'Tokenfront：轨道信号战';
 
   @override
@@ -176,11 +208,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privacyPolicyTitle => '隐私政策';
 
   @override
+  String get privacyOptions => '广告隐私设置';
+
+  @override
   String get privacyPolicyEffectiveDate => '生效日期：2026-08-05';
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfront: Orbital Signal War 是一款离线单人游戏。此版本不会在设备外收集或共享用户数据。';
+      'Tokenfront 是一款离线单人游戏。游戏过程和本地进度保存在设备上。启用广告请求且同意流程允许时，Google AdMob 测试广告可能会处理广告请求以及设备/广告标识符。';
 
   @override
   String get privacyDataStoredTitle => '存储在设备上的数据';
@@ -201,7 +236,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      '此版本不含广告 SDK、真实广告请求、展示、激励广告网络调用，也不会访问广告标识符。';
+      '此 Android 测试版本使用 Google Mobile Ads 和 Google 测试广告单元。大厅和结果页横幅、结果页激励广告以及结果退出插屏只有在 Google 同意流程允许后才会请求。AdMob 可能按照 Google 的说明处理广告请求、设备信息和广告标识符。关闭广告请求会停止应用广告请求，但不会影响基础 War Token 奖励。';
 
   @override
   String get privacyAccountsTitle => '账户、权限与第三方';

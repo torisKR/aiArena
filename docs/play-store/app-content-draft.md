@@ -10,9 +10,9 @@ Status: SOURCE-REVIEWED DRAFT — owner/account confirmation and exact-AAB verif
 
 ## Ads
 
-- Answer for the current default build: **No**.
-- Basis: `TokenfrontRuntime` wires `NoOpAdService` by default; no advertising SDK, live inventory, impression, advertising identifier, or rewarded-ad network request is present in the source-level release inventory. The settings/ad policy interfaces do not by themselves make an ad declaration “Yes.”
-- Owner confirmation required: confirm the exact release variant/AAB keeps the NoOp adapter and has no ad SDK, house ad, mediation, or remote configuration that can render an ad. Re-answer if that changes.
+- Answer for the current Android release candidate: **Yes**.
+- Basis: `main.dart` wires `AdMobAdService`; `google_mobile_ads` supplies fixed 320x50 banner ads plus consent-gated interstitial and rewarded placements. Google Mobile Ads may process ad requests, device information, diagnostics, and advertising identifiers when requests and consent permit.
+- Owner confirmation required: verify the exact signed AAB, production app/unit IDs, consent flow, and provider traffic before submission. Device QA for the fixed banner remains pending.
 
 ## Target audience and content
 
@@ -43,10 +43,10 @@ Use the current IARC wording in the Play Console and record the returned result 
 
 ## Data Safety
 
-- Collection/sharing top-level answer for the current source/default build: **No data collected; no data shared**.
+- Collection/sharing top-level answer for the current Android release candidate: **Yes, data is collected and shared by the advertising provider**.
 - On-device-only state: local wallet/cosmetics, language, accessibility/audio/input settings, consent choices, Chronicle progress, and reward ledger. Native storage is SharedPreferences; web storage is localStorage. This state is not sent off device. Android automatic cloud backup is disabled, and Android 12+ rules exclude all app storage from cloud backup and device-to-device transfer.
 - Volatile analytics: typed events may be buffered locally (maximum 500); consent starts off; the default adapter is `NoOpAnalyticsAdapter`; no transport endpoint or analytics SDK is connected; the process-local buffer is discarded on exit.
-- Advertising data: none in this build because `NoOpAdService` makes no network request and no advertising identifier is accessed.
+- Advertising data: Google Mobile Ads may process ad-request, device, diagnostics, and advertising-identifier data when ads are enabled and consent permits.
 - Accounts/cloud sync: none.
 - Personal or sensitive data, user-generated content, contacts, location, camera, microphone, and other sensitive permissions: none in the current release inventory.
 - Account deletion: **Not applicable — no account exists**.

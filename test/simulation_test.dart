@@ -171,6 +171,134 @@ void main() {
     expect(controlled.position.x - dashStart.x, closeTo(64 * 1.9 / 30, 1e-9));
   });
 
+  test('held movement uses normal speed during combat lock only', () {
+    const config = BattleConfig(
+      unitsPerFaction: 2,
+      combatRange: 0.1,
+      visionRange: 1,
+      separationStrength: 0,
+    );
+    final simulation = BattleSimulation(
+      seed: 71,
+      config: config,
+      playerFaction: Faction.amethyst,
+    );
+    final unit = simulation.controlledUnit!;
+    _leaveOnly(simulation, simulation.units);
+    unit
+      ..position = const Vec2(500, 500)
+      ..combatLockRemaining = config.combatLockDuration
+      ..recoverRemaining = 0;
+    simulation.setPlayerInput(const Vec2(1, 0), dash: true);
+    final start = unit.position;
+
+    simulation.step(1 / config.simulationHz);
+
+    expect(unit.position.x - start.x, closeTo(config.moveSpeed / 30, 1e-9));
+    expect(unit.position.y, start.y);
+    expect(unit.state, AiState.recover);
+  });
+
+  test('held movement uses normal speed during recovery lock only', () {
+    const config = BattleConfig(
+      unitsPerFaction: 2,
+      combatRange: 0.1,
+      visionRange: 1,
+      separationStrength: 0,
+    );
+    final simulation = BattleSimulation(
+      seed: 71,
+      config: config,
+      playerFaction: Faction.amethyst,
+    );
+    final unit = simulation.controlledUnit!;
+    _leaveOnly(simulation, simulation.units);
+    unit
+      ..position = const Vec2(500, 500)
+      ..combatLockRemaining = 0
+      ..recoverRemaining = config.recoverDuration;
+    simulation.setPlayerInput(const Vec2(1, 0), dash: true);
+    final start = unit.position;
+
+    simulation.step(1 / config.simulationHz);
+
+    expect(unit.position.x - start.x, closeTo(config.moveSpeed / 30, 1e-9));
+    expect(unit.position.y, start.y);
+    expect(unit.state, AiState.recover);
+  });
+
+  test('normal movement and dash apply after both locks expire', () {
+    const config = BattleConfig(
+      unitsPerFaction: 2,
+      combatRange: 0.1,
+      visionRange: 1,
+      separationStrength: 0,
+    );
+    final simulation = BattleSimulation(
+      seed: 71,
+      config: config,
+      playerFaction: Faction.amethyst,
+    );
+    final unit = simulation.controlledUnit!;
+    _leaveOnly(simulation, simulation.units);
+    unit
+      ..position = const Vec2(500, 500)
+      ..combatLockRemaining = config.combatLockDuration
+      ..recoverRemaining = config.recoverDuration;
+    expect(unit.combatLockRemaining, greaterThan(0));
+    expect(unit.recoverRemaining, greaterThan(0));
+
+    simulation.setPlayerInput(const Vec2(1, 0), dash: true);
+    final normalStart = unit.position;
+    simulation.step(1 / config.simulationHz);
+    expect(
+      unit.position.x - normalStart.x,
+      closeTo(config.moveSpeed / 30, 1e-9),
+    );
+
+    final expirationTicks =
+        (config.combatLockDuration / config.simulationStepSeconds).ceil();
+    for (var tick = 1; tick < expirationTicks; tick++) {
+      simulation.step(config.simulationStepSeconds);
+    }
+    expect(unit.combatLockRemaining, 0);
+    expect(unit.recoverRemaining, 0);
+
+    final dashStart = unit.position;
+    simulation.step(1 / config.simulationHz);
+    expect(
+      unit.position.x - dashStart.x,
+      closeTo(config.moveSpeed * config.dashMultiplier / 30, 1e-9),
+    );
+  });
+
+  test('no input stays stationary while a lock remains', () {
+    const config = BattleConfig(
+      unitsPerFaction: 2,
+      combatRange: 0.1,
+      visionRange: 1,
+      separationStrength: 0,
+    );
+    final simulation = BattleSimulation(
+      seed: 71,
+      config: config,
+      playerFaction: Faction.amethyst,
+    );
+    final unit = simulation.controlledUnit!;
+    _leaveOnly(simulation, simulation.units);
+    unit
+      ..position = const Vec2(500, 500)
+      ..combatLockRemaining = config.combatLockDuration
+      ..recoverRemaining = 0;
+    final start = unit.position;
+
+    simulation.step(1 / config.simulationHz);
+
+    expect(unit.position, start);
+    expect(unit.velocity, Vec2.zero);
+    expect(unit.state, AiState.recover);
+  });
+
   group('combat rules', () {
     test('higher level wins all 10,000 unequal-level trials', () {
       final resolver = CombatResolver(SeededRandom(123));

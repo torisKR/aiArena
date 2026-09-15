@@ -17,6 +17,7 @@ Future<void> showSignalSettings({
   required ValueChanged<bool> onAdRequestsChanged,
   required ReleaseCapabilities capabilities,
   required PrivacyLinkActions privacyLinkActions,
+  Future<bool> Function()? onShowPrivacyOptions,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -31,6 +32,7 @@ Future<void> showSignalSettings({
     onAdRequestsChanged: onAdRequestsChanged,
     capabilities: capabilities,
     privacyLinkActions: privacyLinkActions,
+    onShowPrivacyOptions: onShowPrivacyOptions,
   ),
 );
 
@@ -43,6 +45,7 @@ class _SignalSettingsSheet extends StatefulWidget {
     required this.onAdRequestsChanged,
     required this.capabilities,
     required this.privacyLinkActions,
+    this.onShowPrivacyOptions,
   });
 
   final GamePreferences preferences;
@@ -52,6 +55,7 @@ class _SignalSettingsSheet extends StatefulWidget {
   final ValueChanged<bool> onAdRequestsChanged;
   final ReleaseCapabilities capabilities;
   final PrivacyLinkActions privacyLinkActions;
+  final Future<bool> Function()? onShowPrivacyOptions;
 
   @override
   State<_SignalSettingsSheet> createState() => _SignalSettingsSheetState();
@@ -109,6 +113,7 @@ class _SignalSettingsSheetState extends State<_SignalSettingsSheet> {
                           ),
                         ),
                         IconButton(
+                          key: const Key('close-settings'),
                           tooltip: context.l10n.closeSettings,
                           onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.close),
@@ -197,6 +202,15 @@ class _SignalSettingsSheetState extends State<_SignalSettingsSheet> {
                       icon: const Icon(Icons.privacy_tip_outlined),
                       label: Text(context.l10n.privacyPolicyTitle),
                     ),
+                    if (widget.onShowPrivacyOptions != null) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: const Key('privacy-options-button'),
+                        onPressed: () => widget.onShowPrivacyOptions!(),
+                        icon: const Icon(Icons.tune),
+                        label: Text(context.l10n.privacyOptions),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Text(
                       context.l10n.privacyDefaultNote,

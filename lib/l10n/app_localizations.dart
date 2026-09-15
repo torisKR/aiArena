@@ -102,6 +102,60 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @recoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover three signals'**
+  String get recoveryTitle;
+
+  /// No description provided for @recoveryInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap 1, 2 or 3 to choose a destination. Movement and combat are automatic. If your token falls, another continues. Progress stays.'**
+  String get recoveryInstruction;
+
+  /// No description provided for @recoveryAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTO MOVE · AUTO COMBAT · AUTO CONTINUE'**
+  String get recoveryAutomatic;
+
+  /// No description provided for @recoveryWon.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGNALS RECOVERED'**
+  String get recoveryWon;
+
+  /// No description provided for @recoveryLost.
+  ///
+  /// In en, this message translates to:
+  /// **'RECOVERY ENDED'**
+  String get recoveryLost;
+
+  /// No description provided for @recoveryTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'TIMEOUT'**
+  String get recoveryTimeout;
+
+  /// No description provided for @recoveryAlliesLost.
+  ///
+  /// In en, this message translates to:
+  /// **'ALLIES LOST'**
+  String get recoveryAlliesLost;
+
+  /// No description provided for @recoveryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/3 signals recovered'**
+  String recoveryProgress(int count);
+
+  /// No description provided for @recoveryDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Signal {number}: {seconds}/10s'**
+  String recoveryDestination(int number, int seconds);
+
   /// Application title shown by the operating system and browser.
   ///
   /// In en, this message translates to:
@@ -420,6 +474,12 @@ abstract class AppLocalizations {
   /// **'PRIVACY POLICY'**
   String get privacyPolicyTitle;
 
+  /// No description provided for @privacyOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'AD PRIVACY OPTIONS'**
+  String get privacyOptions;
+
   /// No description provided for @privacyPolicyEffectiveDate.
   ///
   /// In en, this message translates to:
@@ -429,7 +489,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyPolicyIntro.
   ///
   /// In en, this message translates to:
-  /// **'Tokenfront: Orbital Signal War is an offline single-player game. This release does not collect or share user data off your device.'**
+  /// **'Tokenfront is an offline single-player game. Gameplay and local progress stay on your device. Optional Google AdMob test ads may process ad requests and device/ad identifiers when you enable ad requests and consent permits them.'**
   String get privacyPolicyIntro;
 
   /// No description provided for @privacyDataStoredTitle.
@@ -465,7 +525,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyAdvertisingBody.
   ///
   /// In en, this message translates to:
-  /// **'This release has no advertising SDK, live ad request, impression, rewarded-ad network call, or advertising identifier access.'**
+  /// **'This Android test build uses Google Mobile Ads with Google test ad units. Optional lobby and result banners, result rewarded ads, and result-exit interstitials are requested only after the Google consent flow permits them. AdMob may process ad requests, device information, and advertising identifiers as described by Google. Turning off AD REQUESTS stops app ad requests; the base War Token reward never depends on an ad.'**
   String get privacyAdvertisingBody;
 
   /// No description provided for @privacyAccountsTitle.

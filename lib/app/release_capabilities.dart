@@ -20,3 +20,10 @@ const playReleaseCapabilities = ReleaseCapabilities(
   privacyPolicyUrl: 'https://tokenfront-orbital-war.pages.dev/privacy.html',
   privacyContactEmail: 'korea@toris.kr',
 );
+
+const androidAdMobTestCapabilities = ReleaseCapabilities(
+  analyticsTransportAvailable: false,
+  adInventoryAvailable: true,
+  privacyPolicyUrl: 'https://tokenfront-orbital-war.pages.dev/privacy.html',
+  privacyContactEmail: 'korea@toris.kr',
+);

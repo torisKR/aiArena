@@ -1,5 +1,6 @@
 import 'story_catalog.dart';
 import 'story_models.dart';
+import '../game/recovery.dart';
 import 'package:tokenfront/game/simulation.dart';
 
 final class CampaignTransition {
@@ -29,6 +30,16 @@ final class CampaignController {
     required bool replay,
   }) {
     final operation = StoryCatalog.byId(operationId);
+    if (report.recoveryOutcome case final outcome?
+        when outcome != RecoveryOutcome.recovered) {
+      return CampaignTransition(
+        nextProgress: progress,
+        nextLedger: ledger,
+        directiveSucceeded: false,
+        directiveBonusCredit: 0,
+        firstConclusion: false,
+      );
+    }
     final alreadyConcluded = progress.concludedOperations.contains(operationId);
     final campaignFaction = progress.campaignFaction;
     final succeeded = campaignFaction == null
@@ -141,11 +152,13 @@ final class CampaignController {
     required StoryOperation operation,
     required BattleReport report,
     required Faction campaignFaction,
-  }) => directiveProgress(
-    operation: operation,
-    report: report,
-    campaignFaction: campaignFaction,
-  ).completed;
+  }) => report.recoveryOutcome != null
+      ? report.recoveryOutcome == RecoveryOutcome.recovered
+      : directiveProgress(
+          operation: operation,
+          report: report,
+          campaignFaction: campaignFaction,
+        ).completed;
 
   StoryProgress chooseEnding(StoryProgress progress, EndingChoice choice) {
     if (!progress.concludedOperations.contains(

@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -12,9 +11,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
 import '../design/tokens.dart';
+import '../services/audio/game_audio_service.dart';
 import '../economy/cosmetic_catalog.dart';
 import 'faction_visuals.dart';
 import 'simulation.dart';
+import 'recovery.dart';
 import '../story/story_models.dart';
 
 enum HandoffStage {
@@ -141,6 +142,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     required this.playerFaction,
     required this.onBattleConcluded,
     this.mode = GameMode.skirmish,
+    bool recoveryMode = false,
     this.operation,
     this.seed = 20260715,
     BattleConfig config = const BattleConfig(),
@@ -154,6 +156,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     ),
     this.hapticsEnabled = true,
     this.audioEnabled = true,
+    this.audio,
     this.combatWinCode = 'WIN',
     this.combatOutCode = 'OUT',
     this.relayRoute,
@@ -164,6 +167,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
          seed: seed,
          config: config,
          playerFaction: playerFaction,
+         recovery: recoveryMode ? RecoveryState() : null,
        ),
        hud = ValueNotifier(
          BattleHudSnapshot.initial(
@@ -208,6 +212,17 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   final CosmeticLoadout cosmeticLoadout;
   final bool hapticsEnabled;
   final bool audioEnabled;
+  final GameAudioService? audio;
+  bool _recoveryAcknowledged = false;
+  bool get awaitingRecoveryInstruction => isRecovery && !_recoveryAcknowledged;
+
+  void acknowledgeRecoveryInstruction() {
+    if (!paused) _recoveryAcknowledged = true;
+  }
+
+  void playCue(GameAudioCue cue) {
+    if (audio case final service?) unawaited(service.play(cue));
+  }
   final String combatWinCode;
   final String combatOutCode;
 
@@ -218,6 +233,14 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   final ValueChanged<bool>? onHandoffOutcome;
   final void Function(BattleReport report) onBattleConcluded;
   final BattleSimulation simulation;
+  bool get isRecovery => simulation.recovery != null;
+
+  void selectDestination(int index) {
+    if (!paused && simulation.recovery?.select(index) == true) {
+      acknowledgeRecoveryInstruction();
+      _publishHud();
+    }
+  }
 
   final ValueNotifier<BattleHudSnapshot> hud;
   final Color _commandAccent;
@@ -269,9 +292,6 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   int _fpsSampleCount = 0;
   double _fpsSampleSum = 0;
   bool _hudDisposed = false;
-  AudioPool? _dashAudioPool;
-  AudioPool? _impactAudioPool;
-  AudioPool? _relayAudioPool;
   double _lastImpactAudioAt = -10;
   ui.Image? _unitAtlas;
   int _debugRenderedUnitCount = 0;
@@ -290,12 +310,15 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   static const _manualRelayRechargeDuration = 45.0;
 
   RelayRoute? get selectedRelayRoute =>
-      mode == GameMode.chronicle ? relayRoute ?? RelayRoute.preserve : null;
+      mode == GameMode.chronicle && !isRecovery
+      ? relayRoute ?? RelayRoute.preserve
+      : null;
   double? get manualRelayCharge =>
       mode == GameMode.chronicle ? _manualRelayCharge : null;
   bool get manualRelayPending =>
       mode == GameMode.chronicle && simulation.manualRelayPending;
   bool get manualRelayReady =>
+      !isRecovery &&
       mode == GameMode.chronicle &&
       selectedRelayRoute != null &&
       _manualRelayCharge >= 1 - 1e-9 &&
@@ -335,6 +358,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   DirectiveProgress? get directiveProgress => _directiveProgress;
 
   DirectiveProgress? get _directiveProgress {
+    if (isRecovery) return null;
     final currentOperation = operation;
     if (currentOperation == null) return null;
     final current = switch (currentOperation.directive.kind) {
@@ -408,7 +432,6 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       // Keep the procedural token path as a launch-safe asset fallback.
       _unitAtlas = null;
     }
-    if (audioEnabled) await _loadAudioPools();
     _cameraCenter =
         simulation.controlledUnit?.position ??
         Vec2(
@@ -416,37 +439,6 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
           simulation.config.worldHeight / 2,
         );
     _publishHud();
-  }
-
-  Future<void> _loadAudioPools() async {
-    try {
-      _dashAudioPool = await FlameAudio.createPool(
-        'dash.wav',
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-      _impactAudioPool = await FlameAudio.createPool(
-        'impact.wav',
-        minPlayers: 1,
-        maxPlayers: 3,
-      );
-      _relayAudioPool = await FlameAudio.createPool(
-        'relay.wav',
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-    } on Object {
-      _disposeAudioPools();
-    }
-  }
-
-  Future<void> _safeStart(AudioPool? pool, {required double volume}) async {
-    if (!audioEnabled || pool == null) return;
-    try {
-      await pool.start(volume: volume);
-    } on Object {
-      // Audio is an optional presentation layer and can never stop a match.
-    }
   }
 
   void setTouchInput(Vec2 direction) {
@@ -561,13 +553,14 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   }
 
   void triggerDash() {
+    if (isRecovery) return;
     if (!paused &&
         _handoffElapsed < 0 &&
         _dashCooldownRemaining <= 0 &&
         simulation.controlledUnit != null) {
       _dashRemaining = .24;
       _dashCooldownRemaining = .9;
-      unawaited(_safeStart(_dashAudioPool, volume: .7));
+      playCue(GameAudioCue.dash);
       if (hapticsEnabled) HapticFeedback.selectionClick();
     }
   }
@@ -671,6 +664,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   @override
   void update(double dt) {
     super.update(dt);
+    if (awaitingRecoveryInstruction) return;
     if (dt <= 0) return;
     final measuredFrameDt = dt.clamp(1 / 240, 1.0).toDouble();
     final safeDt = dt.clamp(0.0, .05).toDouble();
@@ -701,7 +695,11 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     final manualRelayPendingBeforeStep = simulation.manualRelayPending;
     final commandedBeforeStep = simulation.controlledUnitId;
     final elapsedBeforeStep = simulation.matchElapsed;
+    final recoveredBeforeStep = simulation.recovery?.recoveredCount ?? 0;
     simulation.step(simulationDt);
+    if ((simulation.recovery?.recoveredCount ?? 0) > recoveredBeforeStep) {
+      playCue(GameAudioCue.recoveryComplete);
+    }
 
     for (final event in simulation.frameCombatEvents) {
       if (event.winnerId == commandedBeforeStep) _commandKills += 1;
@@ -735,7 +733,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       _combatFlashes.add(_CombatFlash(event, _realElapsed));
       if (_realElapsed - _lastImpactAudioAt >= .11) {
         _lastImpactAudioAt = _realElapsed;
-        unawaited(_safeStart(_impactAudioPool, volume: .42));
+        playCue(GameAudioCue.combatImpact);
       }
     }
     final flashDuration = lowSpecMode ? .26 : _combatFlashDuration;
@@ -746,6 +744,13 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     var handoffObserved = false;
     while (_seenHandoffs < simulation.handoffLog.length) {
       final event = simulation.handoffLog[_seenHandoffs++];
+      if (isRecovery) {
+        if (!event.factionEliminated) playCue(GameAudioCue.commandRelay);
+        if (!event.factionEliminated) _relayCount += 1;
+        onHandoffOutcome?.call(!event.factionEliminated);
+        handoffObserved = true;
+        continue;
+      }
       _handoffQueue.add(event);
       handoffObserved = true;
       if (event.kind == HandoffKind.manual) {
@@ -817,7 +822,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       _minimapPanning = false;
       _followResumeRemaining = 0;
       onHandoffStarted?.call();
-      unawaited(_safeStart(_relayAudioPool, volume: .72));
+      playCue(GameAudioCue.commandRelay);
       if (hapticsEnabled) HapticFeedback.mediumImpact();
       return;
     }
@@ -1043,7 +1048,9 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     );
     final result = simulation.result;
     final report = BattleReport(
-      endReason: reason,
+      endReason: isRecovery ? ChronicleEndReason.recovery : reason,
+      recoveryOutcome: simulation.recovery?.outcome,
+      recoveredSignals: simulation.recovery?.recoveredCount ?? 0,
       standingsAtConclusion: standings,
       globalWinner: reason == ChronicleEndReason.playerEliminated
           ? null
@@ -1126,6 +1133,41 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
 
     _drawArena(canvas, zoom);
     _drawOrbitalBackdrop(canvas, zoom);
+    if (simulation.recovery case final recovery?) {
+      for (var index = 0; index < 3; index++) {
+        final position = RecoveryState.destinations[index];
+        final color = recovery.seconds[index] >= RecoveryState.requiredSeconds
+            ? TokenfrontColors.volt
+            : recovery.selected == index
+            ? TokenfrontColors.threadCyan
+            : TokenfrontColors.relayIvory;
+        final center = Offset(position.x, position.y);
+        canvas.drawCircle(
+          center,
+          RecoveryState.radius,
+          Paint()..color = color.withValues(alpha: .12),
+        );
+        canvas.drawCircle(
+          center,
+          RecoveryState.radius,
+          Paint()
+            ..color = color
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
+        final label = TextPainter(
+          text: TextSpan(
+            text: '${index + 1}',
+            style: TokenfrontType.instrument.copyWith(
+              color: color,
+              fontSize: 24,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        label.paint(canvas, center - Offset(label.width / 2, label.height / 2));
+      }
+    }
     _drawMovementTrail(canvas, zoom);
     if (_isImpactChromaticActive) {
       _drawChromaticEchoes(canvas, zoom, visibleUnitBounds);
@@ -1688,21 +1730,6 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
       hud.dispose();
       _hudDisposed = true;
     }
-    _disposeAudioPools();
     super.onRemove();
-  }
-
-  void _disposeAudioPools() {
-    final pools = <AudioPool?>[
-      _dashAudioPool,
-      _impactAudioPool,
-      _relayAudioPool,
-    ];
-    _dashAudioPool = null;
-    _impactAudioPool = null;
-    _relayAudioPool = null;
-    for (final pool in pools) {
-      if (pool != null) unawaited(pool.dispose());
-    }
   }
 }

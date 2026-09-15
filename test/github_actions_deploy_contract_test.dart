@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('main deploy workflow verifies and uploads the Flutter web release', () {
+  test('main deploy workflow publishes only the static privacy page', () {
     final workflow = File(
       '.github/workflows/deploy-web.yml',
     ).readAsStringSync();
@@ -14,13 +14,9 @@ void main() {
       "if: github.ref == 'refs/heads/main'",
       'contents: read',
       'deployments: write',
-      'flutter-version: 3.44.6',
-      'flutter analyze --fatal-infos',
-      'flutter test --reporter compact',
-      'flutter build web --release',
       'CLOUDFLARE_API_TOKEN',
       'CLOUDFLARE_ACCOUNT_ID',
-      'pages deploy build/web --project-name=tokenfront-orbital-war --branch=main',
+      'pages deploy web --project-name=tokenfront-orbital-war --branch=main',
     ]) {
       expect(workflow, contains(contract));
     }
@@ -32,14 +28,10 @@ void main() {
     expect(
       workflow,
       contains(
-        'subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2',
-      ),
-    );
-    expect(
-      workflow,
-      contains(
         'cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0',
       ),
     );
+    expect(workflow, isNot(contains('flutter build web')));
+    expect(File('web/privacy.html').existsSync(), isTrue);
   });
 }

@@ -6,11 +6,11 @@ Audit date: 2026-08-05
 
 ## On-device state
 
-SharedPreferences stores one JSON snapshot containing War Token balance, unlocked and equipped cosmetic IDs, language, accessibility, camera, haptics, audio, analytics/ad choices, and Signal Chronicle core/progress/medals/transmissions/ending/lifetime directive-bonus ledger. The web build uses localStorage for the equivalent snapshot. This data is not sent off device.
+The Android app's SharedPreferences stores one JSON snapshot containing War Token balance, unlocked and equipped cosmetic IDs, language, accessibility, camera, haptics, audio, analytics/ad choices, and Signal Chronicle core/progress/medals/transmissions/ending/lifetime directive-bonus ledger. This data is not sent off device. Web localStorage is outside this Android release contract.
 
 Android backup: disabled. The release manifest sets `android:allowBackup="false"`; `@xml/backup_rules` excludes every app-storage domain on Android 11 and lower; and Android 12+ `@xml/data_extraction_rules` excludes every app-storage domain from both cloud backup and device-to-device transfer. Local game state is therefore neither automatically backed up nor transferred by Android. Clearing app data or uninstalling removes Android local state.
 
-Source evidence: `lib/app/tokenfront_state_store_native.dart:8-21` uses the `tokenfront.local_state.v1` SharedPreferences key; `lib/app/tokenfront_state_store_web.dart:7-16` uses the same key in browser localStorage; `lib/app/tokenfront_runtime.dart:453-468` captures the wallet, preferences, privacy, Chronicle, and reward-ledger fields; `lib/app/tokenfront_runtime.dart:643-668` encodes that snapshot; `lib/app/tokenfront_runtime.dart:80-104` restores it into runtime state; `android/app/src/main/AndroidManifest.xml` disables automatic backup and references `android/app/src/main/res/xml/backup_rules.xml` for Android 11 and lower plus `android/app/src/main/res/xml/data_extraction_rules.xml` for Android 12+ cloud/device-transfer exclusions.
+Source evidence: `lib/app/tokenfront_state_store_native.dart:8-21` uses the `tokenfront.local_state.v1` SharedPreferences key; `lib/app/tokenfront_runtime.dart:453-468` captures the wallet, preferences, privacy, Chronicle, and reward-ledger fields; `lib/app/tokenfront_runtime.dart:643-668` encodes that snapshot; `lib/app/tokenfront_runtime.dart:80-104` restores it into runtime state; `android/app/src/main/AndroidManifest.xml` disables automatic backup and references `android/app/src/main/res/xml/backup_rules.xml` for Android 11 and lower plus `android/app/src/main/res/xml/data_extraction_rules.xml` for Android 12+ cloud/device-transfer exclusions.
 
 ## Volatile analytics
 
@@ -20,14 +20,14 @@ Source evidence: `lib/services/analytics/analytics_service.dart:19-30` defines t
 
 ## Advertising
 
-The production runtime uses NoOpAdService behind local consent and placement policy. No ad SDK, live inventory, impression, advertising identifier, or rewarded-ad network request exists in this build.
+The Android runtime uses `AdMobAdService` behind local consent and placement policy. Debug/profile builds use Google test IDs; release builds use the verified Tokenfront production app and unit IDs through the Android release configuration. No publisher credential is committed. AdMob request/device data is provider-controlled and must be reconciled against the signed AAB and current consent configuration before release.
 
-Source evidence: `lib/services/ads/ad_service.dart:68-86` defines the no-op adapter; `lib/services/ads/ad_service.dart:138-145` begins the local policy service; `lib/app/tokenfront_runtime.dart:70-72` wires the no-op adapter by default; `pubspec.yaml:30-40` lists no advertising SDK.
+Source evidence: `lib/services/ads/ad_service.dart:68-86` defines the policy fallback; `lib/services/ads/admob_ad_service.dart` implements AdMob; `lib/main.dart` wires it for Android; `lib/services/ads/admob_gateway.dart:78-88` requests fixed `AdSize.banner` (320x50); `pubspec.yaml` declares `google_mobile_ads: 9.1.0`.
 
 ## Release declaration
 
-Off-device collection: none
-Third-party sharing: none
+Off-device collection: AdMob may process ad-request, device, diagnostics, and advertising-identifier data when enabled and consented
+Third-party sharing: Google Mobile Ads advertising/request data
 Accounts or cloud sync: none
 Personal information or user-generated content: none
 Sensitive permissions: none

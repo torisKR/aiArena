@@ -9,6 +9,38 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get recoveryTitle => '3つの信号を回収';
+
+  @override
+  String get recoveryInstruction =>
+      '1・2・3をタップして目的地を選択。移動と戦闘は自動です。トークンが倒れると別のトークンが引き継ぎ、回収の進捗は維持されます。';
+
+  @override
+  String get recoveryAutomatic => '自動移動 · 自動戦闘 · 自動引き継ぎ';
+
+  @override
+  String get recoveryWon => '信号回収完了';
+
+  @override
+  String get recoveryLost => '回収終了';
+
+  @override
+  String get recoveryTimeout => '時間切れ';
+
+  @override
+  String get recoveryAlliesLost => '味方全滅';
+
+  @override
+  String recoveryProgress(int count) {
+    return '信号 $count/3 回収';
+  }
+
+  @override
+  String recoveryDestination(int number, int seconds) {
+    return '信号 $number: $seconds/10秒';
+  }
+
+  @override
   String get appTitle => 'Tokenfront: 軌道信号戦';
 
   @override
@@ -177,11 +209,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privacyPolicyTitle => 'プライバシーポリシー';
 
   @override
+  String get privacyOptions => '広告プライバシー設定';
+
+  @override
   String get privacyPolicyEffectiveDate => '施行日: 2026-08-05';
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfront: Orbital Signal Warはオフラインのシングルプレイゲームです。このリリースはユーザーデータを端末外へ収集または共有しません。';
+      'Tokenfrontはオフラインのシングルプレイゲームです。ゲームプレイとローカル進行は端末に保存されます。広告リクエストを有効にし、同意が許可した場合、Google AdMobのテスト広告が広告リクエストと端末・広告識別子を処理することがあります。';
 
   @override
   String get privacyDataStoredTitle => '端末に保存されるデータ';
@@ -202,7 +237,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      'このリリースには広告SDK、実広告リクエスト、インプレッション、リワード広告のネットワーク呼び出し、広告識別子へのアクセスがありません。';
+      'このAndroidテストビルドはGoogle Mobile AdsとGoogleテスト広告ユニットを使用します。ロビー・結果バナー、結果のリワード広告、結果終了時のインタースティシャルは、Googleの同意フローが許可した後だけリクエストされます。AdMobはGoogleの説明に従い広告リクエスト、端末情報、広告識別子を処理することがあります。広告リクエストをオフにしても基本War Token報酬は変わりません。';
 
   @override
   String get privacyAccountsTitle => 'アカウント、権限、第三者';

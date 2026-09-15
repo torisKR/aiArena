@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'recovery.dart';
 
 /// The four armies used by the MVP.
 enum Faction { amethyst, cobalt, volt, prism }
@@ -646,7 +647,7 @@ class FactionStanding {
   }
 }
 
-enum MatchEndReason { ongoing, elimination, timeLimit }
+enum MatchEndReason { ongoing, elimination, timeLimit, recovery }
 
 class MatchResult {
   const MatchResult({
@@ -830,6 +831,7 @@ class BattleSimulation {
     this.seed = 1,
     this.config = const BattleConfig(),
     this.playerFaction,
+    this.recovery,
     bool autoSpawn = true,
   }) : matchLimit = config.matchLimitSeconds,
        random = SeededRandom(seed),
@@ -845,6 +847,7 @@ class BattleSimulation {
 
   final int seed;
   final BattleConfig config;
+  final RecoveryState? recovery;
   final SeededRandom random;
   final SpatialGrid grid;
   final CombatResolver resolver;
@@ -951,6 +954,7 @@ class BattleSimulation {
   bool get manualRelayPending => _pendingManualRelayRoute != null;
 
   void spawnArmies() {
+    recovery?.reset();
     random.reset(seed);
     resolver.random.reset(seed ^ 0xa341316c);
     aiController.random.reset(seed ^ 0xc8013ea4);
@@ -1119,6 +1123,7 @@ class BattleSimulation {
   /// request is pending). Target selection and no-candidate failure are
   /// resolved once when the request is consumed on the fixed tick.
   bool requestManualRelay(RelayRoute route) {
+    if (recovery != null) return false;
     if (finished || playerFactionEliminated || manualRelayPending) return false;
     final source = controlledUnit;
     if (source == null || !source.alive) return false;
@@ -1182,6 +1187,12 @@ class BattleSimulation {
     _moveUnits(dt);
     grid.rebuild(units);
     _resolveNearbyCombats();
+    recovery?.advance(
+      unit: controlledUnit,
+      dt: dt,
+      alliesLost: playerFactionEliminated,
+      deadline: matchElapsed + 1e-9 >= matchLimit,
+    );
     _handoffIfNeeded();
     _finishIfNeeded();
   }
@@ -1232,9 +1243,17 @@ class BattleSimulation {
   }
 
   void _updateControlledUnit(Unit unit) {
+    final objective = recovery;
+    if (objective != null) {
+      unit.velocity = objective.direction(unit) * config.moveSpeed;
+      return;
+    }
+    // Mobile rule: a held movement command lets the player disengage during
+    // the brief post-combat lock/recovery window; releasing the joystick keeps
+    // the unit stationary until that window expires.
     if (unit.recoverRemaining > 0 || unit.combatLockRemaining > 0) {
       unit.state = AiState.recover;
-      unit.velocity = Vec2.zero;
+      unit.velocity = _playerMove * config.moveSpeed;
       return;
     }
     final multiplier = _playerDash ? config.dashMultiplier : 1.0;
@@ -1537,6 +1556,17 @@ class BattleSimulation {
   }
 
   void _finishIfNeeded() {
+    if (recovery case final objective?) {
+      if (objective.outcome != null) {
+        result = MatchResult(
+          reason: MatchEndReason.recovery,
+          winner: null,
+          standings: standings(),
+        );
+        finished = true;
+      }
+      return;
+    }
     _survivorScratch.fillRange(0, _survivorScratch.length, 0);
     for (final unit in units) {
       if (unit.alive) _survivorScratch[unit.faction.index] += 1;

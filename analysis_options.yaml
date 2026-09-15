@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Flutter's iOS plugin build copies google_mobile_ads into this generated
+# checkout. Its upstream package tests are not part of this application's
+# source/test surface and are incompatible with the app's resolved Mockito
+# graph. Keep analyzer coverage strict for lib/, test/, and all other project
+# paths while excluding only this generated dependency tree.
+analyzer:
+  exclude:
+    - build/ios/SourcePackages/google_mobile_ads-9.1.0/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#0b1214">
   <meta name="description" content="Privacy Policy for Tokenfront: Orbital Signal War, including English and Korean versions.">
   <title>Privacy Policy · Tokenfront: Orbital Signal War</title>
-  <link rel="icon" type="image/png" href="favicon.png">
   <style>
     :root {
       --field: #0b1214;
@@ -66,9 +65,9 @@
 
     .brand {
       color: var(--ivory);
-      font-size: .82rem;
+      font-size: 1rem;
       font-weight: 900;
-      letter-spacing: .2em;
+      letter-spacing: .04em;
       text-decoration: none;
     }
 
@@ -77,8 +76,8 @@
       align-items: center;
       gap: 8px;
       color: var(--cyan);
-      font: 700 .68rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: .11em;
+      font: 700 .75rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .05em;
       text-transform: uppercase;
     }
 
@@ -99,12 +98,11 @@
       padding: 72px 0 52px;
     }
 
-    .eyebrow,
     .section-code {
       margin: 0 0 13px;
       color: var(--volt);
-      font: 800 .68rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: .14em;
+      font: 800 .75rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .05em;
       text-transform: uppercase;
     }
 
@@ -113,7 +111,7 @@
       margin: 0;
       font-size: clamp(2.1rem, 6vw, 4.7rem);
       line-height: .98;
-      letter-spacing: -.055em;
+      letter-spacing: -.025em;
     }
 
     .lede {
@@ -139,8 +137,8 @@
 
     .metadata dt {
       color: var(--muted);
-      font: 700 .64rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: .1em;
+      font: 700 .75rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .05em;
       text-transform: uppercase;
     }
 
@@ -158,8 +156,8 @@
       border: 1px solid var(--line);
       color: var(--ivory);
       background: var(--panel);
-      font: 750 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: .06em;
+      font: 750 .8rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .03em;
       text-decoration: none;
       text-transform: uppercase;
     }
@@ -257,15 +255,14 @@
   <a class="skip-link" href="#policy">Skip to privacy policy</a>
   <div class="shell">
     <header>
-      <a class="brand" href="/">TOKENFRONT / ORBITAL SIGNAL WAR</a>
+      <a class="brand" href="#policy">TOKENFRONT / ORBITAL SIGNAL WAR</a>
       <span class="status">Offline data boundary</span>
     </header>
 
     <div class="hero">
       <div>
-        <p class="eyebrow">Release document · Privacy</p>
         <h1>Android gameplay data stays on your device.</h1>
-        <p class="lede">This Android release is an offline game. It has no app-controlled off-device collection, transmission, sale, or sharing of personal data.</p>
+        <p class="lede">This Android release is an offline game. Gameplay and local progress stay on the device; consent-gated Google Mobile Ads may process advertising request and device data.</p>
       </div>
       <dl class="metadata">
         <div><dt>Effective</dt><dd>August 5, 2026</dd></div>
@@ -287,13 +284,13 @@
           <h2>Tokenfront: Orbital Signal War</h2>
         </div>
         <div class="article-body">
-          <section><h3>Summary</h3><p>The App is provided by Toris. This release has no account system, cloud sync, advertising SDK, analytics SDK, crash-reporting SDK, purchase SDK, or server endpoint.</p></section>
+<section><h3>Summary</h3><p>The App is provided by Toris. Gameplay and local progress stay on the device. Debug and profile builds use Google Mobile Ads test units; signed release builds use the configured Tokenfront production app and ad-unit IDs. When ad requests are enabled and consent permits, Google may process ad requests, device information, diagnostics, and advertising identifiers under Google's terms.</p></section>
           <section><h3>Information stored on your device</h3><p>Game progress and settings stay on your device. This may include War Token balance, cosmetics, language, accessibility, camera, haptics, audio, local privacy choices, Signal Chronicle progress, medals, transmissions, endings, and directive-bonus history. Android automatic cloud backup is disabled, and release rules exclude local state from cloud backup and device-to-device transfer. Android users can clear App data or uninstall; web users can clear the site’s local storage.</p></section>
           <section><h3>Analytics and advertising choices</h3><p>Consent settings are stored locally so players retain control if related features are introduced later. This release sends them nowhere. Gameplay and performance events may be held temporarily in memory during a session, but are not transmitted and are discarded when the App process ends.</p></section>
-          <section><h3>Data collection and sharing</h3><ul><li>Personal data collected off device: none</li><li>Data shared with third parties: none</li><li>Accounts or cloud profiles: none</li><li>Location, contacts, photos, camera, or microphone access: none</li><li>Advertising identifiers: none</li></ul></section>
-          <section><h3>Retention and deletion</h3><p>Toris retains no App data on a server because this release sends no data off device. Clear the App’s storage or uninstall it to remove local progress and settings.</p></section>
+<section><h3>Data collection and sharing</h3><ul><li>Personal data collected off device: AdMob may process ad-request/device data when ads are enabled</li><li>Data shared with third parties: Google Mobile Ads data as described by Google</li><li>Accounts or cloud profiles: none</li><li>Location, contacts, photos, camera, or microphone access: none</li><li>Advertising identifiers: may be processed by AdMob when consent and ad requests permit</li></ul></section>
+          <section><h3>Retention and deletion</h3><p>Toris retains no gameplay or local-state data on a server. Google Mobile Ads may retain advertising/request data under Google’s terms. Clear the App’s storage or uninstall it to remove local progress and settings.</p></section>
           <section><h3>Public policy hosting</h3><p>The complete policy is also readable in the App. Opening this Cloudflare Pages URL is an explicit external-browser action. Cloudflare Pages and the external browser may process ordinary web-request data, such as IP address and routing data, under their own terms. The Android App does not embed this page or send gameplay or local-state data to it.</p></section>
-          <section><h3>Children’s privacy</h3><p>The App is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information. If a future release changes these practices, this policy and relevant store disclosures will be updated before publication.</p></section>
+          <section><h3>Children’s privacy</h3><p>The App is intended for players aged 13 and older and is not directed to children under 13. The App does not knowingly collect children’s personal information; Google Mobile Ads processing is governed by the consent flow and Google’s terms. If a future release changes these practices, this policy and relevant store disclosures will be updated before publication.</p></section>
           <section><h3>Security</h3><p>Keeping data on your device and omitting network collection reduces exposure. No storage method is completely secure, so keep your device and operating system protected.</p></section>
           <section><h3>Changes</h3><p>The effective date will be revised when features or legal requirements materially change.</p></section>
           <section><h3>Contact</h3><p>Toris · <a href="mailto:korea@toris.kr">korea@toris.kr</a></p></section>
@@ -306,13 +303,13 @@
           <h2>Tokenfront: 궤도 신호전</h2>
         </div>
         <div class="article-body">
-          <section><h3>요약</h3><p>앱은 Toris가 제공하는 오프라인 게임입니다. 이 릴리스에는 계정, 클라우드 동기화, 광고 SDK, 분석 SDK, 오류 보고 SDK, 결제 SDK 및 서버 통신 엔드포인트가 없으며 개인정보를 수집·전송·판매하거나 제3자와 공유하지 않습니다.</p></section>
+<section><h3>요약</h3><p>앱은 Toris가 제공하는 오프라인 게임입니다. 디버그·프로필 빌드는 Google Mobile Ads 테스트 단위를 사용하고, 서명된 릴리스 빌드는 설정된 Tokenfront 운영 앱·광고 단위 ID를 사용합니다. 광고 요청을 켜고 동의 절차가 허용하면 Google이 광고 요청, 기기 정보, 진단 정보 및 광고 식별자를 처리할 수 있습니다.</p></section>
           <section><h3>기기에 저장되는 정보</h3><p>게임 진행 상태와 설정만 사용자의 기기에 저장됩니다. War Token 잔액, 꾸미기 항목, 언어, 접근성, 카메라, 햅틱, 오디오, 로컬 개인정보 선택, Signal Chronicle 진행, 메달, 전송 기록, 엔딩 및 지령 보너스 기록이 포함될 수 있습니다. Android 자동 클라우드 백업은 비활성화되어 있으며 릴리스 규칙은 로컬 상태를 클라우드 백업과 기기 간 전송에서 제외합니다. Android에서는 앱 데이터 삭제 또는 제거로, 웹에서는 사이트 로컬 저장소 삭제로 지울 수 있습니다.</p></section>
           <section><h3>분석 및 광고 선택</h3><p>향후 관련 기능이 도입될 경우에도 이용자가 선택권을 갖도록 동의 설정이 포함되어 있습니다. 이 릴리스에서 선택값은 기기에만 저장됩니다. 게임플레이 및 성능 이벤트가 세션 중 메모리에 일시 보관될 수 있으나 외부로 전송되지 않고 앱 프로세스 종료 시 삭제됩니다.</p></section>
-          <section><h3>데이터 수집 및 공유</h3><ul><li>기기 외부로 수집하는 개인정보: 없음</li><li>제3자와 공유하는 데이터: 없음</li><li>계정 또는 클라우드 프로필: 없음</li><li>위치, 연락처, 사진, 카메라 또는 마이크 접근: 없음</li><li>광고 식별자: 없음</li></ul></section>
-          <section><h3>보유 및 삭제</h3><p>이 릴리스는 데이터를 기기 외부로 전송하지 않으므로 Toris가 서버에 보유하는 앱 데이터가 없습니다. 앱 저장공간을 삭제하거나 앱을 제거하면 로컬 진행 상태와 설정이 삭제됩니다.</p></section>
+<section><h3>데이터 수집 및 공유</h3><ul><li>기기 외부로 수집하는 개인정보: 광고 요청이 켜져 있으면 AdMob이 광고 요청·기기 데이터를 처리할 수 있음</li><li>제3자와 공유하는 데이터: Google Mobile Ads가 Google 설명에 따라 처리하는 데이터</li><li>계정 또는 클라우드 프로필: 없음</li><li>위치, 연락처, 사진, 카메라 또는 마이크 접근: 없음</li><li>광고 식별자: 동의 및 광고 요청이 허용하면 AdMob이 처리할 수 있음</li></ul></section>
+          <section><h3>보유 및 삭제</h3><p>Toris는 게임플레이 또는 로컬 상태 데이터를 서버에 보유하지 않습니다. Google Mobile Ads는 Google 약관에 따라 광고·요청 데이터를 보유할 수 있습니다. 앱 저장공간을 삭제하거나 앱을 제거하면 로컬 진행 상태와 설정이 삭제됩니다.</p></section>
           <section><h3>공개 정책 페이지 호스팅</h3><p>전체 방침은 앱에서도 읽을 수 있습니다. 이 Cloudflare Pages URL을 여는 것은 외부 브라우저에서 명시적으로 수행하는 동작입니다. Cloudflare Pages와 외부 브라우저는 자체 조건에 따라 IP 주소와 라우팅 정보 등 일반적인 웹 요청 데이터를 처리할 수 있습니다. Android 앱은 이 페이지를 내장하지 않으며 게임플레이나 로컬 상태 데이터를 보내지 않습니다.</p></section>
-          <section><h3>아동의 개인정보</h3><p>앱은 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 이 릴리스는 개인정보를 수집하지 않습니다. 향후 릴리스에서 처리 방식이 바뀌는 경우 공개 전에 이 방침과 관련 스토어 정보를 업데이트합니다.</p></section>
+          <section><h3>아동의 개인정보</h3><p>앱은 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 아동의 개인정보를 고의로 수집하지 않으며, Google Mobile Ads 처리는 동의 절차와 Google 약관의 적용을 받습니다. 향후 릴리스에서 처리 방식이 바뀌는 경우 공개 전에 이 방침과 관련 스토어 정보를 업데이트합니다.</p></section>
           <section><h3>보안</h3><p>정보를 기기에만 보관하고 네트워크 수집을 하지 않아 노출 가능성을 줄입니다. 다만 어떠한 저장 방식도 완전한 보안을 보장하지 않으므로 기기와 운영체제를 안전하게 유지해 주세요.</p></section>
           <section><h3>방침 변경</h3><p>기능 또는 관련 법적 요구사항이 중요하게 변경되면 시행일을 수정합니다.</p></section>
           <section><h3>문의</h3><p>Toris · <a href="mailto:korea@toris.kr">korea@toris.kr</a></p></section>
@@ -321,8 +318,8 @@
     </main>
 
     <footer>
-      <span>Tokenfront Android release data contract · No app-controlled off-device collection</span>
-      <a href="/">Return to Command Deck</a>
+      <span>Tokenfront Android release data contract · AdMob consent boundary</span>
+      <a href="https://play.google.com/store/apps/details?id=com.toris.tokenfront.tokenfront">View the app on Google Play</a>
     </footer>
   </div>
 </body>

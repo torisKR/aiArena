@@ -9,6 +9,38 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get recoveryTitle => '신호 세 개 회수하기';
+
+  @override
+  String get recoveryInstruction =>
+      '1, 2, 3을 눌러 목적지를 고르세요. 이동과 전투는 자동입니다. 토큰이 쓰러지면 다른 토큰이 이어갑니다. 회수 진행도는 유지됩니다.';
+
+  @override
+  String get recoveryAutomatic => '자동 이동 · 자동 전투 · 자동 이어받기';
+
+  @override
+  String get recoveryWon => '신호 회수 완료';
+
+  @override
+  String get recoveryLost => '회수 종료';
+
+  @override
+  String get recoveryTimeout => '시간 초과';
+
+  @override
+  String get recoveryAlliesLost => '아군 전멸';
+
+  @override
+  String recoveryProgress(int count) {
+    return '신호 $count/3개 회수';
+  }
+
+  @override
+  String recoveryDestination(int number, int seconds) {
+    return '신호 $number: $seconds/10초';
+  }
+
+  @override
   String get appTitle => 'Tokenfront: 궤도 신호전';
 
   @override
@@ -177,11 +209,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get privacyPolicyTitle => '개인정보처리방침';
 
   @override
+  String get privacyOptions => '광고 개인정보 설정';
+
+  @override
   String get privacyPolicyEffectiveDate => '시행일: 2026-08-05';
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfront: Orbital Signal War는 오프라인 싱글 플레이 게임입니다. 이 출시 버전은 사용자 데이터를 기기 밖으로 수집하거나 공유하지 않습니다.';
+      'Tokenfront는 오프라인 싱글 플레이 게임입니다. 게임 플레이와 로컬 진행 정보는 기기에 보관됩니다. 광고 요청을 켜고 동의 절차가 허용하면 Google AdMob 테스트 광고가 광고 요청과 기기/광고 식별자를 처리할 수 있습니다.';
 
   @override
   String get privacyDataStoredTitle => '기기에 저장되는 데이터';
@@ -202,7 +237,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      '이 출시 버전에는 광고 SDK, 실제 광고 요청, 노출, 보상형 광고 네트워크 호출, 광고 식별자 접근이 없습니다.';
+      '이 Android 테스트 빌드는 Google 테스트 광고 단위와 Google Mobile Ads를 사용합니다. 선택한 로비·결과 배너, 결과 보상형 광고, 결과 종료 전면 광고는 Google 동의 절차가 허용한 뒤에만 요청됩니다. AdMob은 Google 정책에 따라 광고 요청, 기기 정보, 광고 식별자를 처리할 수 있습니다. 광고 요청을 끄면 앱의 광고 요청이 중단되며 기본 War Token 보상에는 영향이 없습니다.';
 
   @override
   String get privacyAccountsTitle => '계정·권한·제3자';

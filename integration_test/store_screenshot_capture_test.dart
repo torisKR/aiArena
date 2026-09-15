@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flame/src/game/game_render_box.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:tokenfront/app/tokenfront_runtime.dart';
 import 'package:tokenfront/design/tokens.dart';
 import 'package:tokenfront/game/simulation.dart';
-import 'package:tokenfront/game/tokenfront_game.dart';
 import 'package:tokenfront/l10n/l10n.dart';
 import 'package:tokenfront/main.dart';
 import 'package:tokenfront/settings/game_preferences.dart';
@@ -28,7 +26,11 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 1));
     final campaignRuntime = TokenfrontRuntime(
-      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+      preferences: GamePreferences(
+        audioEnabled: false,
+        hapticsEnabled: false,
+        languageCode: 'en',
+      ),
     );
     addTearDown(campaignRuntime.dispose);
 
@@ -43,36 +45,21 @@ void main() {
     await tester.ensureVisible(deploy);
     await tester.tap(deploy);
     await tester.pump(const Duration(seconds: 1));
-    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(BattleScreen), findsOneWidget);
-    expect(find.byKey(const Key('directive-rail')), findsOneWidget);
-    await binding.takeScreenshot('phone-02-live-directive-1920x1080');
+    expect(
+      find.byKey(const Key('recovery-dismiss-instructions')),
+      findsOneWidget,
+    );
+    await binding.takeScreenshot('phone-02-recovery-instructions-1920x1080');
+    await tester.tap(find.byKey(const Key('recovery-dismiss-instructions')));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.byKey(const Key('recovery-destination-0')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('recovery-destination-1')));
+    await tester.pump(const Duration(milliseconds: 250));
+    await binding.takeScreenshot('phone-03-recovery-choice-1920x1080');
 
     final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
-    final controlled = battle.game.simulation.controlledUnit!;
-    controlled
-      ..alive = false
-      ..state = AiState.dead;
-    battle.game.update(.12);
-    for (var tick = 0; tick < 15; tick++) {
-      battle.game.update(.05);
-    }
-    expect(battle.game.handoffStage, HandoffStage.successorScan);
-    expect(battle.game.hud.value.handoffStage, HandoffStage.successorScan);
-    await tester.pump();
-    expect(battle.game.hud.value.handoffProgress, isNotNull);
-    // Stop only Flame's test-render loop so the genuine handoff HUD can paint
-    // without the BattleScreen's user-facing paused overlay.
-    final gameRenderBox = tester.allElements
-        .map((element) => element.renderObject)
-        .whereType<GameRenderBox>()
-        .single;
-    gameRenderBox.gameLoop!.stop();
-    gameRenderBox.markNeedsPaint();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(battle.game.paused, isFalse);
-    await binding.takeScreenshot('phone-03-command-handoff-1920x1080');
+    expect(battle.game.isRecovery, isTrue);
 
     final transition = campaignRuntime.concludeChronicle(
       operationId: StoryOperationId.wake,
@@ -128,7 +115,11 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     final archiveRuntime = TokenfrontRuntime(
-      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+      preferences: GamePreferences(
+        audioEnabled: false,
+        hapticsEnabled: false,
+        languageCode: 'en',
+      ),
     );
     addTearDown(archiveRuntime.dispose);
     _completeChronicle(archiveRuntime);
