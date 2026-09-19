@@ -464,7 +464,12 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     bannerVisible = false;
     runtime.ads.clearBanner();
     attemptNumber += 1;
-    final seed = operation?.seed ?? 20260715 + (++matchIndex);
+    final displayCycle = replay ? 1 : runtime.storyProgress.displayCycle;
+    final seed = operation == null
+        ? 20260715 + (++matchIndex)
+        : replay
+        ? operation.seed
+        : operation.seed + (displayCycle - 1) * 1000;
     currentMatchId = [
       mode.name,
       if (operation != null) operation.id.name,
@@ -496,7 +501,11 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       recoveryMode: mode == GameMode.chronicle,
       relayRoute: mode == GameMode.chronicle ? relayRoute : null,
       seed: seed,
-      config: operation == null ? const BattleConfig() : RecoveryState.config,
+      config: operation == null
+          ? const BattleConfig()
+          : replay
+          ? RecoveryState.config
+          : RecoveryState.configForCycle(displayCycle),
       reduceMotion: runtime.preferences.reducedMotionFor(
         systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
       ),
@@ -546,9 +555,21 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       (standing) => standing.faction == selectedFaction,
     );
     final matchElapsed = endedGame.simulation.matchElapsed;
-    final reward = report.recoveryOutcome != null
-        ? report.recoveredSignals * 20
-        : 40 + report.casualtyRelays * 8 + (playerStanding.kills ~/ 5);
+    final campaignReport = report.recoveryOutcome == RecoveryOutcome.recovered
+        ? report.withRecoveryElapsed(matchElapsed)
+        : report;
+    final playedCycle =
+        (activeBattle?.replay ?? false) || runtime.storyProgress.ending == null
+        ? 1
+        : runtime.storyProgress.displayCycle;
+    final reward = campaignReport.recoveryOutcome != null
+        ? RecoveryRules.matchReward(
+            cycle: playedCycle,
+            succeeded:
+                campaignReport.recoveryOutcome == RecoveryOutcome.recovered,
+            recoveredCount: campaignReport.recoveredSignals,
+          )
+        : 40 + campaignReport.casualtyRelays * 8 + (playerStanding.kills ~/ 5);
     completedMatches += 1;
     runtime.claimBaseReward(matchId: currentMatchId, amount: reward);
     final active = activeBattle;
@@ -562,7 +583,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     if (active?.mode == GameMode.chronicle && active?.operation != null) {
       transition = runtime.concludeChronicle(
         operationId: active!.operation!.id,
-        report: report,
+        report: campaignReport,
         replay: active.replay,
       );
     }
@@ -593,11 +614,11 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     setState(() {
       game = null;
       result = matchResult;
-      recoveryOutcome = report.recoveryOutcome;
-      recoveredSignals = report.recoveredSignals;
-      relays = report.commandRelays;
-      manualRelays = report.manualRelays;
-      reportRoute = report.relayRoute;
+      recoveryOutcome = campaignReport.recoveryOutcome;
+      recoveredSignals = campaignReport.recoveredSignals;
+      relays = campaignReport.commandRelays;
+      manualRelays = campaignReport.manualRelays;
+      reportRoute = campaignReport.relayRoute;
       elapsed = matchElapsed;
       baseReward = reward;
       campaignTransition = transition;
@@ -662,6 +683,13 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       });
       return;
     }
+    final echoProgress = runtime.storyProgress;
+    if (echoProgress.echoActive &&
+        echoProgress.echoConcludedOperations.length ==
+            StoryOperationId.values.length) {
+      await _leaveResult(rematch: false);
+      return;
+    }
     if (!mounted) return;
     final nextOperation = _resolveCurrentOperation();
     setState(() {
@@ -672,8 +700,18 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     if (nextOperation != null) await _openChronicleBriefing();
   }
 
+  bool get _canChooseEnding {
+    final operationId = activeBattle?.operation?.id;
+    if (operationId != StoryOperationId.lastInstruction) return false;
+    final progress = runtime.storyProgress;
+    if (progress.ending == null) return true;
+    return progress.echoEnding == null &&
+        progress.echoConcludedOperations.contains(
+          StoryOperationId.lastInstruction,
+        );
+  }
+
   void _chooseEnding(EndingChoice choice) {
-    if (runtime.storyProgress.ending != null) return;
     try {
       runtime.chooseChronicleEnding(choice);
     } on StateError {
@@ -818,11 +856,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       storyProgress: runtime.storyProgress,
       rewardLedger: runtime.rewardLedger,
       replay: activeBattle?.replay ?? false,
-      onChooseEnding:
-          activeBattle?.operation?.id == StoryOperationId.lastInstruction &&
-              runtime.storyProgress.ending == null
-          ? _chooseEnding
-          : null,
+      onChooseEnding: _canChooseEnding ? _chooseEnding : null,
       onCommandDeck: () => _leaveResult(rematch: false),
     ),
   };

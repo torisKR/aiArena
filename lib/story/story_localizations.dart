@@ -204,6 +204,26 @@ final class StoryLocalizations {
     EndingChoice.openRelay => l10n.endingOpenEpilogue,
   };
 
+  String echoCycleChip(int cycle) => l10n.echoCycleChip(cycle);
+
+  String echoBanner(EndingChoice ending) => switch (ending) {
+    EndingChoice.claimRelay => l10n.echoBannerClaim,
+    EndingChoice.openRelay => l10n.echoBannerOpen,
+  };
+
+  String? echoDoctrine(SignalDoctrine doctrine) => switch (doctrine) {
+    SignalDoctrine.undecided => null,
+    SignalDoctrine.preserve => l10n.echoDoctrinePreserve,
+    SignalDoctrine.force => l10n.echoDoctrineForce,
+    SignalDoctrine.balanced => l10n.echoDoctrineBalanced,
+  };
+
+  String get echoResidualHeading => l10n.echoResidualHeading;
+
+  String echoBestClear(int seconds) => l10n.echoBestClear(seconds);
+
+  String echoArchiveCaption(int cycle) => l10n.echoArchiveCaption(cycle);
+
   String get chronicle => l10n.chronicle;
   String get skirmish => l10n.skirmish;
   String get archive => l10n.archive;

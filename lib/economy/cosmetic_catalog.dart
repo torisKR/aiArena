@@ -50,6 +50,16 @@ abstract final class CosmeticCatalog {
     ),
     CosmeticDefinition(
       item: CosmeticItem(
+        id: 'color_echo_orbit',
+        category: CosmeticCategory.factionColor,
+        cost: 0,
+      ),
+      name: 'ECHO ORBIT',
+      description: 'Residual orbit pigment granted after the first echo cycle.',
+      accentValue: 0xFF6CD6D3,
+    ),
+    CosmeticDefinition(
+      item: CosmeticItem(
         id: 'trail_none',
         category: CosmeticCategory.movementTrail,
         cost: 0,
@@ -80,6 +90,16 @@ abstract final class CosmeticCatalog {
     ),
     CosmeticDefinition(
       item: CosmeticItem(
+        id: 'trail_checksum_scar',
+        category: CosmeticCategory.movementTrail,
+        cost: 0,
+      ),
+      name: 'CHECKSUM SCAR',
+      description: 'A residual scar trail granted for recording both endings.',
+      accentValue: 0xBFA78B6E,
+    ),
+    CosmeticDefinition(
+      item: CosmeticItem(
         id: 'death_ring',
         category: CosmeticCategory.deathEffect,
         cost: 0,
@@ -106,9 +126,16 @@ abstract final class CosmeticCatalog {
   static CosmeticDefinition byId(String id) =>
       items.firstWhere((definition) => definition.item.id == id);
 
+  static const progressGrantIds = <String>{
+    'color_echo_orbit',
+    'trail_checksum_scar',
+  };
+
   static void installDefaults(WarTokenWallet wallet) {
     for (final definition in items.where(
-      (definition) => definition.item.cost == 0,
+      (definition) =>
+          definition.item.cost == 0 &&
+          !progressGrantIds.contains(definition.item.id),
     )) {
       wallet.unlock(definition.item);
       if (wallet.equippedId(definition.item.category) == null) {

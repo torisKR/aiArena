@@ -116,6 +116,7 @@ final class BattleReport {
     this.relayRoute,
     this.recoveryOutcome,
     this.recoveredSignals = 0,
+    this.recoveryElapsedSeconds,
   }) : standingsAtConclusion = List<FactionStanding>.unmodifiable(
          standingsAtConclusion,
        );
@@ -132,6 +133,25 @@ final class BattleReport {
   final int playerSurvivors;
   final int manualRelays;
   final RelayRoute? relayRoute;
+  final double? recoveryElapsedSeconds;
+
+  BattleReport withRecoveryElapsed(double elapsed) => BattleReport(
+    endReason: endReason,
+    standingsAtConclusion: standingsAtConclusion,
+    globalWinner: globalWinner,
+    commandRelays: commandRelays,
+    commandKills: commandKills,
+    longestCommandLinkSeconds: longestCommandLinkSeconds,
+    playerRank: playerRank,
+    playerSurvivors: playerSurvivors,
+    manualRelays: manualRelays,
+    relayRoute: relayRoute,
+    recoveryOutcome: recoveryOutcome,
+    recoveredSignals: recoveredSignals,
+    recoveryElapsedSeconds: recoveryOutcome == RecoveryOutcome.recovered
+        ? elapsed
+        : recoveryElapsedSeconds,
+  );
 
   /// Relays attributable to combat casualties rather than manual transfers.
   /// Persisted/legacy reports may contain inconsistent counts, so this value
@@ -156,7 +176,8 @@ final class BattleReport {
           playerRank == other.playerRank &&
           playerSurvivors == other.playerSurvivors &&
           manualRelays == other.manualRelays &&
-          relayRoute == other.relayRoute;
+          relayRoute == other.relayRoute &&
+          recoveryElapsedSeconds == other.recoveryElapsedSeconds;
 
   @override
   int get hashCode => Object.hash(
@@ -172,6 +193,7 @@ final class BattleReport {
     playerSurvivors,
     manualRelays,
     relayRoute,
+    recoveryElapsedSeconds,
   );
 }
 
@@ -207,10 +229,18 @@ final class StoryProgress {
     required Iterable<StoryOperationId> recoveredTransmissions,
     required this.ending,
     Map<StoryOperationId, RelayRoute> signalRoutes = const {},
+    this.echoCycle = 1,
+    Iterable<StoryOperationId> echoConcludedOperations = const [],
+    Map<StoryOperationId, RelayRoute> echoSignalRoutes = const {},
+    this.echoEnding,
+    Map<StoryOperationId, double> bestClearSeconds = const {},
   }) : concludedOperations = _orderedStoryIds(concludedOperations),
        medals = _orderedStoryIds(medals),
        recoveredTransmissions = _orderedStoryIds(recoveredTransmissions),
-       signalRoutes = _orderedSignalRoutes(signalRoutes);
+       signalRoutes = _orderedSignalRoutes(signalRoutes),
+       echoConcludedOperations = _orderedStoryIds(echoConcludedOperations),
+       echoSignalRoutes = _orderedSignalRoutes(echoSignalRoutes),
+       bestClearSeconds = _orderedBestClearSeconds(bestClearSeconds);
 
   factory StoryProgress.initial() => StoryProgress(
     campaignFaction: null,
@@ -224,13 +254,21 @@ final class StoryProgress {
   factory StoryProgress.fromJson(Map<String, Object?> json) {
     final factionName = json['campaignFaction'];
     final endingName = json['ending'];
+    final ending = endingName == null ? null : _decodeEndingChoice(endingName);
     final progress = StoryProgress(
       campaignFaction: factionName == null ? null : _decodeFaction(factionName),
       concludedOperations: _decodeStoryIds(json['concludedOperations']),
       medals: _decodeStoryIds(json['medals']),
       recoveredTransmissions: _decodeStoryIds(json['recoveredTransmissions']),
-      ending: endingName == null ? null : _decodeEndingChoice(endingName),
+      ending: ending,
       signalRoutes: _decodeSignalRoutes(json['signalRoutes']),
+      echoCycle: _decodeEchoCycle(json['echoCycle'], hasEnding: ending != null),
+      echoConcludedOperations: _decodeStoryIds(json['echoConcludedOperations']),
+      echoSignalRoutes: _decodeSignalRoutes(json['echoSignalRoutes']),
+      echoEnding: json['echoEnding'] == null
+          ? null
+          : _decodeEndingChoice(json['echoEnding'] as Object),
+      bestClearSeconds: _decodeBestClearSeconds(json['bestClearSeconds']),
     );
     if (!progress.isSemanticallyValid) {
       throw const FormatException('story progress is semantically invalid');
@@ -244,6 +282,11 @@ final class StoryProgress {
   final Set<StoryOperationId> recoveredTransmissions;
   final EndingChoice? ending;
   final Map<StoryOperationId, RelayRoute> signalRoutes;
+  final int echoCycle;
+  final Set<StoryOperationId> echoConcludedOperations;
+  final Map<StoryOperationId, RelayRoute> echoSignalRoutes;
+  final EndingChoice? echoEnding;
+  final Map<StoryOperationId, double> bestClearSeconds;
 
   SignalDoctrine get signalDoctrine {
     if (signalRoutes.isEmpty) return SignalDoctrine.undecided;
@@ -273,18 +316,49 @@ final class StoryProgress {
     if (!setEquals(concludedOperations, recoveredTransmissions)) return false;
     if (!signalRoutes.keys.every(concludedOperations.contains)) return false;
     if (concludedOperations.isNotEmpty && campaignFaction == null) return false;
-    if (ending == null) return true;
+    if (echoCycle < 1) return false;
+    if (!_isPrefix(echoConcludedOperations)) return false;
+    if (!echoSignalRoutes.keys.every(echoConcludedOperations.contains)) {
+      return false;
+    }
+    if (echoEnding != null && ending == null) return false;
+    for (final elapsed in bestClearSeconds.values) {
+      if (!elapsed.isFinite || elapsed <= 0) return false;
+    }
+    if (ending == null) {
+      return echoCycle == 1 &&
+          echoConcludedOperations.isEmpty &&
+          echoSignalRoutes.isEmpty &&
+          echoEnding == null;
+    }
     return campaignFaction != null &&
+        echoCycle >= 2 &&
         concludedOperations.length == StoryOperationId.values.length &&
         concludedOperations.containsAll(StoryOperationId.values);
   }
 
   StoryOperationId? get currentOperation {
-    for (final operation in StoryOperationId.values) {
-      if (!concludedOperations.contains(operation)) return operation;
+    if (ending == null) {
+      for (final operation in StoryOperationId.values) {
+        if (!concludedOperations.contains(operation)) return operation;
+      }
+      return null;
     }
-    return null;
+    for (final operation in StoryOperationId.values) {
+      if (!echoConcludedOperations.contains(operation)) return operation;
+    }
+    return StoryOperationId.wake;
   }
+
+  int get displayCycle {
+    if (ending == null) return 1;
+    if (echoConcludedOperations.length == StoryOperationId.values.length) {
+      return echoCycle + 1;
+    }
+    return echoCycle;
+  }
+
+  bool get echoActive => ending != null;
 
   StoryProgress lockCore(Faction faction) => StoryProgress(
     campaignFaction: campaignFaction ?? faction,
@@ -293,6 +367,11 @@ final class StoryProgress {
     recoveredTransmissions: recoveredTransmissions,
     ending: ending,
     signalRoutes: signalRoutes,
+    echoCycle: echoCycle,
+    echoConcludedOperations: echoConcludedOperations,
+    echoSignalRoutes: echoSignalRoutes,
+    echoEnding: echoEnding,
+    bestClearSeconds: bestClearSeconds,
   );
 
   /// Returns a new progress value with only the supplied fields changed.
@@ -307,6 +386,11 @@ final class StoryProgress {
     Object? recoveredTransmissions = _unset,
     Object? ending = _unset,
     Object? signalRoutes = _unset,
+    Object? echoCycle = _unset,
+    Object? echoConcludedOperations = _unset,
+    Object? echoSignalRoutes = _unset,
+    Object? echoEnding = _unset,
+    Object? bestClearSeconds = _unset,
   }) => StoryProgress(
     campaignFaction: identical(campaignFaction, _unset)
         ? this.campaignFaction
@@ -324,6 +408,19 @@ final class StoryProgress {
     signalRoutes: identical(signalRoutes, _unset)
         ? this.signalRoutes
         : signalRoutes as Map<StoryOperationId, RelayRoute>,
+    echoCycle: identical(echoCycle, _unset) ? this.echoCycle : echoCycle as int,
+    echoConcludedOperations: identical(echoConcludedOperations, _unset)
+        ? this.echoConcludedOperations
+        : echoConcludedOperations as Iterable<StoryOperationId>,
+    echoSignalRoutes: identical(echoSignalRoutes, _unset)
+        ? this.echoSignalRoutes
+        : echoSignalRoutes as Map<StoryOperationId, RelayRoute>,
+    echoEnding: identical(echoEnding, _unset)
+        ? this.echoEnding
+        : echoEnding as EndingChoice?,
+    bestClearSeconds: identical(bestClearSeconds, _unset)
+        ? this.bestClearSeconds
+        : bestClearSeconds as Map<StoryOperationId, double>,
   );
 
   Map<String, Object?> toJson() => {
@@ -340,6 +437,18 @@ final class StoryProgress {
       for (final entry in signalRoutes.entries)
         entry.key.name: entry.value.name,
     },
+    'echoCycle': echoCycle,
+    'echoConcludedOperations': echoConcludedOperations
+        .map((operation) => operation.name)
+        .toList(),
+    'echoSignalRoutes': {
+      for (final entry in echoSignalRoutes.entries)
+        entry.key.name: entry.value.name,
+    },
+    'echoEnding': echoEnding?.name,
+    'bestClearSeconds': {
+      for (final entry in bestClearSeconds.entries) entry.key.name: entry.value,
+    },
   };
 
   @override
@@ -351,7 +460,12 @@ final class StoryProgress {
           setEquals(medals, other.medals) &&
           setEquals(recoveredTransmissions, other.recoveredTransmissions) &&
           ending == other.ending &&
-          mapEquals(signalRoutes, other.signalRoutes);
+          mapEquals(signalRoutes, other.signalRoutes) &&
+          echoCycle == other.echoCycle &&
+          setEquals(echoConcludedOperations, other.echoConcludedOperations) &&
+          mapEquals(echoSignalRoutes, other.echoSignalRoutes) &&
+          echoEnding == other.echoEnding &&
+          mapEquals(bestClearSeconds, other.bestClearSeconds);
 
   @override
   int get hashCode => Object.hash(
@@ -362,6 +476,19 @@ final class StoryProgress {
     ending,
     Object.hashAll(
       signalRoutes.entries.map((entry) => Object.hash(entry.key, entry.value)),
+    ),
+    echoCycle,
+    Object.hashAll(echoConcludedOperations),
+    Object.hashAll(
+      echoSignalRoutes.entries.map(
+        (entry) => Object.hash(entry.key, entry.value),
+      ),
+    ),
+    echoEnding,
+    Object.hashAll(
+      bestClearSeconds.entries.map(
+        (entry) => Object.hash(entry.key, entry.value),
+      ),
     ),
   );
 }
@@ -488,6 +615,50 @@ StoryOperationId _decodeStoryOperationId(String name) {
   } on ArgumentError {
     throw FormatException('unknown story operation ID: $name');
   }
+}
+
+int _decodeEchoCycle(Object? value, {required bool hasEnding}) {
+  late final int cycle;
+  if (value == null) {
+    cycle = hasEnding ? 2 : 1;
+  } else if (value is int && value >= 1) {
+    cycle = value;
+  } else {
+    throw const FormatException('echoCycle must be an integer >= 1');
+  }
+  if (hasEnding && cycle < 2) return 2;
+  return cycle;
+}
+
+Map<StoryOperationId, double> _orderedBestClearSeconds(
+  Map<StoryOperationId, double> source,
+) {
+  final ordered = <StoryOperationId, double>{};
+  for (final operation in StoryOperationId.values) {
+    final elapsed = source[operation];
+    if (elapsed != null) ordered[operation] = elapsed;
+  }
+  return Map<StoryOperationId, double>.unmodifiable(ordered);
+}
+
+Map<StoryOperationId, double> _decodeBestClearSeconds(Object? value) {
+  if (value == null) return const {};
+  if (value is! Map) {
+    throw const FormatException('bestClearSeconds must be a map');
+  }
+  final times = <StoryOperationId, double>{};
+  for (final entry in value.entries) {
+    if (entry.key is! String) {
+      throw const FormatException('bestClearSeconds keys must be names');
+    }
+    final operation = _decodeStoryOperationId(entry.key as String);
+    final raw = entry.value;
+    if (raw is! num) continue;
+    final elapsed = raw.toDouble();
+    if (!elapsed.isFinite || elapsed <= 0) continue;
+    times[operation] = elapsed;
+  }
+  return times;
 }
 
 RelayRoute _decodeRelayRoute(String name) {

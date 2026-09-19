@@ -96,6 +96,19 @@ void main() {
     expect(state.advanceMidwayCues(), isEmpty);
   });
 
+  test('cycle-1 recovery rules stay at the playtested constants', () {
+    expect(RecoveryState.requiredSeconds, 8.0);
+    expect(RecoveryState.midwaySeconds, 5.0);
+    expect(RecoveryState.radius, 64.0);
+    expect(RecoveryState.config.unitsPerFaction, 100);
+    expect(RecoveryState.config.matchLimitSeconds, 90);
+    expect(
+      identical(RecoveryRules.forCycle(1).battleConfig, RecoveryState.config),
+      isTrue,
+    );
+    expect(RecoveryState.configForCycle(1), RecoveryState.config);
+  });
+
   test('timeout and allies lost are distinct failures', () {
     final timeout = RecoveryState()
       ..advance(unit: null, dt: 0, alliesLost: false, deadline: true);

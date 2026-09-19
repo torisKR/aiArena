@@ -671,6 +671,52 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('deploy bar stays on screen without scrolling on a tall phone', (
+    tester,
+  ) async {
+    // Matches the SM-F741N portrait surface (1080x2640 @ 2.75x).
+    tester.view.physicalSize = const Size(1080, 2640);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final runtime = TokenfrontRuntime(
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    // Chronicle deploy is reachable with no ensureVisible / scroll.
+    final chronicle = find.byKey(const Key('chronicle-deploy'));
+    expect(chronicle, findsOneWidget);
+    final viewport = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final chronicleRect = tester.getRect(chronicle);
+    expect(chronicleRect.bottom, lessThanOrEqualTo(viewport.height));
+    expect(chronicleRect.top, greaterThanOrEqualTo(0));
+
+    // Same guarantee in Skirmish mode, still without ensureVisible.
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    final skirmish = find.byKey(const Key('skirmish-deploy'));
+    final skirmishRect = tester.getRect(skirmish);
+    expect(skirmishRect.bottom, lessThanOrEqualTo(viewport.height));
+
+    // Scrolling the body must not move the pinned bar.
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getRect(skirmish), skirmishRect);
+
+    // Tapping without ensureVisible reaches the battle surface.
+    await tester.tap(skirmish);
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('deploy enters the Flame battle surface', (tester) async {
     final runtime = TokenfrontRuntime(
       preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),

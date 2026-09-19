@@ -83,170 +83,239 @@ class _LobbyScreenState extends State<LobbyScreen> {
         operation == null &&
         widget.storyProgress.ending == null &&
         widget.onChooseEnding != null;
+    final showChronicleDeploy = mode == GameMode.chronicle && !pendingEnding;
+    final showSkirmishDeploy = mode == GameMode.skirmish;
     return Scaffold(
       body: TacticalBackdrop(
         child: SafeArea(
           child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: compact
-                    ? TokenfrontSpacing.lg
-                    : TokenfrontSpacing.xxl,
-                vertical: compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xl,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1060),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _Header(compact: compact, mode: mode),
-                      const SizedBox(height: TokenfrontSpacing.md),
-                      _UtilityRail(
-                        compact: compact,
-                        warTokenBalance: widget.warTokenBalance,
-                        onOpenSettings: widget.onOpenSettings,
-                        onOpenLocker: widget.onOpenLocker,
-                      ),
-                      SizedBox(
-                        height: compact
-                            ? TokenfrontSpacing.lg + TokenfrontSpacing.xs
-                            : TokenfrontSpacing.xxl - TokenfrontSpacing.xs,
-                      ),
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        runSpacing: 10,
-                        children: [
-                          Text(
-                            copy.commandDeck,
-                            style: TokenfrontType.instrument.copyWith(
-                              fontSize: compact ? 16 : 19,
+            builder: (context, constraints) => Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xxl,
+                      compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xl,
+                      compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xxl,
+                      TokenfrontSpacing.sm,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1060),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _Header(compact: compact, mode: mode),
+                            const SizedBox(height: TokenfrontSpacing.md),
+                            _UtilityRail(
+                              compact: compact,
+                              warTokenBalance: widget.warTokenBalance,
+                              onOpenSettings: widget.onOpenSettings,
+                              onOpenLocker: widget.onOpenLocker,
                             ),
-                          ),
-                          _ModeRail(
-                            selectedMode: mode,
-                            chronicleAvailable: widget.chronicleAvailable,
-                            onChronicle: () =>
-                                setState(() => mode = GameMode.chronicle),
-                            onSkirmish: () =>
-                                setState(() => mode = GameMode.skirmish),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: TokenfrontSpacing.lg),
-                      if (mode == GameMode.chronicle) ...[
-                        _StoryRole(copy: copy, compact: compact),
-                        const SizedBox(height: TokenfrontSpacing.lg),
-                        if (lockedCore == null && operation != null) ...[
-                          _Prologue(prologue: copy.prologue),
-                          ExcludeSemantics(
-                            child: Text(
-                              'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
-                              style: TokenfrontType.instrument.copyWith(
-                                color: TokenfrontColors.quietText,
-                                fontSize: 9,
+                            SizedBox(
+                              height: compact
+                                  ? TokenfrontSpacing.lg + TokenfrontSpacing.xs
+                                  : TokenfrontSpacing.xxl -
+                                        TokenfrontSpacing.xs,
+                            ),
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              runSpacing: 10,
+                              children: [
+                                Text(
+                                  copy.commandDeck,
+                                  style: TokenfrontType.instrument.copyWith(
+                                    fontSize: compact ? 16 : 19,
+                                  ),
+                                ),
+                                if (widget.storyProgress.echoActive)
+                                  Text(
+                                    copy.echoCycleChip(
+                                      widget.storyProgress.displayCycle,
+                                    ),
+                                    key: const Key('echo-cycle-chip'),
+                                    style: TokenfrontType.instrument.copyWith(
+                                      fontSize: compact ? 11 : 13,
+                                      color: TokenfrontColors.volt,
+                                    ),
+                                  ),
+                                _ModeRail(
+                                  selectedMode: mode,
+                                  chronicleAvailable: widget.chronicleAvailable,
+                                  onChronicle: () =>
+                                      setState(() => mode = GameMode.chronicle),
+                                  onSkirmish: () =>
+                                      setState(() => mode = GameMode.skirmish),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: TokenfrontSpacing.lg),
+                            if (mode == GameMode.chronicle) ...[
+                              _StoryRole(copy: copy, compact: compact),
+                              const SizedBox(height: TokenfrontSpacing.lg),
+                              if (lockedCore == null && operation != null) ...[
+                                _Prologue(prologue: copy.prologue),
+                                ExcludeSemantics(
+                                  child: Text(
+                                    'OP-${(operation.index + 1).toString().padLeft(2, '0')}',
+                                    style: TokenfrontType.instrument.copyWith(
+                                      color: TokenfrontColors.quietText,
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              if (operation != null)
+                                _Briefing(
+                                  operation: StoryCatalog.byId(operation),
+                                  copy: copy,
+                                ),
+                              if (widget.storyProgress.echoActive &&
+                                  widget.storyProgress.ending != null)
+                                _EchoBanner(
+                                  ending: widget.storyProgress.ending!,
+                                  doctrine: widget.storyProgress.signalDoctrine,
+                                  copy: copy,
+                                ),
+                              if (pendingEnding)
+                                _EndingChoicePanel(
+                                  onChooseEnding: widget.onChooseEnding!,
+                                ),
+                              OrbitalProgressRing(
+                                progress: widget.storyProgress,
+                                lowSpec: widget.lowSpec,
+                                reduceMotion: widget.reduceMotion,
                               ),
+                              const SizedBox(height: 7),
+                              _CoreGrid(
+                                selected: selectedCore,
+                                locked: lockedCore != null,
+                                compact: compact || dense,
+                                onSelected: (faction) {
+                                  if (lockedCore != null) return;
+                                  widget.onSelectChronicleCore(faction);
+                                },
+                              ),
+                              const SizedBox(height: TokenfrontSpacing.lg),
+                              TacticalPanel(
+                                child: Text(
+                                  context.l10n.recoveryInstruction,
+                                  style: TokenfrontType.body,
+                                ),
+                              ),
+                            ] else ...[
+                              _FactionSelector(
+                                selected: widget.selectedSkirmishFaction,
+                                compact: compact || dense,
+                                onSelected: widget.onSelectSkirmishFaction,
+                              ),
+                              const SizedBox(height: 18),
+                              _ProtocolPanel(
+                                faction: widget.selectedSkirmishFaction,
+                              ),
+                              const SizedBox(height: 10),
+                              if (widget.storyProgress.ending != null)
+                                Text(
+                                  context.l10n.archiveSimulation,
+                                  textAlign: TextAlign.center,
+                                  style: TokenfrontType.instrument.copyWith(
+                                    color: TokenfrontColors.quietText,
+                                    fontSize: 9,
+                                  ),
+                                ),
+                            ],
+                            const SizedBox(height: 20),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                OutlinedButton.icon(
+                                  key: const Key('archive-action'),
+                                  onPressed: widget.onOpenArchive,
+                                  icon: const Icon(
+                                    Icons.archive_outlined,
+                                    size: 17,
+                                  ),
+                                  label: Text(copy.archive),
+                                ),
+                                if (mode == GameMode.skirmish)
+                                  const _RulesStrip(),
+                              ],
                             ),
-                          ),
-                        ],
-                        if (operation != null)
-                          _Briefing(
-                            operation: StoryCatalog.byId(operation),
-                            copy: copy,
-                          ),
-                        if (pendingEnding)
-                          _EndingChoicePanel(
-                            onChooseEnding: widget.onChooseEnding!,
-                          ),
-                        OrbitalProgressRing(
-                          progress: widget.storyProgress,
-                          lowSpec: widget.lowSpec,
-                          reduceMotion: widget.reduceMotion,
+                            if (widget.bannerVisible) ...[
+                              const SizedBox(height: 18),
+                              _SponsorRail(ad: widget.bannerAd),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 7),
-                        _CoreGrid(
-                          selected: selectedCore,
-                          locked: lockedCore != null,
-                          compact: compact || dense,
-                          onSelected: (faction) {
-                            if (lockedCore != null) return;
-                            widget.onSelectChronicleCore(faction);
-                          },
-                        ),
-                        const SizedBox(height: TokenfrontSpacing.lg),
-                        TacticalPanel(
-                          child: Text(
-                            context.l10n.recoveryInstruction,
-                            style: TokenfrontType.body,
-                          ),
-                        ),
-                        const SizedBox(height: TokenfrontSpacing.lg),
-                        if (!pendingEnding)
-                          TacticalButton(
-                            key: const Key('chronicle-deploy'),
-                            expanded: compact,
-                            label: operation == null
-                                ? context.l10n.chronicleUnavailable
-                                : context.l10n.recoveryTitle,
-                            color: selectedCore.visual.color,
-                            onPressed: operation == null
-                                ? null
-                                : () {
-                                    widget.onDeployChronicle();
-                                  },
-                          ),
-                      ] else ...[
-                        _FactionSelector(
-                          selected: widget.selectedSkirmishFaction,
-                          compact: compact || dense,
-                          onSelected: widget.onSelectSkirmishFaction,
-                        ),
-                        const SizedBox(height: 18),
-                        _ProtocolPanel(faction: widget.selectedSkirmishFaction),
-                        const SizedBox(height: 16),
-                        TacticalButton(
-                          key: const Key('skirmish-deploy'),
-                          expanded: compact,
-                          label: context.l10n.deploySignal,
-                          color: widget.selectedSkirmishFaction.visual.color,
-                          onPressed: widget.onDeploySkirmish,
-                        ),
-                        const SizedBox(height: 10),
-                        if (widget.storyProgress.ending != null)
-                          Text(
-                            context.l10n.archiveSimulation,
-                            textAlign: TextAlign.center,
-                            style: TokenfrontType.instrument.copyWith(
-                              color: TokenfrontColors.quietText,
-                              fontSize: 9,
-                            ),
-                          ),
-                      ],
-                      const SizedBox(height: 20),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          OutlinedButton.icon(
-                            key: const Key('archive-action'),
-                            onPressed: widget.onOpenArchive,
-                            icon: const Icon(Icons.archive_outlined, size: 17),
-                            label: Text(copy.archive),
-                          ),
-                          if (mode == GameMode.skirmish) const _RulesStrip(),
-                        ],
                       ),
-                      if (widget.bannerVisible) ...[
-                        const SizedBox(height: 18),
-                        _SponsorRail(ad: widget.bannerAd),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                if (showChronicleDeploy)
+                  _LobbyDeployBar(
+                    compact: compact,
+                    child: TacticalButton(
+                      key: const Key('chronicle-deploy'),
+                      expanded: compact,
+                      label: operation == null
+                          ? context.l10n.chronicleUnavailable
+                          : widget.storyProgress.echoActive
+                          ? context.l10n.echoDeploy
+                          : context.l10n.recoveryTitle,
+                      color: selectedCore.visual.color,
+                      onPressed: operation == null
+                          ? null
+                          : widget.onDeployChronicle,
+                    ),
+                  )
+                else if (showSkirmishDeploy)
+                  _LobbyDeployBar(
+                    compact: compact,
+                    child: TacticalButton(
+                      key: const Key('skirmish-deploy'),
+                      expanded: compact,
+                      label: context.l10n.deploySignal,
+                      color: widget.selectedSkirmishFaction.visual.color,
+                      onPressed: widget.onDeploySkirmish,
+                    ),
+                  ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LobbyDeployBar extends StatelessWidget {
+  const _LobbyDeployBar({required this.compact, required this.child});
+
+  final bool compact;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: TokenfrontColors.deepField.withValues(alpha: .94),
+        border: Border(top: BorderSide(color: TokenfrontColors.panelBorder)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xxl,
+          TokenfrontSpacing.md,
+          compact ? TokenfrontSpacing.lg : TokenfrontSpacing.xxl,
+          TokenfrontSpacing.md,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1060),
+            child: child,
           ),
         ),
       ),
@@ -299,6 +368,57 @@ class _StoryRole extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _EchoBanner extends StatelessWidget {
+  const _EchoBanner({
+    required this.ending,
+    required this.doctrine,
+    required this.copy,
+  });
+
+  final EndingChoice ending;
+  final SignalDoctrine doctrine;
+  final StoryLocalizations copy;
+
+  @override
+  Widget build(BuildContext context) {
+    final doctrineLine = copy.echoDoctrine(doctrine);
+    return Padding(
+      padding: const EdgeInsets.only(top: TokenfrontSpacing.md),
+      child: TacticalPanel(
+        key: const Key('echo-banner'),
+        borderColor: TokenfrontColors.volt.withValues(alpha: .55),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              copy.endingLabel(ending),
+              style: TokenfrontType.instrument.copyWith(
+                color: TokenfrontColors.volt,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: TokenfrontSpacing.sm),
+            Text(
+              copy.echoBanner(ending),
+              style: TokenfrontType.body.copyWith(fontSize: 12),
+            ),
+            if (doctrineLine != null) ...[
+              const SizedBox(height: TokenfrontSpacing.sm),
+              Text(
+                doctrineLine,
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.quietText,
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Briefing extends StatelessWidget {
@@ -520,7 +640,7 @@ class _CoreCard extends StatelessWidget {
                 ),
               ),
               Text(
-                      context.l10n.unitsCount(100),
+                context.l10n.unitsCount(100),
                 style: TokenfrontType.body.copyWith(
                   fontSize: compact ? 8 : 9,
                   color: TokenfrontColors.quietText,

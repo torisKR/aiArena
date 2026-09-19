@@ -2,6 +2,74 @@ import 'simulation.dart';
 
 enum RecoveryOutcome { recovered, timeout, alliesLost }
 
+/// Per-cycle recovery match rules. Occupancy, radius, and unit count stay
+/// fixed at the cycle-1 values; only the match clock shortens.
+final class RecoveryRules {
+  const RecoveryRules({
+    required this.requiredSeconds,
+    required this.midwaySeconds,
+    required this.matchLimitSeconds,
+    required this.radius,
+    required this.unitsPerFaction,
+  });
+
+  static const cycle1 = RecoveryRules(
+    requiredSeconds: 8.0,
+    midwaySeconds: 5.0,
+    matchLimitSeconds: 90,
+    radius: 64.0,
+    unitsPerFaction: 100,
+  );
+
+  final double requiredSeconds;
+  final double midwaySeconds;
+  final double matchLimitSeconds;
+  final double radius;
+  final int unitsPerFaction;
+
+  static RecoveryRules forCycle(int cycle) {
+    final n = cycle < 1 ? 1 : cycle;
+    if (n == 1) return cycle1;
+    return RecoveryRules(
+      requiredSeconds: 8.0,
+      midwaySeconds: 5.0,
+      matchLimitSeconds: n == 2
+          ? 78
+          : n == 3
+          ? 66
+          : 54,
+      radius: 64.0,
+      unitsPerFaction: 100,
+    );
+  }
+
+  static int matchReward({
+    required int cycle,
+    required bool succeeded,
+    required int recoveredCount,
+  }) {
+    if (!succeeded) return 0;
+    final base = recoveredCount * 20 < 40 ? 40 : recoveredCount * 20;
+    final n = cycle < 1 ? 1 : cycle;
+    if (n <= 2) return base;
+    if (n == 3) return 40;
+    return 20;
+  }
+
+  BattleConfig get battleConfig {
+    if (matchLimitSeconds == RecoveryState.config.matchLimitSeconds &&
+        unitsPerFaction == RecoveryState.config.unitsPerFaction) {
+      return RecoveryState.config;
+    }
+    return BattleConfig(
+      unitsPerFaction: unitsPerFaction,
+      worldWidth: 1200,
+      worldHeight: 800,
+      matchLimitSeconds: matchLimitSeconds,
+    );
+  }
+}
+
 /// Match-owned objective state. A command transfer never resets this state.
 final class RecoveryState {
   static const config = BattleConfig(
@@ -10,6 +78,8 @@ final class RecoveryState {
     worldHeight: 800,
     matchLimitSeconds: 90,
   );
+  static BattleConfig configForCycle(int cycle) =>
+      RecoveryRules.forCycle(cycle).battleConfig;
   static const requiredSeconds = 8.0;
   static const midwaySeconds = 5.0;
   static const radius = 64.0;

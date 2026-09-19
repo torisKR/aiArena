@@ -357,6 +357,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
         rewardedAdCompleted: false,
       );
     }
+    _grantEchoCosmetics();
     _schedulePersist();
     notifyListeners();
     return transition;
@@ -364,8 +365,29 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   void chooseChronicleEnding(EndingChoice choice) {
     _storyProgress = _campaignController.chooseEnding(_storyProgress, choice);
+    _grantEchoCosmetics();
     _schedulePersist();
     notifyListeners();
+  }
+
+  void _grantEchoCosmetics() {
+    final progress = _storyProgress;
+    final firstEchoCycleCleared =
+        progress.echoCycle >= 3 ||
+        (progress.echoCycle == 2 &&
+            progress.echoConcludedOperations.length ==
+                StoryOperationId.values.length);
+    if (firstEchoCycleCleared) {
+      wallet.unlock(CosmeticCatalog.byId('color_echo_orbit').item);
+    }
+    final endings = <EndingChoice>{
+      if (progress.ending != null) progress.ending!,
+      if (progress.echoEnding != null) progress.echoEnding!,
+    };
+    if (endings.contains(EndingChoice.claimRelay) &&
+        endings.contains(EndingChoice.openRelay)) {
+      wallet.unlock(CosmeticCatalog.byId('trail_checksum_scar').item);
+    }
   }
 
   void restartChronicle() {

@@ -50,6 +50,17 @@ final class CampaignController {
             campaignFaction: campaignFaction,
           );
 
+    if (progress.ending != null && !replay) {
+      return _concludeEcho(
+        progress: progress,
+        ledger: ledger,
+        operation: operation,
+        operationId: operationId,
+        report: report,
+        succeeded: succeeded,
+      );
+    }
+
     // Duplicate non-replay delivery is observational only. A successful
     // replay may restore mastery for a concluded operation, without moving
     // the sequential campaign pointer or changing transmissions/ending.
@@ -70,7 +81,10 @@ final class CampaignController {
       );
       final paysBonus = !hasClaim;
       return CampaignTransition(
-        nextProgress: progress.copyWith(medals: medals),
+        nextProgress: progress.copyWith(
+          medals: medals,
+          bestClearSeconds: _bestClearSeconds(progress, operationId, report),
+        ),
         nextLedger: paysBonus
             ? ProfileRewardLedger(
                 claimedDirectiveBonusIds: {
@@ -120,12 +134,85 @@ final class CampaignController {
         medals: medals,
         recoveredTransmissions: transmissions,
         signalRoutes: signalRoutes,
+        bestClearSeconds: _bestClearSeconds(progress, operationId, report),
       ),
       nextLedger: nextLedger,
       directiveSucceeded: succeeded,
       directiveBonusCredit: paysBonus ? operation.oneTimeBonus : 0,
       firstConclusion: true,
     );
+  }
+
+  CampaignTransition _concludeEcho({
+    required StoryProgress progress,
+    required ProfileRewardLedger ledger,
+    required StoryOperation operation,
+    required StoryOperationId operationId,
+    required BattleReport report,
+    required bool succeeded,
+  }) {
+    if (progress.currentOperation != operationId) {
+      throw StateError('story operation ${operation.id.name} is not unlocked');
+    }
+
+    var echoCycle = progress.echoCycle;
+    var echoConcluded = {...progress.echoConcludedOperations};
+    var echoRoutes = {...progress.echoSignalRoutes};
+    if (echoConcluded.length == StoryOperationId.values.length) {
+      echoCycle += 1;
+      echoConcluded = <StoryOperationId>{};
+      echoRoutes = <StoryOperationId, RelayRoute>{};
+    }
+    final firstConclusion = !echoConcluded.contains(operationId);
+    echoConcluded.add(operationId);
+    if (report.relayRoute != null) {
+      echoRoutes[operationId] = report.relayRoute!;
+    }
+    final medals = {...progress.medals};
+    if (!medals.contains(operationId)) medals.add(operationId);
+
+    final hasClaim = ledger.claimedDirectiveBonusIds.contains(
+      operation.bonusClaimId,
+    );
+    final paysBonus = succeeded && !hasClaim;
+    final nextLedger = paysBonus
+        ? ProfileRewardLedger(
+            claimedDirectiveBonusIds: {
+              ...ledger.claimedDirectiveBonusIds,
+              operation.bonusClaimId,
+            },
+          )
+        : ledger;
+
+    return CampaignTransition(
+      nextProgress: progress.copyWith(
+        medals: medals,
+        echoCycle: echoCycle,
+        echoConcludedOperations: echoConcluded,
+        echoSignalRoutes: echoRoutes,
+        bestClearSeconds: _bestClearSeconds(progress, operationId, report),
+      ),
+      nextLedger: nextLedger,
+      directiveSucceeded: succeeded,
+      directiveBonusCredit: paysBonus ? operation.oneTimeBonus : 0,
+      firstConclusion: firstConclusion,
+    );
+  }
+
+  Map<StoryOperationId, double> _bestClearSeconds(
+    StoryProgress progress,
+    StoryOperationId operationId,
+    BattleReport report,
+  ) {
+    final elapsed = report.recoveryElapsedSeconds;
+    if (elapsed == null || !elapsed.isFinite || elapsed <= 0) {
+      return progress.bestClearSeconds;
+    }
+    final current = progress.bestClearSeconds[operationId];
+    if (current != null && current <= elapsed) {
+      return progress.bestClearSeconds;
+    }
+    return {...progress.bestClearSeconds, operationId: elapsed};
   }
 
   DirectiveProgress directiveProgress({
@@ -166,10 +253,21 @@ final class CampaignController {
     )) {
       throw StateError('OP-05 must conclude before choosing an ending');
     }
-    if (progress.ending != null) {
-      throw StateError('campaign ending has already been chosen');
+    if (progress.ending == null) {
+      return progress.copyWith(
+        ending: choice,
+        echoCycle: progress.echoCycle < 2 ? 2 : progress.echoCycle,
+      );
     }
-    return progress.copyWith(ending: choice);
+    if (progress.echoEnding != null) {
+      throw StateError('echo ending has already been chosen');
+    }
+    if (!progress.echoConcludedOperations.contains(
+      StoryOperationId.lastInstruction,
+    )) {
+      throw StateError('echo OP-05 must conclude before residual ending');
+    }
+    return progress.copyWith(echoEnding: choice);
   }
 
   StoryProgress restart(StoryProgress progress) => StoryProgress.initial();

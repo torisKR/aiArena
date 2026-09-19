@@ -103,7 +103,16 @@ final class _ArchiveSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: TokenfrontSpacing.xs),
-            if (storyProgress.ending != null)
+            if (storyProgress.echoActive)
+              Text(
+                copy.echoArchiveCaption(storyProgress.displayCycle),
+                key: const Key('echo-archive-caption'),
+                style: TokenfrontType.instrument.copyWith(
+                  color: TokenfrontColors.volt,
+                  fontSize: 9,
+                ),
+              )
+            else if (storyProgress.ending != null)
               Text(
                 copy.archiveSimulation,
                 style: TokenfrontType.instrument.copyWith(
@@ -132,6 +141,21 @@ final class _ArchiveSheet extends StatelessWidget {
                       copy.endingEpilogue(ending),
                       style: TokenfrontType.body,
                     ),
+                    if (storyProgress.echoEnding case final residual?) ...[
+                      const SizedBox(height: TokenfrontSpacing.md),
+                      Text(
+                        copy.echoResidualHeading,
+                        style: TokenfrontType.instrument.copyWith(
+                          color: TokenfrontColors.threadCyan,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: TokenfrontSpacing.sm),
+                      Text(
+                        copy.endingEpilogue(residual),
+                        style: TokenfrontType.body,
+                      ),
+                    ],
                     const SizedBox(height: TokenfrontSpacing.md),
                     Text(
                       copy.archiveSimulation,
@@ -267,7 +291,7 @@ final class _ArchiveRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = StoryLocalizations(context.l10n);
     final concluded = progress.concludedOperations.contains(operation.id);
-    final current = progress.currentOperation == operation.id;
+    final current = !concluded && progress.currentOperation == operation.id;
     final locked = !concluded && !current;
     if (locked) {
       return Padding(
@@ -441,6 +465,18 @@ final class _ArchiveRow extends StatelessWidget {
                       color: TokenfrontColors.volt,
                     ),
                   ),
+                  if (progress.bestClearSeconds[operation.id]
+                      case final best?) ...[
+                    const SizedBox(height: TokenfrontSpacing.xs),
+                    Text(
+                      copy.echoBestClear(best.round()),
+                      key: Key('echo-best-clear-${operation.id.name}'),
+                      style: TokenfrontType.instrument.copyWith(
+                        color: TokenfrontColors.threadCyan,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -145,8 +145,18 @@ class _ResultScreenState extends State<ResultScreen> {
               StoryOperationId.lastInstruction,
             ) ==
             true;
+    final echoResidualReady =
+        chronicle &&
+        operation.id == StoryOperationId.lastInstruction &&
+        ending != null &&
+        widget.storyProgress?.echoEnding == null &&
+        widget.storyProgress?.echoConcludedOperations.contains(
+              StoryOperationId.lastInstruction,
+            ) ==
+            true;
     final showEndingChoices =
-        endingUnlocked && ending == null && widget.onChooseEnding != null;
+        ((endingUnlocked && ending == null) || echoResidualReady) &&
+        widget.onChooseEnding != null;
     final route = operation == null
         ? null
         : widget.relayRoute ?? widget.storyProgress?.signalRoutes[operation.id];
@@ -415,11 +425,10 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ),
               ),
-              if (chronicle &&
-                  (widget.onContinue != null ||
-                      showEndingChoices))
+              if (chronicle && (widget.onContinue != null || showEndingChoices))
                 _ChronicleActionLayer(
                   showEndingChoices: showEndingChoices,
+                  residual: echoResidualReady,
                   onContinue: () => _navigate(widget.onContinue),
                   continueLabel: continueLabel,
                   onRetry: () => _navigate(widget.onRematch),
@@ -626,6 +635,7 @@ class _ChronicleDebriefPanel extends StatelessWidget {
 class _ChronicleActionLayer extends StatelessWidget {
   const _ChronicleActionLayer({
     required this.showEndingChoices,
+    this.residual = false,
     required this.onContinue,
     required this.continueLabel,
     required this.onRetry,
@@ -634,6 +644,7 @@ class _ChronicleActionLayer extends StatelessWidget {
   });
 
   final bool showEndingChoices;
+  final bool residual;
   final VoidCallback? onContinue;
   final String continueLabel;
   final VoidCallback onRetry;
@@ -664,7 +675,10 @@ class _ChronicleActionLayer extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(copy.endingHeading, style: TokenfrontType.instrument),
+                    Text(
+                      residual ? copy.echoResidualHeading : copy.endingHeading,
+                      style: TokenfrontType.instrument,
+                    ),
                     const SizedBox(height: TokenfrontSpacing.sm),
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -726,36 +740,94 @@ class _ChronicleActionLayer extends StatelessWidget {
                   ],
                 ),
               )
-            : Wrap(
-                alignment: WrapAlignment.center,
-                spacing: TokenfrontSpacing.sm,
-                runSpacing: TokenfrontSpacing.sm,
-                children: [
-                  if (onContinue != null)
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        minHeight: TokenfrontSizes.buttonHeight,
-                      ),
-                      child: TacticalButton(
-                        label: continueLabel,
-                        onPressed: onContinue,
-                        color: TokenfrontColors.relayIvory,
-                        expanded: true,
-                      ),
-                    ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: TokenfrontSizes.buttonHeight,
-                    ),
-                    child: TacticalButton(
-                      label: copy.retryDirective,
-                      onPressed: onRetry,
-                      color: retryColor,
-                    ),
-                  ),
-                ],
+            : _ChronicleActionRow(
+                onContinue: onContinue,
+                continueLabel: continueLabel,
+                onRetry: onRetry,
+                retryColor: retryColor,
               ),
       ),
+    );
+  }
+}
+
+/// Continue and retry share one row: continue on the left, retry on the right.
+/// Falls back to a stacked column only when the row cannot fit both controls.
+class _ChronicleActionRow extends StatelessWidget {
+  const _ChronicleActionRow({
+    required this.onContinue,
+    required this.continueLabel,
+    required this.onRetry,
+    required this.retryColor,
+  });
+
+  final VoidCallback? onContinue;
+  final String continueLabel;
+  final VoidCallback onRetry;
+  final Color retryColor;
+
+  static const double _minSideWidth = 132;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = StoryLocalizations(context.l10n);
+
+    Widget control(Widget button) => ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: TokenfrontSizes.buttonHeight,
+      ),
+      child: button,
+    );
+
+    final retry = control(
+      TacticalButton(
+        label: copy.retryDirective,
+        onPressed: onRetry,
+        color: retryColor,
+        expanded: true,
+      ),
+    );
+
+    if (onContinue == null) {
+      return retry;
+    }
+
+    final continueControl = control(
+      TacticalButton(
+        label: continueLabel,
+        onPressed: onContinue,
+        color: TokenfrontColors.relayIvory,
+        expanded: true,
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fitsSideBySide =
+            constraints.maxWidth >= _minSideWidth * 2 + TokenfrontSpacing.sm;
+        if (!fitsSideBySide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              retry,
+              const SizedBox(height: TokenfrontSpacing.sm),
+              continueControl,
+            ],
+          );
+        }
+        // IntrinsicHeight bounds the row so stretch can equalise both
+        // controls to the taller label's height.
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: retry),
+              const SizedBox(width: TokenfrontSpacing.sm),
+              Expanded(child: continueControl),
+            ],
+          ),
+        );
+      },
     );
   }
 }

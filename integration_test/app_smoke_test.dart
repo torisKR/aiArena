@@ -246,7 +246,7 @@ void main() {
         stateStore: store,
       );
       addTearDown(recreated.dispose);
-      expect(recreated.storyProgress.currentOperation, isNull);
+      expect(recreated.storyProgress.currentOperation, StoryOperationId.wake);
       expect(recreated.storyProgress.concludedOperations, {
         ...StoryOperationId.values,
       });
