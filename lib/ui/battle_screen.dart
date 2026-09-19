@@ -253,19 +253,19 @@ class BattleScreenState extends State<BattleScreen>
                     autofocus: true,
                   ),
                 ),
-                SafeArea(
-                  minimum: EdgeInsets.all(short ? 6 : 10),
-                  child: ValueListenableBuilder<BattleHudSnapshot>(
-                    valueListenable: game.hud,
-                    builder: (context, snapshot, _) => game.isRecovery
-                        ? RecoveryHud(
-                            game: game,
-                            snapshot: snapshot,
-                            paused: game.paused,
-                            enabled: _gameplayInputEnabled,
-                            onPause: _toggleUserPause,
-                          )
-                        : Stack(
+                ValueListenableBuilder<BattleHudSnapshot>(
+                  valueListenable: game.hud,
+                  builder: (context, snapshot, _) => game.isRecovery
+                      ? RecoveryHud(
+                          game: game,
+                          snapshot: snapshot,
+                          paused: game.paused,
+                          enabled: _gameplayInputEnabled,
+                          onPause: _toggleUserPause,
+                        )
+                      : SafeArea(
+                          minimum: EdgeInsets.all(short ? 6 : 10),
+                          child: Stack(
                             fit: StackFit.expand,
                             children: [
                               Align(
@@ -389,7 +389,7 @@ class BattleScreenState extends State<BattleScreen>
                                 ),
                             ],
                           ),
-                  ),
+                        ),
                 ),
               ],
             );

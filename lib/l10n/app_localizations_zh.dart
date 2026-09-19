@@ -19,6 +19,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recoveryAutomatic => '自动移动 · 自动战斗 · 自动接手';
 
   @override
+  String get recoveryChooseDestination => '选择目的地';
+
+  @override
   String get recoveryWon => '信号回收完成';
 
   @override
@@ -37,7 +40,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String recoveryDestination(int number, int seconds) {
-    return '信号 $number：$seconds/10秒';
+    return '信号 $number：$seconds/8秒';
   }
 
   @override
@@ -388,6 +391,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cosmeticFractureDescription => '清晰的几何裂变，不影响游戏玩法。';
+
+  @override
+  String get cosmeticEchoOrbitName => 'ECHO ORBIT';
+
+  @override
+  String get cosmeticEchoOrbitDescription => '首次回响周期通关后授予的残余轨道颜料。';
+
+  @override
+  String get cosmeticChecksumScarName => 'CHECKSUM SCAR';
+
+  @override
+  String get cosmeticChecksumScarDescription => '记录两种结局后授予的残余伤痕轨迹。';
 
   @override
   String get signalLostObserving => '信号丢失  /  观战剩余战局';
@@ -846,7 +861,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      '战役核心、进度、传输、奖章和结局将重置。钱包、设置和外观保留。此前已发放的作战奖励无法再次获得。';
+      '战役核心、进度、传输、奖章、回响周期和结局将重置。钱包、设置和外观保留。此前已发放的作战奖励无法再次获得。';
+
+  @override
+  String get echoDeploy => '回收残响';
+
+  @override
+  String echoCycleChip(int cycle) {
+    return '回响 $cycle';
+  }
+
+  @override
+  String get echoBannerClaim => 'Orbit 00仍将一个核心加冕。残余伤痕争夺席位。回收三个节点。';
+
+  @override
+  String get echoBannerOpen => '中继已开放。残余数据包仍在发射。在循环遗忘自身之前回收三个节点。';
+
+  @override
+  String get echoDoctrinePreserve => '正史教义：连续。残余循环测试压力是否本可守住。';
+
+  @override
+  String get echoDoctrineForce => '正史教义：压力。残余循环测试连续是否本可守住。';
+
+  @override
+  String get echoDoctrineBalanced => '正史教义：适应。残余循环不再与自身一致。';
+
+  @override
+  String get echoResidualHeading => '残余选择';
+
+  @override
+  String echoBestClear(int seconds) {
+    return '最佳 $seconds秒';
+  }
+
+  @override
+  String echoArchiveCaption(int cycle) {
+    return '回响周期 $cycle // 正史结局保留';
+  }
+
+  @override
+  String get echoCosmeticOrbit => '已解锁 ECHO ORBIT';
+
+  @override
+  String get echoCosmeticScar => '已解锁 CHECKSUM SCAR';
 
   @override
   String get endingClaimRelay => '接管中继站';

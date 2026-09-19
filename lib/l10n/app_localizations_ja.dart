@@ -19,6 +19,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recoveryAutomatic => '自動移動 · 自動戦闘 · 自動引き継ぎ';
 
   @override
+  String get recoveryChooseDestination => '目的地を選ぶ';
+
+  @override
   String get recoveryWon => '信号回収完了';
 
   @override
@@ -37,7 +40,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String recoveryDestination(int number, int seconds) {
-    return '信号 $number: $seconds/10秒';
+    return '信号 $number: $seconds/8秒';
   }
 
   @override
@@ -389,6 +392,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get cosmeticFractureDescription => 'ゲームプレイに影響しない鮮明な幾何学破砕。';
+
+  @override
+  String get cosmeticEchoOrbitName => 'ECHO ORBIT';
+
+  @override
+  String get cosmeticEchoOrbitDescription => '最初のエコー周期クリア後に付与される残響軌道の顔料。';
+
+  @override
+  String get cosmeticChecksumScarName => 'CHECKSUM SCAR';
+
+  @override
+  String get cosmeticChecksumScarDescription =>
+      '両方のエンディングを記録すると付与される残響の傷跡トレイル。';
 
   @override
   String get signalLostObserving => 'シグナル喪失  /  残存戦を観戦';
@@ -854,7 +870,50 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      'キャンペーンコア、進行、送信、メダル、エンディングをリセットします。ウォレット、設定、コスメは保持されます。以前に付与された作戦ボーナスは再獲得できません。';
+      'キャンペーンコア、進行、送信、メダル、エコー周期、エンディングをリセットします。ウォレット、設定、コスメは保持されます。以前に付与された作戦ボーナスは再獲得できません。';
+
+  @override
+  String get echoDeploy => '残響を回収';
+
+  @override
+  String echoCycleChip(int cycle) {
+    return 'エコー $cycle';
+  }
+
+  @override
+  String get echoBannerClaim => 'Orbit 00はなお一つのコアを戴く。残った傷痕がその座を争う。三つのノードを回収せよ。';
+
+  @override
+  String get echoBannerOpen =>
+      'リレーは開いている。残存パケットはなお発火する。ループが己を忘れる前に三つのノードを回収せよ。';
+
+  @override
+  String get echoDoctrinePreserve => '正史教義: 連続。残響ループは圧力が持ったかを試す。';
+
+  @override
+  String get echoDoctrineForce => '正史教義: 圧力。残響ループは連続が持ったかを試す。';
+
+  @override
+  String get echoDoctrineBalanced => '正史教義: 適応。残響ループはもはや自らと一致しない。';
+
+  @override
+  String get echoResidualHeading => '残響の選択';
+
+  @override
+  String echoBestClear(int seconds) {
+    return '最速 $seconds秒';
+  }
+
+  @override
+  String echoArchiveCaption(int cycle) {
+    return 'エコー周期 $cycle // 正史エンディング保持';
+  }
+
+  @override
+  String get echoCosmeticOrbit => 'ECHO ORBIT を解除';
+
+  @override
+  String get echoCosmeticScar => 'CHECKSUM SCAR を解除';
 
   @override
   String get endingClaimRelay => 'リレーを掌握';

@@ -10,10 +10,12 @@ final class RecoveryState {
     worldHeight: 800,
     matchLimitSeconds: 90,
   );
-  static const requiredSeconds = 10.0;
+  static const requiredSeconds = 8.0;
+  static const midwaySeconds = 5.0;
   static const radius = 64.0;
   static const destinations = [Vec2(300, 240), Vec2(900, 240), Vec2(600, 600)];
   final List<double> _seconds = [0, 0, 0];
+  final List<bool> _midwayCued = [false, false, false];
   int selected = 0;
   RecoveryOutcome? outcome;
 
@@ -26,6 +28,7 @@ final class RecoveryState {
 
   void reset() {
     _seconds.fillRange(0, 3, 0);
+    _midwayCued.fillRange(0, 3, false);
     selected = 0;
     outcome = null;
   }
@@ -39,6 +42,20 @@ final class RecoveryState {
     }
     selected = index;
     return true;
+  }
+
+  /// Returns destination indices that crossed [midwaySeconds] this tick.
+  List<int> advanceMidwayCues() {
+    final cues = <int>[];
+    for (var index = 0; index < 3; index++) {
+      if (_midwayCued[index]) continue;
+      if (_seconds[index] >= midwaySeconds &&
+          _seconds[index] < requiredSeconds) {
+        _midwayCued[index] = true;
+        cues.add(index);
+      }
+    }
+    return cues;
   }
 
   Vec2 direction(Unit unit) {

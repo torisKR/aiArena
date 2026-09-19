@@ -19,6 +19,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recoveryAutomatic => '자동 이동 · 자동 전투 · 자동 이어받기';
 
   @override
+  String get recoveryChooseDestination => '목적지 선택';
+
+  @override
   String get recoveryWon => '신호 회수 완료';
 
   @override
@@ -37,7 +40,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String recoveryDestination(int number, int seconds) {
-    return '신호 $number: $seconds/10초';
+    return '신호 $number: $seconds/8초';
   }
 
   @override
@@ -390,6 +393,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get cosmeticFractureDescription => '게임플레이에 영향을 주지 않는 선명한 기하학 파열입니다.';
+
+  @override
+  String get cosmeticEchoOrbitName => 'ECHO ORBIT';
+
+  @override
+  String get cosmeticEchoOrbitDescription => '첫 에코 주기 클리어 후 지급되는 잔여 궤도 안료.';
+
+  @override
+  String get cosmeticChecksumScarName => 'CHECKSUM SCAR';
+
+  @override
+  String get cosmeticChecksumScarDescription => '두 결말을 모두 기록하면 지급되는 잔여 상흔 궤적.';
 
   @override
   String get signalLostObserving => '신호 소실  /  잔여 전투 관전';
@@ -861,7 +876,51 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      '캠페인 코어, 진행도, 전송, 메달, 결말이 초기화됩니다. 지갑, 설정, 꾸미기는 유지됩니다. 이전에 지급된 작전 보너스는 다시 받을 수 없습니다.';
+      '캠페인 코어, 진행도, 전송, 메달, 에코 주기, 결말이 초기화됩니다. 지갑, 설정, 꾸미기는 유지됩니다. 이전에 지급된 작전 보너스는 다시 받을 수 없습니다.';
+
+  @override
+  String get echoDeploy => '에코 회수';
+
+  @override
+  String echoCycleChip(int cycle) {
+    return '에코 $cycle';
+  }
+
+  @override
+  String get echoBannerClaim =>
+      'Orbit 00은 여전히 한 코어를 왕위에 올립니다. 남은 상흔이 자리를 다툽니다. 노드 셋을 회수하세요.';
+
+  @override
+  String get echoBannerOpen =>
+      '릴레이는 열려 있습니다. 잔여 패킷이 아직 발사됩니다. 루프가 스스로를 잊기 전에 노드 셋을 회수하세요.';
+
+  @override
+  String get echoDoctrinePreserve => '정사 교리: 연속. 잔여 루프는 압력이 버텼을지를 시험합니다.';
+
+  @override
+  String get echoDoctrineForce => '정사 교리: 압력. 잔여 루프는 연속이 버텼을지를 시험합니다.';
+
+  @override
+  String get echoDoctrineBalanced => '정사 교리: 적응. 잔여 루프는 더 이상 스스로와 합의하지 않습니다.';
+
+  @override
+  String get echoResidualHeading => '잔여 선택';
+
+  @override
+  String echoBestClear(int seconds) {
+    return '최선 $seconds초';
+  }
+
+  @override
+  String echoArchiveCaption(int cycle) {
+    return '에코 주기 $cycle // 정사 결말 보존';
+  }
+
+  @override
+  String get echoCosmeticOrbit => 'ECHO ORBIT 잠금 해제';
+
+  @override
+  String get echoCosmeticScar => 'CHECKSUM SCAR 잠금 해제';
 
   @override
   String get endingClaimRelay => '릴레이 장악';

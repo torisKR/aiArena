@@ -8,7 +8,7 @@ import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart' show KeyEventResult;
+import 'package:flutter/widgets.dart' show KeyEventResult, MediaQuery;
 
 import '../design/tokens.dart';
 import '../services/audio/game_audio_service.dart';
@@ -17,6 +17,13 @@ import 'faction_visuals.dart';
 import 'simulation.dart';
 import 'recovery.dart';
 import '../story/story_models.dart';
+
+/// Canvas-space top of a combat-flash caption. The unclamped caption sits
+/// 18 px above the event; the result is never above [minCanvasY].
+double combatFlashLabelCanvasTop({
+  required double eventCanvasY,
+  required double minCanvasY,
+}) => math.max(eventCanvasY - 18, minCanvasY);
 
 enum HandoffStage {
   impactHold,
@@ -214,6 +221,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   final bool audioEnabled;
   final GameAudioService? audio;
   bool _recoveryAcknowledged = false;
+  final List<bool> _recoveryMidwayCues = [false, false, false];
   bool get awaitingRecoveryInstruction => isRecovery && !_recoveryAcknowledged;
 
   void acknowledgeRecoveryInstruction() {
@@ -223,6 +231,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   void playCue(GameAudioCue cue) {
     if (audio case final service?) unawaited(service.play(cue));
   }
+
   final String combatWinCode;
   final String combatOutCode;
 
@@ -238,6 +247,8 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
   void selectDestination(int index) {
     if (!paused && simulation.recovery?.select(index) == true) {
       acknowledgeRecoveryInstruction();
+      if (hapticsEnabled) HapticFeedback.lightImpact();
+      playCue(GameAudioCue.commandRelay);
       _publishHud();
     }
   }
@@ -697,6 +708,14 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     final elapsedBeforeStep = simulation.matchElapsed;
     final recoveredBeforeStep = simulation.recovery?.recoveredCount ?? 0;
     simulation.step(simulationDt);
+    if (simulation.recovery case final recovery?) {
+      for (final index in recovery.advanceMidwayCues()) {
+        if (_recoveryMidwayCues[index]) continue;
+        _recoveryMidwayCues[index] = true;
+        if (hapticsEnabled) HapticFeedback.lightImpact();
+        playCue(GameAudioCue.commandRelay);
+      }
+    }
     if ((simulation.recovery?.recoveredCount ?? 0) > recoveredBeforeStep) {
       playCue(GameAudioCue.recoveryComplete);
     }
@@ -1153,8 +1172,54 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
           Paint()
             ..color = color
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2,
+            ..strokeWidth = recovery.selected == index ? 4 : 2,
         );
+        // Occupancy arc: the node itself shows banked progress, so the 5s
+        // midway beat is readable without relying on audio or haptics.
+        final banked = recovery.seconds[index];
+        if (banked > 0) {
+          const arcRadius = RecoveryState.radius - 7;
+          final sweep =
+              (banked / RecoveryState.requiredSeconds).clamp(0.0, 1.0) *
+              math.pi *
+              2;
+          canvas.drawArc(
+            Rect.fromCircle(center: center, radius: arcRadius),
+            -math.pi / 2,
+            sweep,
+            false,
+            Paint()
+              ..color = color
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 5
+              ..strokeCap = StrokeCap.round,
+          );
+        }
+        // Midway notch at 5s, so crossing it is a visible event.
+        if (banked < RecoveryState.requiredSeconds) {
+          const midwayAngle =
+              -math.pi / 2 +
+              (RecoveryState.midwaySeconds / RecoveryState.requiredSeconds) *
+                  math.pi *
+                  2;
+          final reached = banked >= RecoveryState.midwaySeconds;
+          final inner =
+              center +
+              Offset(math.cos(midwayAngle), math.sin(midwayAngle)) *
+                  (RecoveryState.radius - 13);
+          final outer =
+              center +
+              Offset(math.cos(midwayAngle), math.sin(midwayAngle)) *
+                  (RecoveryState.radius - 1);
+          canvas.drawLine(
+            inner,
+            outer,
+            Paint()
+              ..color = color.withValues(alpha: reached ? 1 : .45)
+              ..strokeWidth = reached ? 3 : 2
+              ..strokeCap = StrokeCap.round,
+          );
+        }
         final label = TextPainter(
           text: TextSpan(
             text: '${index + 1}',
@@ -1196,7 +1261,7 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
         _drawUnit(canvas, unit, zoom);
       }
     }
-    _drawCombatFlashes(canvas, zoom);
+    _drawCombatFlashes(canvas, zoom, renderCenter);
     if (_handoffElapsed >= 0 && !reduceMotion) _drawRelayTape(canvas, zoom);
     canvas.restore();
 
@@ -1618,7 +1683,17 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
     return path..close();
   }
 
-  void _drawCombatFlashes(Canvas canvas, double zoom) {
+  double get _combatFlashMinCanvasY {
+    const floor = 8.0;
+    final ctx = buildContext;
+    if (ctx == null || !ctx.mounted) return floor;
+    final mq = MediaQuery.maybeOf(ctx);
+    if (mq == null) return floor;
+    return math.max(floor, math.max(mq.padding.top, mq.viewPadding.top));
+  }
+
+  void _drawCombatFlashes(Canvas canvas, double zoom, Vec2 renderCenter) {
+    final minCanvasY = _combatFlashMinCanvasY;
     for (final flash in _combatFlashes) {
       final duration = lowSpecMode ? .26 : _combatFlashDuration;
       final age = (_realElapsed - flash.createdAt) / duration;
@@ -1652,7 +1727,13 @@ class TokenfrontGame extends FlameGame with KeyboardEvents {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      painter.paint(canvas, center + Offset(-painter.width / 2, -18 / zoom));
+      final eventCanvasY = size.y / 2 + (center.dy - renderCenter.y) * zoom;
+      final labelCanvasTop = combatFlashLabelCanvasTop(
+        eventCanvasY: eventCanvasY,
+        minCanvasY: minCanvasY,
+      );
+      final labelWorldY = renderCenter.y + (labelCanvasTop - size.y / 2) / zoom;
+      painter.paint(canvas, Offset(center.dx - painter.width / 2, labelWorldY));
     }
   }
 

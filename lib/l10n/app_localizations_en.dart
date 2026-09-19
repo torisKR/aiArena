@@ -19,6 +19,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recoveryAutomatic => 'AUTO MOVE · AUTO COMBAT · AUTO CONTINUE';
 
   @override
+  String get recoveryChooseDestination => 'CHOOSE DESTINATION';
+
+  @override
   String get recoveryWon => 'SIGNALS RECOVERED';
 
   @override
@@ -37,7 +40,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recoveryDestination(int number, int seconds) {
-    return 'Signal $number: $seconds/10s';
+    return 'Signal $number: $seconds/8s';
   }
 
   @override
@@ -424,6 +427,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cosmeticFractureDescription =>
       'A crisp geometric break with no gameplay effect.';
+
+  @override
+  String get cosmeticEchoOrbitName => 'ECHO ORBIT';
+
+  @override
+  String get cosmeticEchoOrbitDescription =>
+      'Residual orbit pigment granted after the first echo cycle.';
+
+  @override
+  String get cosmeticChecksumScarName => 'CHECKSUM SCAR';
+
+  @override
+  String get cosmeticChecksumScarDescription =>
+      'A residual scar trail granted for recording both endings.';
 
   @override
   String get signalLostObserving => 'SIGNAL LOST  /  OBSERVING REMAINING WAR';
@@ -918,7 +935,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restartDisclosure =>
-      'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.';
+      'Campaign core, progress, transmissions, medals, echo cycles, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.';
+
+  @override
+  String get echoDeploy => 'Recover the echo';
+
+  @override
+  String echoCycleChip(int cycle) {
+    return 'ECHO $cycle';
+  }
+
+  @override
+  String get echoBannerClaim =>
+      'Orbit 00 still crowns one core. Residual scars contest the slot. Recover the three nodes.';
+
+  @override
+  String get echoBannerOpen =>
+      'The relay is open. Residual packets still fire. Recover the three nodes before the loop forgets itself.';
+
+  @override
+  String get echoDoctrinePreserve =>
+      'Canonical doctrine: CONTINUITY. The residual loop tests whether pressure would have held.';
+
+  @override
+  String get echoDoctrineForce =>
+      'Canonical doctrine: PRESSURE. The residual loop tests whether continuity would have held.';
+
+  @override
+  String get echoDoctrineBalanced =>
+      'Canonical doctrine: ADAPTIVE. The residual loop no longer agrees with itself.';
+
+  @override
+  String get echoResidualHeading => 'RESIDUAL CHOICE';
+
+  @override
+  String echoBestClear(int seconds) {
+    return 'BEST ${seconds}s';
+  }
+
+  @override
+  String echoArchiveCaption(int cycle) {
+    return 'ECHO CYCLE $cycle // CANONICAL ENDING PRESERVED';
+  }
+
+  @override
+  String get echoCosmeticOrbit => 'ECHO ORBIT unlocked';
+
+  @override
+  String get echoCosmeticScar => 'CHECKSUM SCAR unlocked';
 
   @override
   String get endingClaimRelay => 'CLAIM THE RELAY';

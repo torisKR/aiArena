@@ -120,6 +120,12 @@ abstract class AppLocalizations {
   /// **'AUTO MOVE · AUTO COMBAT · AUTO CONTINUE'**
   String get recoveryAutomatic;
 
+  /// Recovery HUD button that dismisses the first-run instruction overlay.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE DESTINATION'**
+  String get recoveryChooseDestination;
+
   /// No description provided for @recoveryWon.
   ///
   /// In en, this message translates to:
@@ -153,7 +159,7 @@ abstract class AppLocalizations {
   /// No description provided for @recoveryDestination.
   ///
   /// In en, this message translates to:
-  /// **'Signal {number}: {seconds}/10s'**
+  /// **'Signal {number}: {seconds}/8s'**
   String recoveryDestination(int number, int seconds);
 
   /// Application title shown by the operating system and browser.
@@ -809,6 +815,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A crisp geometric break with no gameplay effect.'**
   String get cosmeticFractureDescription;
+
+  /// Name of the echo-cycle faction color grant.
+  ///
+  /// In en, this message translates to:
+  /// **'ECHO ORBIT'**
+  String get cosmeticEchoOrbitName;
+
+  /// No description provided for @cosmeticEchoOrbitDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Residual orbit pigment granted after the first echo cycle.'**
+  String get cosmeticEchoOrbitDescription;
+
+  /// Name of the dual-ending movement trail grant.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECKSUM SCAR'**
+  String get cosmeticChecksumScarName;
+
+  /// No description provided for @cosmeticChecksumScarDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A residual scar trail granted for recording both endings.'**
+  String get cosmeticChecksumScarDescription;
 
   /// Battle notice after the player faction is eliminated.
   ///
@@ -1600,8 +1630,80 @@ abstract class AppLocalizations {
   /// No description provided for @restartDisclosure.
   ///
   /// In en, this message translates to:
-  /// **'Campaign core, progress, transmissions, medals, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.'**
+  /// **'Campaign core, progress, transmissions, medals, echo cycles, and ending reset. Wallet, settings, and cosmetics remain. Previously awarded operation bonuses cannot be earned again.'**
   String get restartDisclosure;
+
+  /// Chronicle deploy label after an ending is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover the echo'**
+  String get echoDeploy;
+
+  /// Lobby instrument chip for the active echo cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'ECHO {cycle}'**
+  String echoCycleChip(int cycle);
+
+  /// No description provided for @echoBannerClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Orbit 00 still crowns one core. Residual scars contest the slot. Recover the three nodes.'**
+  String get echoBannerClaim;
+
+  /// No description provided for @echoBannerOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'The relay is open. Residual packets still fire. Recover the three nodes before the loop forgets itself.'**
+  String get echoBannerOpen;
+
+  /// No description provided for @echoDoctrinePreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'Canonical doctrine: CONTINUITY. The residual loop tests whether pressure would have held.'**
+  String get echoDoctrinePreserve;
+
+  /// No description provided for @echoDoctrineForce.
+  ///
+  /// In en, this message translates to:
+  /// **'Canonical doctrine: PRESSURE. The residual loop tests whether continuity would have held.'**
+  String get echoDoctrineForce;
+
+  /// No description provided for @echoDoctrineBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Canonical doctrine: ADAPTIVE. The residual loop no longer agrees with itself.'**
+  String get echoDoctrineBalanced;
+
+  /// No description provided for @echoResidualHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'RESIDUAL CHOICE'**
+  String get echoResidualHeading;
+
+  /// Archive personal-best recovery time.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST {seconds}s'**
+  String echoBestClear(int seconds);
+
+  /// Archive header while echo cycles are active.
+  ///
+  /// In en, this message translates to:
+  /// **'ECHO CYCLE {cycle} // CANONICAL ENDING PRESERVED'**
+  String echoArchiveCaption(int cycle);
+
+  /// No description provided for @echoCosmeticOrbit.
+  ///
+  /// In en, this message translates to:
+  /// **'ECHO ORBIT unlocked'**
+  String get echoCosmeticOrbit;
+
+  /// No description provided for @echoCosmeticScar.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECKSUM SCAR unlocked'**
+  String get echoCosmeticScar;
 
   /// No description provided for @endingClaimRelay.
   ///

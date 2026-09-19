@@ -17,7 +17,7 @@ void main() {
       level: 10,
       position: RecoveryState.destinations[2],
     );
-    state.advance(unit: unit, dt: 10, alliesLost: false, deadline: false);
+    state.advance(unit: unit, dt: 8, alliesLost: false, deadline: false);
     expect(state.select(2), isFalse);
     expect(state.selected, 0);
     expect(state.reward, 0);
@@ -41,7 +41,7 @@ void main() {
       position: RecoveryState.destinations[0],
     );
     state.advance(unit: receiver, dt: 6, alliesLost: false, deadline: false);
-    expect(state.seconds[0], 10);
+    expect(state.seconds[0], 8);
     expect(state.selected, 1);
   });
 
@@ -55,17 +55,45 @@ void main() {
     );
     for (var index = 0; index < 3; index++) {
       unit.position = RecoveryState.destinations[index];
-      state.advance(
-        unit: unit,
-        dt: 10,
-        alliesLost: false,
-        deadline: index == 2,
-      );
+      state.advance(unit: unit, dt: 8, alliesLost: false, deadline: index == 2);
     }
     expect(state.outcome, RecoveryOutcome.recovered);
     state.advance(unit: null, dt: 90, alliesLost: true, deadline: true);
     expect(state.reward, 60);
     expect(state.outcome, RecoveryOutcome.recovered);
+  });
+
+  test('midway cue fires once per node at 5s and never after completion', () {
+    final state = RecoveryState();
+    final unit = Unit(
+      id: 0,
+      faction: Faction.amethyst,
+      level: 10,
+      position: RecoveryState.destinations[0],
+    );
+
+    // Below midway: no cue.
+    state.advance(unit: unit, dt: 4, alliesLost: false, deadline: false);
+    expect(state.advanceMidwayCues(), isEmpty);
+
+    // Crossing 5s fires exactly once for node 0.
+    state.advance(unit: unit, dt: 2, alliesLost: false, deadline: false);
+    expect(state.advanceMidwayCues(), [0]);
+    expect(state.advanceMidwayCues(), isEmpty);
+
+    // Completing node 0 must not re-fire the cue.
+    state.advance(unit: unit, dt: 2, alliesLost: false, deadline: false);
+    expect(state.seconds[0], RecoveryState.requiredSeconds);
+    expect(state.advanceMidwayCues(), isEmpty);
+
+    // A second node fires its own cue independently.
+    unit.position = RecoveryState.destinations[1];
+    state.advance(unit: unit, dt: 5, alliesLost: false, deadline: false);
+    expect(state.advanceMidwayCues(), [1]);
+
+    // reset() clears cue latches.
+    state.reset();
+    expect(state.advanceMidwayCues(), isEmpty);
   });
 
   test('timeout and allies lost are distinct failures', () {
