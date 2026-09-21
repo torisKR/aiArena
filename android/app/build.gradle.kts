@@ -80,6 +80,9 @@ android {
 
     buildTypes {
         release {
+            // Room 2.2.5's consumer rule keeps database classes, but R8 full
+            // mode also needs the constructor used by Class.newInstance().
+            proguardFiles("proguard-rules.pro")
             manifestPlaceholders["admobAppId"] = productionAdMobAppId
             releaseSigningValues?.let {
                 signingConfig = signingConfigs.getByName("release")
