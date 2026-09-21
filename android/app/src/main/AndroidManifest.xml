@@ -1,13 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Remove the AD_ID permission injected by play-services-ads.
-         This does not enforce non-personalized ads or prevent all identifier
-         collection. NPA is requested explicitly in the AdMob gateway;
-         UMP consent gating remains required. -->
-    <uses-permission
-        android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove" />
+    <!-- Matches the owner's advertising-ID use declaration. Explicit NPA
+         requests do not prevent identifier collection; UMP gating is retained. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

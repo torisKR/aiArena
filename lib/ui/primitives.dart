@@ -333,7 +333,7 @@ class TacticalBackdrop extends StatelessWidget {
           ignoring: true,
           child: ExcludeSemantics(
             child: Image.asset(
-              'assets/blender/tokenfront_keyart.png',
+              'assets/blender/tokenfront_keyart.webp',
               fit: BoxFit.cover,
               alignment: Alignment.center,
               filterQuality: FilterQuality.low,

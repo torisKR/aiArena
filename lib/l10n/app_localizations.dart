@@ -537,7 +537,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyPolicyIntro.
   ///
   /// In en, this message translates to:
-  /// **'Tokenfront is an offline single-player game. Gameplay and local progress stay on your device. Optional Google AdMob test ads may process ad requests and device/ad identifiers when you enable ad requests and consent permits them.'**
+  /// **'Tokenfront is an offline single-player game. Gameplay and local progress stay on your device. Optional Google AdMob ads may process ad requests and device/ad identifiers when you enable ad requests and consent permits them.'**
   String get privacyPolicyIntro;
 
   /// No description provided for @privacyDataStoredTitle.
@@ -573,7 +573,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyAdvertisingBody.
   ///
   /// In en, this message translates to:
-  /// **'This Android test build uses Google Mobile Ads with Google test ad units. Optional lobby and result banners, result rewarded ads, and result-exit interstitials are requested only after the Google consent flow permits them. AdMob may process ad requests, device information, and advertising identifiers as described by Google. Turning off AD REQUESTS stops app ad requests; the base War Token reward never depends on an ad.'**
+  /// **'Debug/profile builds use Google test ad units; signed release builds use the configured Tokenfront production units. All requests are non-personalized; this does not prevent advertising-identifier collection. Optional lobby and result banners, result rewarded ads, and result-exit interstitials are requested only after the Google consent flow permits them. AdMob may process ad requests, device information, and advertising identifiers as described by Google. Turning off AD REQUESTS stops app ad requests; the base War Token reward never depends on an ad.'**
   String get privacyAdvertisingBody;
 
   /// No description provided for @privacyAccountsTitle.

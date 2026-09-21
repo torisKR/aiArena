@@ -8,7 +8,7 @@ class LaunchSplash extends StatefulWidget {
 
   final Widget child;
   static const duration = Duration(seconds: 2);
-  static const asset = 'assets/images/splah_image.png';
+  static const asset = 'assets/images/splah_image.webp';
 
   @override
   State<LaunchSplash> createState() => _LaunchSplashState();

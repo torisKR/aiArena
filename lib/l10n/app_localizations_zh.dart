@@ -242,7 +242,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfront 是一款离线单人游戏。游戏过程和本地进度保存在设备上。启用广告请求且同意流程允许时，Google AdMob 测试广告可能会处理广告请求以及设备/广告标识符。';
+      'Tokenfront 是一款离线单人游戏。游戏过程和本地进度保存在设备上。启用广告请求且同意流程允许时，Google AdMob 广告可能会处理广告请求以及设备/广告标识符。';
 
   @override
   String get privacyDataStoredTitle => '存储在设备上的数据';
@@ -263,7 +263,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      '此 Android 测试版本使用 Google Mobile Ads 和 Google 测试广告单元。大厅和结果页横幅、结果页激励广告以及结果退出插屏只有在 Google 同意流程允许后才会请求。AdMob 可能按照 Google 的说明处理广告请求、设备信息和广告标识符。关闭广告请求会停止应用广告请求，但不会影响基础 War Token 奖励。';
+      '调试和性能分析版本使用 Google 测试广告单元；签名发布版本使用已配置的 Tokenfront 正式广告单元。所有请求均为非个性化广告，但这不代表禁止收集广告标识符。大厅和结果页横幅、结果页激励广告以及结果退出插屏只有在 Google 同意流程允许后才会请求。AdMob 可能按照 Google 的说明处理广告请求、设备信息和广告标识符。关闭广告请求会停止应用广告请求，但不会影响基础 War Token 奖励。';
 
   @override
   String get privacyAccountsTitle => '账户、权限与第三方';

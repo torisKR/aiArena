@@ -58,7 +58,7 @@ The Android build contains `google_mobile_ads 9.1.0` and requests `INTERNET`. De
 
 Do not submit this declaration until all of the following refer to the exact AAB selected in Play Console:
 
-1. Release manifest and permissions are extracted from the exact AAB; INTERNET is expected, sensitive permissions must be justified, and AD_ID removal must be verified; `allowBackup` is `false`; and the packaged Android 12+ data-extraction rules exclude every storage domain from cloud backup and device-to-device transfer.
+1. Release manifest and permissions are extracted from the exact AAB; INTERNET is expected, sensitive permissions must be justified, and AD_ID presence must be verified against the owner-reported advertising-ID use declaration (NPA is not an identifier-collection opt-out); `allowBackup` is `false`; and the packaged Android 12+ data-extraction rules exclude every storage domain from cloud backup and device-to-device transfer.
 2. Audit resolved Dart and Android dependency graphs, including AdMob and the forthcoming billing/identity dependencies; document every off-device flow and inactive gate.
 3. Verify NoOp analytics and the actual AdMob runtime wiring, plus disabled billing until all launch gates pass.
 4. Observe launch, gameplay, ads/consent, settings, background/resume and, in authorized staging, login/purchase/restore traffic. Reconcile actual recipients and data with the declaration; do not assume zero traffic.

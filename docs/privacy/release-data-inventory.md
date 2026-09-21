@@ -55,13 +55,13 @@ Source evidence: `lib/services/ads/ad_service.dart:68-86` defines the policy fal
 
 ## Release declaration
 
-Off-device collection: AdMob may process ad-request, device, and diagnostics data when enabled and consented. The Android advertising ID is not collected: `play-services-ads` injects `com.google.android.gms.permission.AD_ID` during manifest merge and the app manifest removes it with `tools:node="remove"`, so the shipped package does not hold that permission and ads are non-personalized. This matches the Play Console advertising-ID declaration of "not used" and is asserted by `test/privacy_release_contract_test.dart`.
+Off-device collection: AdMob may process ad-request, device, advertising-ID and diagnostics data when enabled and permitted by consent. The current 1.3.1 build explicitly declares `com.google.android.gms.permission.AD_ID`, matching the owner-reported advertising-ID use declaration; no Console declaration was changed. All placements request `AdRequest(nonPersonalizedAds: true)` and retain UMP consent gating. Non-personalized ads do not mean that advertising IDs or other identifiers cannot be collected. Verify the permission in the exact signed AAB. This supersedes the earlier permission-removal claim.
 Third-party sharing: Google Mobile Ads advertising/request data
 Accounts or cloud sync: none
 Personal information or user-generated content: none
 Sensitive permissions: none
 
-Source evidence: `android/app/src/main/AndroidManifest.xml` declares only `android.permission.INTERNET` and removes the SDK-injected `AD_ID`; no runtime-prompted or sensitive permission is requested; `pubspec.yaml` contains only the shipped Flutter, Flame, localization, persistence, web, and external-link dependencies; `lib/app/tokenfront_runtime.dart:32-35` documents the offline/no-transport default.
+Source evidence: `android/app/src/main/AndroidManifest.xml` declares `android.permission.INTERNET` and `com.google.android.gms.permission.AD_ID`; no runtime-prompted or sensitive permission is requested; `pubspec.yaml` contains only the shipped Flutter, Flame, localization, persistence, web, and external-link dependencies; `lib/app/tokenfront_runtime.dart:32-35` documents the offline/no-transport default.
 
 ## Privacy policy access
 

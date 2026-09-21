@@ -40,7 +40,9 @@ void main() {
   });
 
   test('orbital key art keeps the tactical asset contract', () async {
-    final bytes = await rootBundle.load('assets/blender/tokenfront_keyart.png');
+    final bytes = await rootBundle.load(
+      'assets/blender/tokenfront_keyart.webp',
+    );
     final codec = await ui.instantiateImageCodec(
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );

@@ -243,7 +243,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyPolicyIntro =>
-      'Tokenfrontはオフラインのシングルプレイゲームです。ゲームプレイとローカル進行は端末に保存されます。広告リクエストを有効にし、同意が許可した場合、Google AdMobのテスト広告が広告リクエストと端末・広告識別子を処理することがあります。';
+      'Tokenfrontはオフラインのシングルプレイゲームです。ゲームプレイとローカル進行は端末に保存されます。広告リクエストを有効にし、同意が許可した場合、Google AdMobの広告が広告リクエストと端末・広告識別子を処理することがあります。';
 
   @override
   String get privacyDataStoredTitle => '端末に保存されるデータ';
@@ -264,7 +264,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyAdvertisingBody =>
-      'このAndroidテストビルドはGoogle Mobile AdsとGoogleテスト広告ユニットを使用します。ロビー・結果バナー、結果のリワード広告、結果終了時のインタースティシャルは、Googleの同意フローが許可した後だけリクエストされます。AdMobはGoogleの説明に従い広告リクエスト、端末情報、広告識別子を処理することがあります。広告リクエストをオフにしても基本War Token報酬は変わりません。';
+      'デバッグ・プロファイルビルドはGoogleのテスト広告ユニットを、署名済みリリースビルドは設定済みのTokenfront本番広告ユニットを使用します。すべて非パーソナライズ広告としてリクエストしますが、広告識別子の収集を防ぐものではありません。ロビー・結果バナー、結果のリワード広告、結果終了時のインタースティシャルは、Googleの同意フローが許可した後だけリクエストされます。AdMobはGoogleの説明に従い広告リクエスト、端末情報、広告識別子を処理することがあります。広告リクエストをオフにしても基本War Token報酬は変わりません。';
 
   @override
   String get privacyAccountsTitle => 'アカウント、権限、第三者';
