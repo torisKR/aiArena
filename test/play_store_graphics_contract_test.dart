@@ -90,16 +90,21 @@ void main() {
   test(
     'Play icon is a full-square opaque RGBA PNG without source rounding',
     () async {
-      final svg = await File(
-        'store-assets/source/tokenfront-store-icon.svg',
-      ).readAsString();
+      final contract =
+          jsonDecode(
+                await File(
+                  'store-assets/android/play-store-graphics-contract.json',
+                ).readAsString(),
+              )
+              as Map<String, dynamic>;
+      final generation = contract['iconGeneration'] as Map<String, dynamic>;
+      expect(generation['source'], 'assets/images/logo_image.png');
+      expect(generation['sourceDimensions'], <int>[1254, 1254]);
+      final icon = File('store-assets/android/ai-war-simulator-icon-512.png');
       expect(
-        svg,
-        contains('<rect width="512" height="512" fill="url(#field)"/>'),
+        await icon.readAsBytes(),
+        await File('store-assets/android/icon-512.png').readAsBytes(),
       );
-      expect(svg, isNot(contains('<rect width="512" height="512" rx=')));
-
-      final icon = File('store-assets/android/icon-512.png');
       final bytes = await icon.readAsBytes();
       expect(bytes.sublist(0, 8), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
       expect(bytes[25], 6, reason: 'icon PNG must use RGBA color type');

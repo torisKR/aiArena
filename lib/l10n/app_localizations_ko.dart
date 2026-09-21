@@ -9,6 +9,30 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get billingDelete => '결제 계정 삭제';
+
+  @override
+  String get billingDeleteWarning =>
+      'Tokenfront 결제 계정과 구매 검증 기록을 삭제합니다. 광고 제거 혜택과 복원 연결이 종료되며 삭제 후 복원은 보장되지 않습니다. 구매 환불이나 Google / Google Play 기록 삭제는 아닙니다. 계속하고 동일한 Google 계정을 확인할까요?';
+
+  @override
+  String get billingDeleteCancel => '취소';
+
+  @override
+  String get billingDeleteConfirm => '삭제 및 Google 계정 확인';
+
+  @override
+  String get billingDeleted => '결제 계정이 삭제되었습니다. 이 기기의 광고 제거 혜택이 종료되었습니다.';
+
+  @override
+  String get billingDeleteFailed =>
+      '삭제가 확인되지 않았습니다. 곧 동일한 계정으로 다시 시도하세요. 재시도할 수 없으면 korea@toris.kr로 문의하세요.';
+
+  @override
+  String get billingDeleteLocalFailed =>
+      '서버 계정은 삭제되었지만 기기 정리에 실패했습니다. 앱을 열어 둔 채 다시 시도하세요. 디스크에 캐시가 남아 있을 수 있습니다. 계속되면 korea@toris.kr로 문의하세요.';
+
+  @override
   String get recoveryTitle => '신호 세 개 회수하기';
 
   @override
@@ -44,7 +68,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get appTitle => 'Tokenfront: 궤도 신호전';
+  String get appTitle => 'AI 전쟁 시뮬레이터';
 
   @override
   String get lobbyTagline => '네 AI 코어. 4,000개의 활성 토큰. 단 하나의 최후 릴레이.';
@@ -247,7 +271,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyAccountsBody =>
-      'Tokenfront에는 계정, 로그인, 클라우드 동기화, 구매 시스템, 사용자 제출 콘텐츠, 소셜 기능이 없습니다. 위치, 카메라, 마이크, 연락처, 사진, 파일, 캘린더, 건강, 금융, 메시지 권한을 요청하지 않습니다.';
+      '출시된 1.2.0에는 로그인·구매가 없습니다. 차기 버전 초안이며 비활성화·공개 대기 상태입니다. Google 로그인은 게임 이용에는 선택 사항이고 일회성 광고 제거 구매·복원에는 필요하며 선택형 보상 광고는 유지됩니다. Toris의 Cloudflare Workers 백엔드가 Google 인증과 Google Play 구매를 검증하고 D1에 가명(익명이 아님) 계정 연결값, 암호화 구매 토큰과 해시, 주문 ID, 상품·상태 및 검증·확인 시각을 보관할 예정입니다. 이메일·프로필은 백엔드에 저장하지 않습니다. 서명된 권한과 계정 연결값을 정상 검증 후 최대 30일간 기기에 캐시하며 이는 서버 기록 보유 기간이 아닙니다. 앱 데이터 삭제·로그아웃은 서버 기록을 삭제하지 않습니다. 삭제 엔드포인트·운영 절차와 보유 정책이 없어 출시를 차단하며 삭제 서비스 운영을 약속하지 않습니다. 개인정보 문의: korea@toris.kr. 토큰·비밀번호를 보내지 마세요. 게임 클라우드 동기화, 소셜 기능이나 위치·카메라·마이크·연락처·사진·캘린더·건강·메시지 접근은 추가하지 않습니다.';
 
   @override
   String get privacyHostingTitle => '공개 정책 페이지 호스팅';
@@ -261,7 +285,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyChildrenBody =>
-      'Tokenfront는 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 이 출시 버전은 개인정보를 수집하지 않습니다.';
+      'Tokenfront는 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 광고 처리는 위에 설명되어 있으며 제안된 계정·구매 처리는 비활성화 상태로 별도 안내합니다.';
 
   @override
   String get privacyChangesTitle => '변경';
@@ -1095,4 +1119,52 @@ class AppLocalizationsKo extends AppLocalizations {
   String doctrineSummary(String doctrine) {
     return '신호 교리  //  $doctrine';
   }
+
+  @override
+  String get billingTitle => '강제 광고 제거';
+
+  @override
+  String get billingDetail => '일회성 구매입니다. 배너와 전면 광고만 제거하며 선택형 보상 광고는 유지됩니다.';
+
+  @override
+  String get billingUnavailable => '구매를 이용할 수 없습니다';
+
+  @override
+  String get billingLogin => 'Google로 로그인';
+
+  @override
+  String get billingLogout => '로그아웃';
+
+  @override
+  String get billingSwitch => 'Google 계정 변경';
+
+  @override
+  String get billingRestore => '구매 복원';
+
+  @override
+  String billingBuy(String price) {
+    return '구매 · $price';
+  }
+
+  @override
+  String get billingActive => '강제 광고 제거됨';
+
+  @override
+  String get billingPending => '처리 중…';
+
+  @override
+  String get billingCanceled => '취소되었습니다. 다시 시도할 수 있습니다.';
+
+  @override
+  String get billingError => '확인하지 못했습니다. 로그인하거나 구매를 복원해 주세요.';
+
+  @override
+  String get billingReady => '구매 가능';
+
+  @override
+  String get billingSignInRequired => '구매하거나 복원하려면 로그인해 주세요.';
+
+  @override
+  String get billingFreshness =>
+      '로그인 후 및 주기적으로 온라인 확인이 필요합니다. 확인 유효기간이 지나면 광고가 다시 표시될 수 있습니다.';
 }

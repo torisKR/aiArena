@@ -9,6 +9,31 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get billingDelete => 'Delete billing account';
+
+  @override
+  String get billingDeleteWarning =>
+      'Delete the Tokenfront billing account and purchase verification records. Ad removal and the restoration link end; restoration is not guaranteed after deletion. This does not refund purchases or delete Google / Google Play records. Continue and verify the same Google account?';
+
+  @override
+  String get billingDeleteCancel => 'Cancel';
+
+  @override
+  String get billingDeleteConfirm => 'Delete and verify with Google';
+
+  @override
+  String get billingDeleted =>
+      'Billing account deleted. Ad removal ended on this device.';
+
+  @override
+  String get billingDeleteFailed =>
+      'Deletion is not confirmed. Retry soon with the same account. If you cannot retry, contact korea@toris.kr.';
+
+  @override
+  String get billingDeleteLocalFailed =>
+      'Server account deleted, but local cleanup failed. Keep the app open and retry. Cached data may remain on disk; contact korea@toris.kr if this continues.';
+
+  @override
   String get recoveryTitle => 'Recover three signals';
 
   @override
@@ -263,7 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyAccountsBody =>
-      'Tokenfront has no account, login, cloud sync, purchase system, user-submitted content, or social feature. It requests no location, camera, microphone, contacts, photos, files, calendar, health, financial, or messaging access.';
+      'Shipped 1.2.0 has no login or purchases. Future-version draft, disabled and pending publication: optional Google sign-in would enable one-time remove-ads purchase/restore; gameplay needs no login and optional rewarded ads remain. Toris’s Cloudflare Workers backend would verify Google identity and Google Play purchases. D1 would retain pseudonymous (not anonymous) account bindings, encrypted purchase tokens and their hashes, order IDs, product/status and verification/check timestamps. Email/profile are not persisted by the backend. A signed entitlement and account binding would be cached locally for up to 30 days after positive verification, not as a retention limit for server records. Clearing app storage or logging out does not delete backend records. Deletion endpoint/workflow and retention policy are missing release blockers; no operational deletion service is promised. Privacy inquiries: korea@toris.kr; do not send tokens or passwords. No cloud game sync, social feature or access to location, camera, microphone, contacts, photos, calendar, health or messages is added.';
 
   @override
   String get privacyHostingTitle => 'PUBLIC POLICY HOSTING';
@@ -277,7 +302,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyChildrenBody =>
-      'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information.';
+      'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. Advertising processing is described above; the proposed account and purchase processing is disabled and separately disclosed.';
 
   @override
   String get privacyChangesTitle => 'CHANGES';
@@ -1163,4 +1188,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String doctrineSummary(String doctrine) {
     return 'DOCTRINE  //  $doctrine';
   }
+
+  @override
+  String get billingTitle => 'Remove forced ads';
+
+  @override
+  String get billingDetail =>
+      'One-time purchase. Banners and interstitials are removed; optional rewarded ads remain.';
+
+  @override
+  String get billingUnavailable => 'Purchases unavailable';
+
+  @override
+  String get billingLogin => 'Sign in with Google';
+
+  @override
+  String get billingLogout => 'Sign out';
+
+  @override
+  String get billingSwitch => 'Switch Google account';
+
+  @override
+  String get billingRestore => 'Restore purchases';
+
+  @override
+  String billingBuy(String price) {
+    return 'Buy · $price';
+  }
+
+  @override
+  String get billingActive => 'Forced ads removed';
+
+  @override
+  String get billingPending => 'Processing…';
+
+  @override
+  String get billingCanceled => 'Canceled. You can try again.';
+
+  @override
+  String get billingError => 'Could not verify. Sign in or restore to retry.';
+
+  @override
+  String get billingReady => 'Ready to purchase';
+
+  @override
+  String get billingSignInRequired => 'Sign in to purchase or restore.';
+
+  @override
+  String get billingFreshness =>
+      'Online verification is required after sign-in and periodically. Ads may return when verification expires.';
 }

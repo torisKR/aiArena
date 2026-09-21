@@ -1,5 +1,34 @@
 # Tokenfront Release Data Inventory
 
+Status for forthcoming monetization: **DRAFT NOT SUBMITTED** — EXACT AAB AUDIT AND PLAY SUBMISSION PENDING. No Console changes, publication, deployment or legal attestations performed.
+
+## Forthcoming monetization — DRAFT, disabled; publication pending
+
+Applies only to a future version after 1.2.0; no effective date has been approved. Shipped 1.2.0 has no login or purchase flow. The implementation in this working tree is disabled, the backend is not deployed, and the Play product is not created. The 1.2.0 policy below remains separately scoped; its no-account statements must not be reused for an enabled release.
+
+Google sign-in would be optional for gameplay and required to buy or restore the proposed one-time remove-ads purchase (KRW 3,900, subject to Play product/price setup). It removes banners and interstitials, not optional rewarded ads. Restore uses the same Google identity plus Google Play purchase verification; it does not upload or synchronize game progress.
+
+The app would send a fresh Google ID token and server challenge over HTTPS to Toris’s Cloudflare Workers backend. The backend verifies Google signatures, audience and nonce, and checks purchases with Google Play. Cloudflare would process these requests and store billing records in D1; Google processes authentication and payment/verification under its own terms. A stable hash of Google issuer/subject and a random purchase-account binding link records across reinstalls/devices. These are **pseudonymous, NOT anonymous**, account identifiers. The backend does not persist the raw Google subject, email or profile. ID tokens are exchanged transiently; billing sessions stay in app memory for up to 15 minutes, without a stored Google refresh token.
+
+D1 would store account identifiers/binding, product ID, purchase-token hash and AES-256-GCM encrypted purchase token, order ID, active/terminal status, verification and next-check timestamps, and reconciliation/abuse-control records. Only the purchase token has application-level encryption in this schema; do not claim that order/status fields are similarly encrypted. Tokens are decrypted for repeat verification/refund checks. Cloudflare also processes network metadata, with a hashed IP used for edge rate limiting. Payment-card details are handled by Google Play, not this billing database.
+
+The app would locally cache a signed remove-ads entitlement, account binding and clock high-water mark. The signed grant expires 30 days after the last positive Google verification; it is not a lifetime offline grant or an API credential. Offline refund/revocation visibility may be delayed until expiry. Logout/account switching invalidates the in-memory grant and attempts local cache removal (storage failures may leave an old signed cache usable until its original expiry); clearing app storage/uninstalling removes local data, **not backend billing records**. Neither action is account deletion.
+
+**Release blockers:** no account/data-deletion endpoint or operational deletion workflow exists, and retention periods for account/purchase records, logs and backups have not been approved or implemented. The 30-day grant lifetime is not a backend retention period. Before enabling login/sales, define retention and legal exceptions, implement authenticated deletion and any required in-app/web request mechanism, test identity verification and deletion effects on restore/refunds/backups, and approve/publish revised policies and Console disclosures. Do not promise deletion completion or a response deadline.
+
+Draft inquiry route only: email the existing public contact **korea@toris.kr** with subject “Tokenfront privacy / deletion inquiry” and describe the request; do not send passwords, ID/session tokens or purchase tokens. This is not an operational account-deletion service or a verified deletion URL. Public contact and policy URLs are unchanged; ownership/routing must be confirmed before launch.
+
+## Evidence and unresolved contact reconciliation
+
+Reviewed `backend/billing/README.md`, `backend/billing/migrations/0001_billing.sql`, backend security/routing source, `lib/services/identity/README.md`, `lib/services/identity/google_identity.dart`, `lib/services/billing/README.md`, `billing_configuration.dart` and `billing_controller.dart`. Schema stores encrypted token ciphertext separately from order/status/timestamps. Cleanup of nonce, rate-limit and lock rows is not account/purchase deletion.
+
+The owner supplied `ironjustlikethat@gmail.com` for support/developer OAuth contact, while the existing public policies, store metadata and app privacy contact use `korea@toris.kr`. These roles may differ; no code evidence authorizes replacing the public address. Preserve `korea@toris.kr` and `https://tokenfront-orbital-war.pages.dev/privacy.html`; owner must approve the public contact choice and verify inbox routing before publication. No test-account address belongs in public policy copy.
+
+## Historical 1.2.0 / earlier preparation record (not future submission answers)
+
+The entries below record the earlier no-login/no-purchase scope and, where stated, August preparation status; they are not evidence of current Console state. Current shipped version is 1.2.0. Do not reuse these answers for the forthcoming build.
+
+
 Release contract: release-data-inventory-v1
 Audited build: Tokenfront: Orbital Signal War Android production candidate
 Audit date: 2026-08-05

@@ -77,7 +77,11 @@ void main() {
             )
             as Map<String, dynamic>;
     expect(contract['version'], 1);
-    expect((contract['brand'] as Map)['title'], 'TOKENFRONT');
+    expect((contract['brand'] as Map)['title'], 'AI 전쟁 시뮬레이터');
+    expect(
+      (contract['iconGeneration'] as Map)['source'],
+      'assets/images/logo_image.png',
+    );
     expect(
       (contract['outputs'] as Map).keys,
       containsAll(<String>['icon-512.png', 'feature-graphic-1024x500.jpg']),

@@ -1,0 +1,78 @@
+name: Build signed monetization preview (no deployment)
+
+on:
+  push:
+    branches: [build/monetization-preview]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-monetization-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/build/monetization-preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Generate disposable test-only RSA fixture
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p test/billing/fixtures
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out test/billing/fixtures/TEST_ONLY_rsa_private.pem 2>/dev/null
+          openssl pkey -in test/billing/fixtures/TEST_ONLY_rsa_private.pem -pubout -out test/billing/fixtures/TEST_ONLY_rsa_public.pem
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+      - name: Test
+        run: flutter test --reporter expanded
+      - name: Build signed AAB without billing configuration
+        env:
+          TOKENFRONT_UPLOAD_KEYSTORE_BASE64: ${{ secrets.TOKENFRONT_UPLOAD_KEYSTORE_BASE64 }}
+          TOKENFRONT_UPLOAD_STORE_PASSWORD: ${{ secrets.TOKENFRONT_UPLOAD_STORE_PASSWORD }}
+          TOKENFRONT_UPLOAD_KEY_ALIAS: ${{ secrets.TOKENFRONT_UPLOAD_KEY_ALIAS }}
+          TOKENFRONT_UPLOAD_KEY_PASSWORD: ${{ secrets.TOKENFRONT_UPLOAD_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export TOKENFRONT_UPLOAD_STORE_FILE="$RUNNER_TEMP/tokenfront-preview-upload.jks"
+          trap 'rm -f "$TOKENFRONT_UPLOAD_STORE_FILE"' EXIT
+          printf '%s' "$TOKENFRONT_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$TOKENFRONT_UPLOAD_STORE_FILE"
+          version_code="$(date -u +%s)"
+          test "$version_code" -gt 1789963280
+          test "$version_code" -lt 2100000000
+          # No dart-defines: account and billing remain fail-closed/unavailable.
+          flutter build appbundle --release --build-name 1.3.0 --build-number "$version_code"
+          jarsigner -verify build/app/outputs/bundle/release/app-release.aab
+          sha256sum build/app/outputs/bundle/release/app-release.aab
+          printf 'Preview version: 1.3.0 (%s)\n' "$version_code" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload AAB only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tokenfront-monetization-preview-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: Clean temporary signing and test keys
+        if: always()
+        run: rm -f "$RUNNER_TEMP/tokenfront-preview-upload.jks" test/billing/fixtures/TEST_ONLY_rsa_private.pem test/billing/fixtures/TEST_ONLY_rsa_public.pem

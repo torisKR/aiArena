@@ -209,6 +209,19 @@ void main() {
     expect(gateway.rewarded, isEmpty);
   });
 
+  test('clear during initialization prevents a banner load', () async {
+    final gateway = FakeAdMobGateway()..holdInitialization();
+    final service = AdMobAdService(gateway: gateway);
+    final load = service.loadBanner(request.copyWith(surface: AdSurface.lobby));
+    service.clearBanner();
+    gateway.completeInitialization(true);
+
+    expect((await load).status, AdStatus.unavailable);
+    expect(gateway.bannerLoadCalls, 0);
+    expect(service.banner, isNull);
+    service.dispose();
+  });
+
   test('clear invalidates an outstanding banner load', () async {
     final gateway = FakeAdMobGateway()..holdBannerLoad = true;
     final service = AdMobAdService(gateway: gateway);
@@ -232,18 +245,115 @@ void main() {
         request.copyWith(surface: AdSurface.lobby),
       );
       await Future<void>.delayed(Duration.zero);
-    final interstitialLoad = service.prepareInterstitial(request);
-    await Future<void>.delayed(Duration.zero);
-    final interstitial = gateway.interstitials.single;
+      final interstitialLoad = service.prepareInterstitial(request);
+      await Future<void>.delayed(Duration.zero);
+      final interstitial = gateway.interstitials.single;
       gateway.consentAllowed = false;
       expect(await service.showPrivacyOptions(), isFalse);
       final banner = gateway.completeBannerLoad();
       expect((await bannerLoad).status, AdStatus.unavailable);
-    expect((await interstitialLoad).status, AdStatus.shown);
-    expect((await service.showInterstitial(request)).status, AdStatus.unavailable);
-    expect(interstitial.disposeCalls, 1);
+      expect((await interstitialLoad).status, AdStatus.shown);
+      expect(
+        (await service.showInterstitial(request)).status,
+        AdStatus.unavailable,
+      );
+      expect(interstitial.disposeCalls, 1);
       expect(banner.disposeCalls, 1);
       expect(service.banner, isNull);
+    },
+  );
+
+  test(
+    'privacy options invalidate cached ads even when still allowed',
+    () async {
+      final gateway = FakeAdMobGateway()..holdBannerLoad = true;
+      final service = AdMobAdService(gateway: gateway);
+      final load = service.loadBanner(
+        request.copyWith(surface: AdSurface.lobby),
+      );
+      await Future<void>.delayed(Duration.zero);
+      final banner = gateway.completeBannerLoad();
+      await load;
+      await service.prepareInterstitial(request);
+      final interstitial = gateway.interstitials.single;
+
+      expect(await service.showPrivacyOptions(), isTrue);
+      expect(banner.disposeCalls, 1);
+      expect(interstitial.disposeCalls, 1);
+      expect(service.banner, isNull);
+      expect(
+        (await service.showInterstitial(request)).status,
+        AdStatus.unavailable,
+      );
+      expect(
+        (await service.prepareInterstitial(request)).status,
+        AdStatus.shown,
+      );
+      expect(gateway.interstitialLoadCalls, 2);
+      service.dispose();
+    },
+  );
+
+  test(
+    'privacy options reject all stale in-flight formats when still allowed',
+    () async {
+      final gateway = FakeAdMobGateway()
+        ..holdBannerLoad = true
+        ..holdInterstitialLoad = true
+        ..holdRewardedLoad = true;
+      final service = AdMobAdService(gateway: gateway);
+      final bannerLoad = service.loadBanner(
+        request.copyWith(surface: AdSurface.lobby),
+      );
+      final interstitialLoad = service.prepareInterstitial(request);
+      final rewardedLoad = service.showRewarded(
+        request.copyWith(surface: AdSurface.result),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(await service.showPrivacyOptions(), isTrue);
+      final banner = gateway.completeBannerLoad();
+      final interstitial = FakeInterstitialHandle();
+      gateway.pendingInterstitials.removeAt(0)(interstitial);
+      final rewarded = FakeRewardedHandle();
+      gateway.pendingRewarded!(rewarded);
+
+      for (final result in await Future.wait([
+        bannerLoad,
+        interstitialLoad,
+        rewardedLoad,
+      ])) {
+        expect(result.status, AdStatus.unavailable);
+      }
+      expect(banner.disposeCalls, 1);
+      expect(interstitial.disposeCalls, 1);
+      expect(rewarded.disposeCalls, 1);
+      expect(rewarded.showCalls, 0);
+      expect(service.banner, isNull);
+      service.dispose();
+    },
+  );
+
+  test(
+    'stale interstitial completion cannot release a fresh load guard',
+    () async {
+      final gateway = FakeAdMobGateway()..holdInterstitialLoad = true;
+      final service = AdMobAdService(gateway: gateway);
+      final oldLoad = service.prepareInterstitial(request);
+      await Future<void>.delayed(Duration.zero);
+      await service.showPrivacyOptions();
+      final freshLoad = service.prepareInterstitial(request);
+      await Future<void>.delayed(Duration.zero);
+      gateway.pendingInterstitials.removeAt(0)(FakeInterstitialHandle());
+      expect((await oldLoad).status, AdStatus.unavailable);
+
+      final duplicate = service.prepareInterstitial(request);
+      expect(identical(duplicate, freshLoad), isTrue);
+      gateway.pendingInterstitials.removeAt(0)(FakeInterstitialHandle());
+      expect((await freshLoad).status, AdStatus.shown);
+      expect((await duplicate).status, AdStatus.shown);
+      expect(gateway.interstitialLoadCalls, 2);
+      service.dispose();
     },
   );
 
@@ -271,12 +381,17 @@ extension on AdRequestContext {
 
 final class FakeAdMobGateway implements AdMobGateway {
   int initializeCalls = 0;
+  int bannerLoadCalls = 0;
   int interstitialLoadCalls = 0;
   bool rewardedNoFill = false;
   bool interstitialNoFill = false;
   bool consentAllowed = true;
   final List<bool> initializationResults = [];
   bool holdBannerLoad = false;
+  bool holdInterstitialLoad = false;
+  bool holdRewardedLoad = false;
+  final List<void Function(AdMobInterstitialHandle)> pendingInterstitials = [];
+  void Function(AdMobRewardedHandle)? pendingRewarded;
   Completer<bool>? _initialization;
   void Function(AdMobBannerHandle)? _bannerLoaded;
   final List<FakeInterstitialHandle> interstitials = [];
@@ -302,6 +417,7 @@ final class FakeAdMobGateway implements AdMobGateway {
     required void Function(AdMobBannerHandle) onLoaded,
     required void Function() onFailed,
   }) {
+    bannerLoadCalls += 1;
     if (holdBannerLoad) {
       _bannerLoaded = onLoaded;
     } else {
@@ -326,6 +442,10 @@ final class FakeAdMobGateway implements AdMobGateway {
       onFailed();
       return;
     }
+    if (holdInterstitialLoad) {
+      pendingInterstitials.add(onLoaded);
+      return;
+    }
     final handle = FakeInterstitialHandle();
     interstitials.add(handle);
     onLoaded(handle);
@@ -339,6 +459,10 @@ final class FakeAdMobGateway implements AdMobGateway {
   }) {
     if (rewardedNoFill) {
       onFailed();
+      return;
+    }
+    if (holdRewardedLoad) {
+      pendingRewarded = onLoaded;
       return;
     }
     final handle = FakeRewardedHandle();
@@ -385,6 +509,7 @@ final class FakeInterstitialHandle implements AdMobInterstitialHandle {
 
 final class FakeRewardedHandle implements AdMobRewardedHandle {
   int disposeCalls = 0;
+  int showCalls = 0;
   void Function()? _earn;
   void Function()? _dismiss;
 
@@ -394,6 +519,7 @@ final class FakeRewardedHandle implements AdMobRewardedHandle {
     required void Function() onDismissed,
     required void Function() onFailed,
   }) {
+    showCalls += 1;
     _earn = onEarned;
     _dismiss = onDismissed;
   }

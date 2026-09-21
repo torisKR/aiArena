@@ -187,11 +187,13 @@ final class PolicyAdService implements AdService {
     required this.delegate,
     int firstInterstitialMatch = 2,
     this.maxRewardedAds = 3,
+    this.removeAds,
   }) : assert(firstInterstitialMatch >= 1),
        assert(maxRewardedAds >= 1),
        _nextInterstitialMatch = firstInterstitialMatch;
 
   final AdService delegate;
+  final bool Function()? removeAds;
   final int maxRewardedAds;
   int _nextInterstitialMatch;
   int _rewardedAdsShown = 0;
@@ -200,7 +202,7 @@ final class PolicyAdService implements AdService {
   ClientPlatform get platform => delegate.platform;
 
   @override
-  BannerAd? get banner => delegate.banner;
+  BannerAd? get banner => removeAds?.call() == true ? null : delegate.banner;
 
   @override
   void dispose() => delegate.dispose();
@@ -209,6 +211,7 @@ final class PolicyAdService implements AdService {
   /// policy gate. This check has no side effects; [showInterstitial] consumes
   /// the frequency slot synchronously before awaiting the platform adapter.
   bool isInterstitialEligible(AdRequestContext request) =>
+      removeAds?.call() != true &&
       request.surface == AdSurface.resultClosed &&
       _commonBlock(request) == null &&
       request.completedMatches >= _nextInterstitialMatch;
@@ -236,6 +239,9 @@ final class PolicyAdService implements AdService {
 
   @override
   Future<AdResult> loadBanner(AdRequestContext request) async {
+    if (removeAds?.call() == true) {
+      return const AdResult(AdStatus.skippedPolicy);
+    }
     if (request.surface != AdSurface.lobby &&
         request.surface != AdSurface.result) {
       return const AdResult(AdStatus.skippedPolicy);
@@ -247,6 +253,9 @@ final class PolicyAdService implements AdService {
 
   @override
   Future<AdResult> prepareInterstitial(AdRequestContext request) async {
+    if (removeAds?.call() == true) {
+      return const AdResult(AdStatus.skippedPolicy);
+    }
     if (!isInterstitialEligible(request)) {
       if (request.surface != AdSurface.resultClosed) {
         return const AdResult(AdStatus.skippedPolicy);
@@ -259,6 +268,9 @@ final class PolicyAdService implements AdService {
 
   @override
   Future<AdResult> showInterstitial(AdRequestContext request) async {
+    if (removeAds?.call() == true) {
+      return const AdResult(AdStatus.skippedPolicy);
+    }
     if (request.surface != AdSurface.resultClosed) {
       return const AdResult(AdStatus.skippedPolicy);
     }

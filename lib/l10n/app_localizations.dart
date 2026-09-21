@@ -102,6 +102,48 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @billingDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete billing account'**
+  String get billingDelete;
+
+  /// No description provided for @billingDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the Tokenfront billing account and purchase verification records. Ad removal and the restoration link end; restoration is not guaranteed after deletion. This does not refund purchases or delete Google / Google Play records. Continue and verify the same Google account?'**
+  String get billingDeleteWarning;
+
+  /// No description provided for @billingDeleteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get billingDeleteCancel;
+
+  /// No description provided for @billingDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete and verify with Google'**
+  String get billingDeleteConfirm;
+
+  /// No description provided for @billingDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing account deleted. Ad removal ended on this device.'**
+  String get billingDeleted;
+
+  /// No description provided for @billingDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion is not confirmed. Retry soon with the same account. If you cannot retry, contact korea@toris.kr.'**
+  String get billingDeleteFailed;
+
+  /// No description provided for @billingDeleteLocalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Server account deleted, but local cleanup failed. Keep the app open and retry. Cached data may remain on disk; contact korea@toris.kr if this continues.'**
+  String get billingDeleteLocalFailed;
+
   /// No description provided for @recoveryTitle.
   ///
   /// In en, this message translates to:
@@ -543,7 +585,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyAccountsBody.
   ///
   /// In en, this message translates to:
-  /// **'Tokenfront has no account, login, cloud sync, purchase system, user-submitted content, or social feature. It requests no location, camera, microphone, contacts, photos, files, calendar, health, financial, or messaging access.'**
+  /// **'Shipped 1.2.0 has no login or purchases. Future-version draft, disabled and pending publication: optional Google sign-in would enable one-time remove-ads purchase/restore; gameplay needs no login and optional rewarded ads remain. Toris’s Cloudflare Workers backend would verify Google identity and Google Play purchases. D1 would retain pseudonymous (not anonymous) account bindings, encrypted purchase tokens and their hashes, order IDs, product/status and verification/check timestamps. Email/profile are not persisted by the backend. A signed entitlement and account binding would be cached locally for up to 30 days after positive verification, not as a retention limit for server records. Clearing app storage or logging out does not delete backend records. Deletion endpoint/workflow and retention policy are missing release blockers; no operational deletion service is promised. Privacy inquiries: korea@toris.kr; do not send tokens or passwords. No cloud game sync, social feature or access to location, camera, microphone, contacts, photos, calendar, health or messages is added.'**
   String get privacyAccountsBody;
 
   /// No description provided for @privacyHostingTitle.
@@ -567,7 +609,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyChildrenBody.
   ///
   /// In en, this message translates to:
-  /// **'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information.'**
+  /// **'Tokenfront is intended for players aged 13 and older and is not directed to children under 13. Advertising processing is described above; the proposed account and purchase processing is disabled and separately disclosed.'**
   String get privacyChildrenBody;
 
   /// No description provided for @privacyChangesTitle.
@@ -2022,6 +2064,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DOCTRINE  //  {doctrine}'**
   String doctrineSummary(String doctrine);
+
+  /// No description provided for @billingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove forced ads'**
+  String get billingTitle;
+
+  /// No description provided for @billingDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time purchase. Banners and interstitials are removed; optional rewarded ads remain.'**
+  String get billingDetail;
+
+  /// No description provided for @billingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases unavailable'**
+  String get billingUnavailable;
+
+  /// No description provided for @billingLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get billingLogin;
+
+  /// No description provided for @billingLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get billingLogout;
+
+  /// No description provided for @billingSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch Google account'**
+  String get billingSwitch;
+
+  /// No description provided for @billingRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get billingRestore;
+
+  /// No description provided for @billingBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy · {price}'**
+  String billingBuy(String price);
+
+  /// No description provided for @billingActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Forced ads removed'**
+  String get billingActive;
+
+  /// No description provided for @billingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get billingPending;
+
+  /// No description provided for @billingCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Canceled. You can try again.'**
+  String get billingCanceled;
+
+  /// No description provided for @billingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify. Sign in or restore to retry.'**
+  String get billingError;
+
+  /// No description provided for @billingReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to purchase'**
+  String get billingReady;
+
+  /// No description provided for @billingSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to purchase or restore.'**
+  String get billingSignInRequired;
+
+  /// No description provided for @billingFreshness.
+  ///
+  /// In en, this message translates to:
+  /// **'Online verification is required after sign-in and periodically. Ads may return when verification expires.'**
+  String get billingFreshness;
 }
 
 class _AppLocalizationsDelegate

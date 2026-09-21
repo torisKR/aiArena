@@ -7,6 +7,8 @@ import '../services/privacy/privacy_link_actions.dart';
 import '../settings/game_preferences.dart';
 import 'privacy_policy_sheet.dart';
 import 'primitives.dart';
+import 'billing_settings.dart';
+import '../services/billing/billing_controller.dart';
 
 Future<void> showSignalSettings({
   required BuildContext context,
@@ -17,6 +19,7 @@ Future<void> showSignalSettings({
   required ValueChanged<bool> onAdRequestsChanged,
   required ReleaseCapabilities capabilities,
   required PrivacyLinkActions privacyLinkActions,
+  BillingController? billing,
   Future<bool> Function()? onShowPrivacyOptions,
 }) => showModalBottomSheet<void>(
   context: context,
@@ -26,6 +29,7 @@ Future<void> showSignalSettings({
   barrierColor: TokenfrontColors.deepField.withValues(alpha: .78),
   builder: (context) => _SignalSettingsSheet(
     preferences: preferences,
+    billing: billing,
     analyticsSharingAllowed: analyticsSharingAllowed,
     adRequestsAllowed: adRequestsAllowed,
     onAnalyticsChanged: onAnalyticsChanged,
@@ -46,8 +50,10 @@ class _SignalSettingsSheet extends StatefulWidget {
     required this.capabilities,
     required this.privacyLinkActions,
     this.onShowPrivacyOptions,
+    this.billing,
   });
 
+  final BillingController? billing;
   final GamePreferences preferences;
   final bool analyticsSharingAllowed;
   final bool adRequestsAllowed;
@@ -121,6 +127,10 @@ class _SignalSettingsSheetState extends State<_SignalSettingsSheet> {
                       ],
                     ),
                     const SizedBox(height: 20),
+                    if (widget.billing != null) ...[
+                      BillingSettings(billing: widget.billing!),
+                      const SizedBox(height: 22),
+                    ],
                     _SectionLabel(context.l10n.languageSection),
                     _LanguageSelector(preferences: widget.preferences),
                     const SizedBox(height: 22),

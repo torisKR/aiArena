@@ -1,4 +1,11 @@
 {
+  "billingDelete": "Delete billing account",
+  "billingDeleteWarning": "Delete the Tokenfront billing account and purchase verification records. Ad removal and the restoration link end; restoration is not guaranteed after deletion. This does not refund purchases or delete Google / Google Play records. Continue and verify the same Google account?",
+  "billingDeleteCancel": "Cancel",
+  "billingDeleteConfirm": "Delete and verify with Google",
+  "billingDeleted": "Billing account deleted. Ad removal ended on this device.",
+  "billingDeleteFailed": "Deletion is not confirmed. Retry soon with the same account. If you cannot retry, contact korea@toris.kr.",
+  "billingDeleteLocalFailed": "Server account deleted, but local cleanup failed. Keep the app open and retry. Cached data may remain on disk; contact korea@toris.kr if this continues.",
   "recoveryTitle": "Recover three signals",
   "recoveryInstruction": "Tap 1, 2 or 3 to choose a destination. Movement and combat are automatic. If your token falls, another continues. Progress stays.",
   "recoveryAutomatic": "AUTO MOVE · AUTO COMBAT · AUTO CONTINUE",
@@ -141,11 +148,11 @@
   "privacyAdvertisingTitle": "ADVERTISING",
   "privacyAdvertisingBody": "This Android test build uses Google Mobile Ads with Google test ad units. Optional lobby and result banners, result rewarded ads, and result-exit interstitials are requested only after the Google consent flow permits them. AdMob may process ad requests, device information, and advertising identifiers as described by Google. Turning off AD REQUESTS stops app ad requests; the base War Token reward never depends on an ad.",
   "privacyAccountsTitle": "ACCOUNTS, PERMISSIONS, AND THIRD PARTIES",
-  "privacyAccountsBody": "Tokenfront has no account, login, cloud sync, purchase system, user-submitted content, or social feature. It requests no location, camera, microphone, contacts, photos, files, calendar, health, financial, or messaging access.",
+  "privacyAccountsBody": "Shipped 1.2.0 has no login or purchases. Future-version draft, disabled and pending publication: optional Google sign-in would enable one-time remove-ads purchase/restore; gameplay needs no login and optional rewarded ads remain. Toris’s Cloudflare Workers backend would verify Google identity and Google Play purchases. D1 would retain pseudonymous (not anonymous) account bindings, encrypted purchase tokens and their hashes, order IDs, product/status and verification/check timestamps. Email/profile are not persisted by the backend. A signed entitlement and account binding would be cached locally for up to 30 days after positive verification, not as a retention limit for server records. Clearing app storage or logging out does not delete backend records. Deletion endpoint/workflow and retention policy are missing release blockers; no operational deletion service is promised. Privacy inquiries: korea@toris.kr; do not send tokens or passwords. No cloud game sync, social feature or access to location, camera, microphone, contacts, photos, calendar, health or messages is added.",
   "privacyHostingTitle": "PUBLIC POLICY HOSTING",
   "privacyHostingBody": "The public copy is hosted on Cloudflare Pages. Opening it uses your external browser, where Cloudflare may process ordinary web-request data under its terms. The Android app does not embed the public page or send gameplay or local-state data to it.",
   "privacyChildrenTitle": "CHILDREN",
-  "privacyChildrenBody": "Tokenfront is intended for players aged 13 and older and is not directed to children under 13. This release does not collect personal information.",
+  "privacyChildrenBody": "Tokenfront is intended for players aged 13 and older and is not directed to children under 13. Advertising processing is described above; the proposed account and purchase processing is disabled and separately disclosed.",
   "privacyChangesTitle": "CHANGES",
   "privacyChangesBody": "Before a future release adds analytics transport, advertising, accounts, cloud services, or another off-device data flow, this policy and Google Play Data Safety declaration will be updated.",
   "privacyContactTitle": "CONTACT",
@@ -593,5 +600,27 @@
   "manualRelaysSummary": "MANUAL RELAYS  //  {count}",
   "@manualRelaysSummary": {"placeholders": {"count": {"type": "int", "example": "1"}}},
   "doctrineSummary": "DOCTRINE  //  {doctrine}",
-  "@doctrineSummary": {"placeholders": {"doctrine": {"type": "String", "example": "ADAPTIVE"}}}
+  "@doctrineSummary": {"placeholders": {"doctrine": {"type": "String", "example": "ADAPTIVE"}}},
+  "billingTitle": "Remove forced ads",
+  "billingDetail": "One-time purchase. Banners and interstitials are removed; optional rewarded ads remain.",
+  "billingUnavailable": "Purchases unavailable",
+  "billingLogin": "Sign in with Google",
+  "billingLogout": "Sign out",
+  "billingSwitch": "Switch Google account",
+  "billingRestore": "Restore purchases",
+  "billingBuy": "Buy · {price}",
+  "billingActive": "Forced ads removed",
+  "billingPending": "Processing…",
+  "billingCanceled": "Canceled. You can try again.",
+  "billingError": "Could not verify. Sign in or restore to retry.",
+  "billingReady": "Ready to purchase",
+  "billingSignInRequired": "Sign in to purchase or restore.",
+  "billingFreshness": "Online verification is required after sign-in and periodically. Ads may return when verification expires.",
+  "@billingBuy": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  }
 }

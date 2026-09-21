@@ -57,7 +57,7 @@ void main() {
         'DEPLOY TO ORBIT',
       ),
       'ko': (
-        'Tokenfront: 궤도 신호전',
+        'AI 전쟁 시뮬레이터',
         '네 AI 코어. 4,000개의 활성 토큰. 단 하나의 최후 릴레이.',
         '궤도 투입',
       ),

@@ -1,28 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#00D8FF"
-        android:pathData="M51,48h6v12h-6zM48,51h12v6h-12z" />
-    <path
-        android:fillColor="#9B6CFF"
-        android:pathData="M26,51h12v6h-12z" />
-    <path
-        android:fillColor="#3F7DFF"
-        android:pathData="M70,51h12v6h-12z" />
-    <path
-        android:fillColor="#FFE66D"
-        android:pathData="M51,26h6v12h-6z" />
-    <path
-        android:fillColor="#FF5CD6"
-        android:pathData="M51,70h6v12h-6z" />
-    <path
-        android:fillColor="#00D8FF"
-        android:fillAlpha="0"
-        android:strokeColor="#00D8FF"
-        android:strokeWidth="4"
-        android:pathData="M54,24A30,30 0,0 1,84 54M84,54A30,30 0,0 1,54 84M54,84A30,30 0,0 1,24 54" />
-</vector>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/ai_war_foreground"
+    android:gravity="fill" />

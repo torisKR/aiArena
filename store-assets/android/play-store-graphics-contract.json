@@ -1,7 +1,7 @@
 {
   "version": 1,
   "brand": {
-    "title": "TOKENFRONT",
+    "title": "AI 전쟁 시뮬레이터",
     "subtitle": "ORBITAL SIGNAL WAR",
     "eyebrow": "OFFLINE TACTICAL SURVIVAL"
   },
@@ -40,7 +40,15 @@
     },
     "render_play_store_graphics.sh": {
       "path": "tooling/render_play_store_graphics.sh",
-      "sha256": "f6b8428510c00fdcda091ae2d03b0baaaabb06b148676078f7bd9221edabb34d"
+      "sha256": "bf326da31328e1ed2b495859e75314b86db70df50239ae3c2b908c624cc08e5f"
+    },
+    "logo_image.png": {
+      "path": "assets/images/logo_image.png",
+      "sha256": "1936809042a02bd6b78386584b940cf5df9c1adac6a1aee0cbab3aa41ef2a838"
+    },
+    "generate_android_icons.py": {
+      "path": "tooling/generate_android_icons.py",
+      "sha256": "6ad69271d2a59460495ea5e438c7facf4f9d444a07405946519d748aa7b2eecb"
     }
   },
   "outputs": {
@@ -52,7 +60,7 @@
       "colorType": "rgba",
       "opaque": true,
       "maxBytes": 1048576,
-      "sha256": "04f6c2cd5ebd59dccb409d17ca4729f54cef32b78e90d6f98765c7b74c77928c"
+      "sha256": "f40cada255a10f4a7295d78c1ec8c3416222ef65b536779fafe405b141796866"
     },
     "feature-graphic-1024x500.jpg": {
       "path": "store-assets/android/feature-graphic-1024x500.jpg",
@@ -63,6 +71,33 @@
       "opaque": true,
       "maxBytes": 1048576,
       "sha256": "d55db2545b5ee03a8bdcc6413a9c70acd54a8d5099f3001fe00ce04a528ccafa"
+    },
+    "ai-war-simulator-icon-512.png": {
+      "path": "store-assets/android/ai-war-simulator-icon-512.png",
+      "width": 512,
+      "height": 512,
+      "format": "png",
+      "colorType": "rgba",
+      "opaque": true,
+      "maxBytes": 1048576,
+      "sha256": "f40cada255a10f4a7295d78c1ec8c3416222ef65b536779fafe405b141796866"
     }
+  },
+  "iconGeneration": {
+    "mode": "user-provided artwork; deterministic Pillow export",
+    "source": "assets/images/logo_image.png",
+    "sourceDimensions": [
+      1254,
+      1254
+    ],
+    "artBounds": [
+      60,
+      70,
+      1194,
+      1080
+    ],
+    "adaptiveArtWidthDp": 60,
+    "monochrome": "purpose-designed simplified spire and four diamond satellites",
+    "note": "imageGeneration describes the unchanged historical feature graphic only; legacy SVG is not the current icon source."
   }
 }

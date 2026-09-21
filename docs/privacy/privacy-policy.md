@@ -1,5 +1,41 @@
 # Tokenfront: Orbital Signal War Privacy Policy
 
+## Forthcoming monetization — DRAFT, disabled; publication pending
+
+Applies only to a future version after 1.2.0; no effective date has been approved. Shipped 1.2.0 has no login or purchase flow. The implementation in this working tree is disabled, the backend is not deployed, and the Play product is not created. The 1.2.0 policy below remains separately scoped; its no-account statements must not be reused for an enabled release.
+
+Google sign-in would be optional for gameplay and required to buy or restore the proposed one-time remove-ads purchase (KRW 3,900, subject to Play product/price setup). It removes banners and interstitials, not optional rewarded ads. Restore uses the same Google identity plus Google Play purchase verification; it does not upload or synchronize game progress.
+
+The app would send a fresh Google ID token and server challenge over HTTPS to Toris’s Cloudflare Workers backend. The backend verifies Google signatures, audience and nonce, and checks purchases with Google Play. Cloudflare would process these requests and store billing records in D1; Google processes authentication and payment/verification under its own terms. A stable hash of Google issuer/subject and a random purchase-account binding link records across reinstalls/devices. These are **pseudonymous, NOT anonymous**, account identifiers. The backend does not persist the raw Google subject, email or profile. ID tokens are exchanged transiently; billing sessions stay in app memory for up to 15 minutes, without a stored Google refresh token.
+
+D1 would store account identifiers/binding, product ID, purchase-token hash and AES-256-GCM encrypted purchase token, order ID, active/terminal status, verification and next-check timestamps, and reconciliation/abuse-control records. Only the purchase token has application-level encryption in this schema; do not claim that order/status fields are similarly encrypted. Tokens are decrypted for repeat verification/refund checks. Cloudflare also processes network metadata, with a hashed IP used for edge rate limiting. Payment-card details are handled by Google Play, not this billing database.
+
+The app would locally cache a signed remove-ads entitlement, account binding and clock high-water mark. The signed grant expires 30 days after the last positive Google verification; it is not a lifetime offline grant or an API credential. Offline refund/revocation visibility may be delayed until expiry. Logout/account switching invalidates the in-memory grant and attempts local cache removal (storage failures may leave an old signed cache usable until its original expiry); clearing app storage/uninstalling removes local data, **not backend billing records**. Neither action is account deletion.
+
+**Release blockers:** no account/data-deletion endpoint or operational deletion workflow exists, and retention periods for account/purchase records, logs and backups have not been approved or implemented. The 30-day grant lifetime is not a backend retention period. Before enabling login/sales, define retention and legal exceptions, implement authenticated deletion and any required in-app/web request mechanism, test identity verification and deletion effects on restore/refunds/backups, and approve/publish revised policies and Console disclosures. Do not promise deletion completion or a response deadline.
+
+Draft inquiry route only: email the existing public contact **korea@toris.kr** with subject “Tokenfront privacy / deletion inquiry” and describe the request; do not send passwords, ID/session tokens or purchase tokens. This is not an operational account-deletion service or a verified deletion URL. Public contact and policy URLs are unchanged; ownership/routing must be confirmed before launch.
+
+## 차기 수익화 기능 — 초안, 비활성화; 공개 대기
+
+1.2.0 이후 차기 버전에만 적용할 초안이며 시행일은 미승인입니다. 출시된 1.2.0에는 로그인·구매 기능이 없습니다. 작업 트리의 구현은 비활성화 상태이고 백엔드는 미배포, Play 상품은 미생성입니다. 아래 1.2.0 방침의 계정 없음 설명은 기능 활성화 버전에 적용되지 않습니다.
+
+게임 이용에는 Google 로그인이 선택 사항이지만, 제안된 일회성 광고 제거 구매(3,900원, Play 상품·가격 설정 필요)와 복원에는 필요합니다. 배너·전면 광고를 제거하며 선택형 보상 광고는 유지됩니다. 동일 Google 계정과 Google Play 구매 검증으로 복원하며 게임 진행은 업로드·동기화하지 않습니다.
+
+앱은 Google ID 토큰과 서버 챌린지를 HTTPS로 Toris의 Cloudflare Workers 백엔드에 보내고, 백엔드는 Google 서명·대상·nonce 및 Google Play 구매를 검증합니다. Cloudflare는 요청 처리와 D1 저장을, Google은 자체 약관에 따른 인증·결제·구매 검증을 담당합니다. Google 발급자/사용자 ID의 안정적 해시와 무작위 구매 계정 연결값으로 재설치·다른 기기의 기록을 연결합니다. 이는 **가명 식별자이며 익명 정보가 아닙니다**. 원본 Google 사용자 ID, 이메일, 프로필은 백엔드에 보관하지 않습니다. ID 토큰은 일시적으로 교환하며, 최대 15분의 결제 세션은 앱 메모리에만 두고 Google 갱신 토큰은 저장하지 않습니다.
+
+D1에는 계정 식별자·연결값, 상품 ID, 구매 토큰 해시 및 AES-256-GCM 암호화 구매 토큰, 주문 ID, 활성·종료 상태, 검증·다음 확인 시각, 재검증·남용 방지 기록이 저장됩니다. 이 스키마에서 애플리케이션 수준으로 암호화하는 것은 구매 토큰이며 주문·상태 필드까지 같은 방식으로 암호화한다고 주장하지 않습니다. 환불 등 재검증 시 토큰을 복호화합니다. Cloudflare는 네트워크 메타데이터도 처리하며 IP 해시를 요청 제한에 사용합니다. 카드 정보는 Google Play가 처리하고 이 결제 DB에는 저장하지 않습니다.
+
+기기에는 서명된 광고 제거 권한, 계정 연결값과 시계 확인값을 저장합니다. 권한은 마지막 Google 정상 검증 후 30일에 만료하며 평생 오프라인 권한이나 API 인증 수단이 아닙니다. 오프라인에서는 환불·철회 반영이 만료까지 지연될 수 있습니다. 로그아웃·계정 전환은 메모리 권한을 무효화하고 로컬 캐시 삭제를 시도합니다. 저장 실패 시 기존 서명 캐시가 원래 만료일까지 다시 사용될 수 있습니다. 앱 데이터 삭제·제거는 로컬 데이터만 삭제하며 서버 결제 기록이나 계정을 삭제하지 않습니다.
+
+**출시 차단 조건:** 계정·데이터 삭제 엔드포인트와 운영 절차가 없고 계정·구매 기록, 로그·백업 보유 기간도 승인·구현되지 않았습니다. 권한의 30일 유효기간은 서버 보유 기간이 아닙니다. 로그인·판매 활성화 전에 보유 기간·법적 예외, 본인 확인과 삭제 절차, 필요한 앱 내·웹 요청 수단을 구현하고 복원·환불·백업에 대한 영향을 검증하며 방침·Console 공개 정보를 승인·게시해야 합니다. 삭제 완료나 처리 기한은 약속하지 않습니다.
+
+문의 경로 초안: 기존 공개 연락처 **korea@toris.kr**로 제목 “Tokenfront 개인정보 / 삭제 문의”와 요청 내용을 보내세요. 비밀번호, ID·세션 토큰, 구매 토큰은 보내지 마세요. 이는 운영 중인 계정 삭제 서비스나 검증된 삭제 URL이 아닙니다. 기존 공개 연락처·정책 URL은 유지하며 출시 전 담당·전달 경로 확인이 필요합니다.
+
+## Shipped 1.2.0 policy / 출시된 1.2.0 방침
+
+The historical effective date below is not the effective date of the draft above. / 아래 기존 시행일은 위 초안의 시행일이 아닙니다.
+
 Effective date: August 5, 2026
 
 Tokenfront: Orbital Signal War (the “App”) is provided by Toris. This policy explains how the release covered by this policy handles information.
@@ -40,7 +76,7 @@ The App is intended for players aged 13 and older and is not directed to childre
 
 ## Security
 
-Keeping data on your device and omitting network data collection reduces exposure. No method of storage is completely secure, so keep your device and operating system protected.
+Keeping gameplay data on your device reduces exposure; advertising is a separate network data flow. No method of storage is completely secure, so keep your device and operating system protected.
 
 ## Changes to this policy
 
@@ -54,11 +90,11 @@ Email: korea@toris.kr
 
 ---
 
-# Tokenfront: 궤도 신호전 개인정보처리방침
+# AI 전쟁 시뮬레이터 개인정보처리방침
 
 시행일: 2026년 8월 5일
 
-Toris가 제공하는 Tokenfront: 궤도 신호전(이하 “앱”)의 이 방침 적용 대상 릴리스가 정보를 처리하는 방식을 안내합니다.
+Toris가 제공하는 AI 전쟁 시뮬레이터(이하 “앱”)의 이 방침 적용 대상 릴리스가 정보를 처리하는 방식을 안내합니다.
 
 ## 요약
 
@@ -76,11 +112,11 @@ Toris가 제공하는 Tokenfront: 궤도 신호전(이하 “앱”)의 이 방�
 
 ## 데이터 수집 및 공유
 
-- 기기 외부로 수집하는 개인정보: 없음
-- 제3자와 공유하는 데이터: 없음
+- 기기 외부로 수집하는 개인정보: 광고 요청이 켜져 있으면 AdMob이 광고 요청·기기 데이터를 처리할 수 있음
+- 제3자와 공유하는 데이터: Google Mobile Ads가 Google 설명에 따라 처리하는 데이터
 - 계정 또는 클라우드 프로필: 없음
 - 정밀 위치, 연락처, 사진, 카메라 또는 마이크 접근: 없음
-- 광고 식별자: 없음
+- 광고 식별자: Android AD_ID 권한 제거 여부를 최종 AAB에서 확인하며, 기타 광고 요청·기기 데이터는 별도 광고 설명에 따름
 
 ## 보유 및 삭제
 
@@ -92,11 +128,11 @@ Toris는 게임플레이 또는 로컬 상태 데이터를 서버에 보유하�
 
 ## 아동의 개인정보
 
-앱은 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 이 릴리스는 개인정보를 수집하지 않습니다. 향후 버전에서 처리 방식이 바뀌는 경우 해당 버전을 출시하기 전에 이 방침과 관련 스토어 공개 정보를 업데이트합니다.
+앱은 만 13세 이상 이용자를 대상으로 하며 만 13세 미만 아동을 대상으로 하지 않습니다. 광고 관련 데이터 처리는 위의 광고 설명과 Google 약관 및 동의 절차에 따릅니다. 향후 버전에서 처리 방식이 바뀌는 경우 해당 버전을 출시하기 전에 이 방침과 관련 스토어 공개 정보를 업데이트합니다.
 
 ## 보안
 
-정보를 기기에만 보관하고 네트워크 수집을 하지 않음으로써 노출 가능성을 줄입니다. 다만 어떠한 저장 방식도 완전한 보안을 보장할 수 없으므로 기기와 운영체제를 안전하게 유지해 주세요.
+게임 진행 정보를 기기에 보관하여 노출 가능성을 줄이며 광고는 별도의 네트워크 데이터 흐름입니다. 다만 어떠한 저장 방식도 완전한 보안을 보장할 수 없으므로 기기와 운영체제를 안전하게 유지해 주세요.
 
 ## 방침 변경
 

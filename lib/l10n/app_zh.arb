@@ -1,4 +1,11 @@
 {
+  "billingDelete": "删除付费账户",
+  "billingDeleteWarning": "将删除Tokenfront付费账户和购买验证记录。去广告权益及恢复关联将终止，删除后不保证能够恢复。这不会退款，也不会删除Google / Google Play记录。是否继续并验证同一个Google账户？",
+  "billingDeleteCancel": "取消",
+  "billingDeleteConfirm": "删除并通过Google验证",
+  "billingDeleted": "付费账户已删除。此设备上的去广告权益已终止。",
+  "billingDeleteFailed": "尚未确认删除。请尽快使用同一账户重试。无法重试时请联系korea@toris.kr。",
+  "billingDeleteLocalFailed": "服务器账户已删除，但本地清理失败。请保持应用开启并重试。磁盘上可能仍有缓存数据；如果问题持续，请联系korea@toris.kr。",
   "recoveryTitle": "回收三个信号",
   "recoveryInstruction": "点击1、2或3选择目的地。移动和战斗自动进行。当前单位倒下后，其他单位会自动接手，回收进度保留。",
   "recoveryAutomatic": "自动移动 · 自动战斗 · 自动接手",
@@ -74,11 +81,11 @@
   "privacyAdvertisingTitle": "广告",
   "privacyAdvertisingBody": "此 Android 测试版本使用 Google Mobile Ads 和 Google 测试广告单元。大厅和结果页横幅、结果页激励广告以及结果退出插屏只有在 Google 同意流程允许后才会请求。AdMob 可能按照 Google 的说明处理广告请求、设备信息和广告标识符。关闭广告请求会停止应用广告请求，但不会影响基础 War Token 奖励。",
   "privacyAccountsTitle": "账户、权限与第三方",
-  "privacyAccountsBody": "Tokenfront 没有账户、登录、云同步、购买系统、用户提交内容或社交功能，也不会请求位置、相机、麦克风、联系人、照片、文件、日历、健康、金融或消息权限。",
+  "privacyAccountsBody": "已发布的1.2.0没有登录或购买功能。以下为未来版本草案，功能已禁用，尚待发布。游戏无需Google登录，但一次性去广告购买与恢复需要登录；自选激励广告仍保留。Toris的Cloudflare Workers后端将验证Google身份及Google Play购买，D1将保存假名化（并非匿名）的账户绑定、加密购买令牌及其哈希、订单ID、商品、状态及验证和检查时间。后端不保存邮箱或个人资料。签名权益与账户绑定将在验证成功后于本地缓存最多30天；这不是服务器记录的保留期限。清除应用数据或退出登录不会删除服务器记录。删除端点、操作流程和保留政策尚缺，属于发布阻断项；不承诺删除服务已运营。隐私咨询：korea@toris.kr；请勿发送令牌或密码。不增加游戏云同步、社交功能或位置、相机、麦克风、联系人、照片、日历、健康、消息访问。",
   "privacyHostingTitle": "公开政策托管",
   "privacyHostingBody": "公开版本由 Cloudflare Pages 托管。通过外部浏览器打开时，Cloudflare 可能依据其条款处理常规网络请求数据。Android 应用不会嵌入公开页面，也不会向其发送游戏或本地状态数据。",
   "privacyChildrenTitle": "儿童",
-  "privacyChildrenBody": "Tokenfront 面向 13 岁及以上玩家，并非为 13 岁以下儿童设计。此版本不收集个人信息。",
+  "privacyChildrenBody": "Tokenfront面向13岁及以上玩家，并非为13岁以下儿童设计。广告处理如上所述；拟议的账户与购买处理已禁用并单独披露。",
   "privacyChangesTitle": "变更",
   "privacyChangesBody": "未来版本在加入分析传输、广告、账户、云服务或其他设备外数据流之前，会更新本政策与 Google Play 数据安全声明。",
   "privacyContactTitle": "联系",
@@ -349,5 +356,27 @@
   "relayAction": "中继",
   "relayKeyboardHint": "R / Enter / Space",
   "manualRelaysSummary": "手动中继  //  {count}",
-  "doctrineSummary": "信号纲领  //  {doctrine}"
+  "doctrineSummary": "信号纲领  //  {doctrine}",
+  "billingTitle": "移除强制广告",
+  "billingDetail": "一次性购买。移除横幅和插屏广告，保留自选激励广告。",
+  "billingUnavailable": "暂时无法购买",
+  "billingLogin": "使用 Google 登录",
+  "billingLogout": "退出登录",
+  "billingSwitch": "切换 Google 账号",
+  "billingRestore": "恢复购买",
+  "billingBuy": "购买 · {price}",
+  "billingActive": "已移除强制广告",
+  "billingPending": "处理中…",
+  "billingCanceled": "已取消，可以重试。",
+  "billingError": "无法验证，请登录或恢复购买后重试。",
+  "billingReady": "可以购买",
+  "billingSignInRequired": "请登录以购买或恢复购买。",
+  "billingFreshness": "登录后及使用期间需要定期在线验证。验证过期后可能会重新显示广告。",
+  "@billingBuy": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  }
 }

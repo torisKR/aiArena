@@ -16,6 +16,7 @@ import 'story/campaign_controller.dart';
 import 'story/story_catalog.dart';
 import 'l10n/l10n.dart';
 import 'services/ads/ad_service.dart';
+import 'services/billing/billing_configuration.dart';
 import 'services/audio/game_audio_service.dart';
 import 'services/ads/admob_ad_service.dart';
 import 'services/analytics/analytics_event.dart';
@@ -29,6 +30,7 @@ import 'ui/lobby_screen.dart';
 import 'ui/operation_briefing_screen.dart';
 import 'ui/result_screen.dart';
 import 'ui/settings_sheet.dart';
+import 'ui/launch_splash.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,12 +39,15 @@ Future<void> main() async {
   final runtime = await TokenfrontRuntime.restore(
     platform: ClientPlatform.android,
     adAdapter: adService,
+    billing: const BillingConfiguration.environment().createController(),
   );
   runApp(
-    TokenfrontApp(
-      runtime: runtime,
-      disposeRuntime: true,
-      capabilities: androidAdMobTestCapabilities,
+    LaunchSplash(
+      child: TokenfrontApp(
+        runtime: runtime,
+        disposeRuntime: true,
+        capabilities: androidAdMobTestCapabilities,
+      ),
     ),
   );
 }
@@ -248,6 +253,9 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _syncAudioLifecycle(state);
+    if (state == AppLifecycleState.resumed) {
+      unawaited(runtime.billing.refresh());
+    }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       unawaited(runtime.flushLocalState());
@@ -260,7 +268,11 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   }
 
   void _runtimeChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {
+        if (runtime.billing.removeAds) bannerVisible = false;
+      });
+    }
   }
 
   void _syncAudioLifecycle(AppLifecycleState state) {
@@ -297,6 +309,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
   void _openSettings() {
     showSignalSettings(
       context: context,
+      billing: runtime.billing,
       preferences: runtime.preferences,
       analyticsSharingAllowed: runtime.analyticsSharingAllowed,
       adRequestsAllowed: runtime.adRequestsAllowed,

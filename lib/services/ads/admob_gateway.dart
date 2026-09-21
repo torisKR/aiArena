@@ -48,6 +48,8 @@ abstract interface class AdMobGateway {
 
 final class GoogleMobileAdsGateway implements AdMobGateway {
   static const _consentTimeout = Duration(seconds: 8);
+  // NPA is an explicit request policy, not a substitute for UMP consent.
+  static const _adRequest = AdRequest(nonPersonalizedAds: true);
 
   @override
   Future<bool> initialize() async {
@@ -84,7 +86,7 @@ final class GoogleMobileAdsGateway implements AdMobGateway {
     ad = BannerAd(
       adUnitId: adUnitId,
       size: AdSize.banner,
-      request: const AdRequest(),
+      request: _adRequest,
       listener: BannerAdListener(
         onAdLoaded: (_) => onLoaded(_GoogleBannerHandle(ad)),
         onAdFailedToLoad: (failed, _) {
@@ -104,7 +106,7 @@ final class GoogleMobileAdsGateway implements AdMobGateway {
   }) {
     InterstitialAd.load(
       adUnitId: adUnitId,
-      request: const AdRequest(),
+      request: _adRequest,
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) => onLoaded(_GoogleInterstitialHandle(ad)),
         onAdFailedToLoad: (_) => onFailed(),
@@ -120,7 +122,7 @@ final class GoogleMobileAdsGateway implements AdMobGateway {
   }) {
     RewardedAd.load(
       adUnitId: adUnitId,
-      request: const AdRequest(),
+      request: _adRequest,
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) => onLoaded(_GoogleRewardedHandle(ad)),
         onAdFailedToLoad: (_) => onFailed(),

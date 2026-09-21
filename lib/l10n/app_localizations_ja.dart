@@ -9,6 +9,30 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get billingDelete => '課金アカウントを削除';
+
+  @override
+  String get billingDeleteWarning =>
+      'Tokenfrontの課金アカウントと購入検証記録を削除します。広告削除特典と復元の紐付けが終了し、削除後の復元は保証されません。購入の払い戻しやGoogle / Google Playの記録削除ではありません。続けて同じGoogleアカウントを確認しますか？';
+
+  @override
+  String get billingDeleteCancel => 'キャンセル';
+
+  @override
+  String get billingDeleteConfirm => '削除してGoogleで確認';
+
+  @override
+  String get billingDeleted => '課金アカウントを削除しました。この端末の広告削除特典は終了しました。';
+
+  @override
+  String get billingDeleteFailed =>
+      '削除は確認できていません。同じアカウントですぐに再試行してください。再試行できない場合はkorea@toris.krへお問い合わせください。';
+
+  @override
+  String get billingDeleteLocalFailed =>
+      'サーバーのアカウントは削除されましたが、端末のデータ消去に失敗しました。アプリを開いたまま再試行してください。キャッシュがディスクに残っている可能性があります。解決しない場合はkorea@toris.krへお問い合わせください。';
+
+  @override
   String get recoveryTitle => '3つの信号を回収';
 
   @override
@@ -247,7 +271,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyAccountsBody =>
-      'アカウント、ログイン、クラウド同期、購入システム、ユーザー投稿、ソーシャル機能はありません。位置情報、カメラ、マイク、連絡先、写真、ファイル、カレンダー、健康、金融、メッセージ権限を要求しません。';
+      '公開済み1.2.0にはログインや購入機能はありません。次期版の草案であり、機能は無効・公開待ちです。Googleログインはプレイには任意ですが、買い切りの広告削除の購入・復元には必要となり、任意のリワード広告は残ります。TorisのCloudflare WorkersバックエンドでGoogle認証とGoogle Play購入を検証し、D1に仮名化された（匿名ではない）アカウント紐付け、暗号化した購入トークンとハッシュ、注文ID、商品・状態、検証・確認時刻を保存する予定です。メール・プロフィールはバックエンドに保存しません。署名付き権利とアカウント紐付けを検証成功から最大30日間端末にキャッシュしますが、これはサーバー記録の保存期間ではありません。アプリデータ消去・ログアウトでサーバー記録は削除されません。削除エンドポイント・運用手順と保存方針が未整備のためリリースを阻止しており、削除サービスの運用は約束しません。問い合わせ：korea@toris.kr。トークンやパスワードは送らないでください。ゲームのクラウド同期、ソーシャル機能、位置情報・カメラ・マイク・連絡先・写真・カレンダー・健康・メッセージへのアクセスは追加しません。';
 
   @override
   String get privacyHostingTitle => '公開ポリシーのホスティング';
@@ -261,7 +285,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyChildrenBody =>
-      'Tokenfrontは13歳以上を対象とし、13歳未満の子ども向けではありません。このリリースは個人情報を収集しません。';
+      'Tokenfrontは13歳以上を対象とし、13歳未満の子ども向けではありません。広告処理は上記のとおりです。予定するアカウント・購入処理は無効であり、別途説明しています。';
 
   @override
   String get privacyChangesTitle => '変更';
@@ -1087,4 +1111,52 @@ class AppLocalizationsJa extends AppLocalizations {
   String doctrineSummary(String doctrine) {
     return '信号ドクトリン  //  $doctrine';
   }
+
+  @override
+  String get billingTitle => '強制広告を削除';
+
+  @override
+  String get billingDetail => '買い切り購入です。バナーと全画面広告を削除し、任意のリワード広告は残ります。';
+
+  @override
+  String get billingUnavailable => '購入を利用できません';
+
+  @override
+  String get billingLogin => 'Googleでログイン';
+
+  @override
+  String get billingLogout => 'ログアウト';
+
+  @override
+  String get billingSwitch => 'Googleアカウントを切り替え';
+
+  @override
+  String get billingRestore => '購入を復元';
+
+  @override
+  String billingBuy(String price) {
+    return '購入 · $price';
+  }
+
+  @override
+  String get billingActive => '強制広告を削除済み';
+
+  @override
+  String get billingPending => '処理中…';
+
+  @override
+  String get billingCanceled => 'キャンセルしました。再試行できます。';
+
+  @override
+  String get billingError => '確認できませんでした。ログインまたは購入の復元をお試しください。';
+
+  @override
+  String get billingReady => '購入可能';
+
+  @override
+  String get billingSignInRequired => '購入または復元するにはログインしてください。';
+
+  @override
+  String get billingFreshness =>
+      'ログイン後および定期的なオンライン確認が必要です。有効期限が切れると広告が再表示される場合があります。';
 }

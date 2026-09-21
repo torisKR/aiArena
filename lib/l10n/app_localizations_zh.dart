@@ -9,6 +9,30 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get billingDelete => '删除付费账户';
+
+  @override
+  String get billingDeleteWarning =>
+      '将删除Tokenfront付费账户和购买验证记录。去广告权益及恢复关联将终止，删除后不保证能够恢复。这不会退款，也不会删除Google / Google Play记录。是否继续并验证同一个Google账户？';
+
+  @override
+  String get billingDeleteCancel => '取消';
+
+  @override
+  String get billingDeleteConfirm => '删除并通过Google验证';
+
+  @override
+  String get billingDeleted => '付费账户已删除。此设备上的去广告权益已终止。';
+
+  @override
+  String get billingDeleteFailed =>
+      '尚未确认删除。请尽快使用同一账户重试。无法重试时请联系korea@toris.kr。';
+
+  @override
+  String get billingDeleteLocalFailed =>
+      '服务器账户已删除，但本地清理失败。请保持应用开启并重试。磁盘上可能仍有缓存数据；如果问题持续，请联系korea@toris.kr。';
+
+  @override
   String get recoveryTitle => '回收三个信号';
 
   @override
@@ -246,7 +270,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyAccountsBody =>
-      'Tokenfront 没有账户、登录、云同步、购买系统、用户提交内容或社交功能，也不会请求位置、相机、麦克风、联系人、照片、文件、日历、健康、金融或消息权限。';
+      '已发布的1.2.0没有登录或购买功能。以下为未来版本草案，功能已禁用，尚待发布。游戏无需Google登录，但一次性去广告购买与恢复需要登录；自选激励广告仍保留。Toris的Cloudflare Workers后端将验证Google身份及Google Play购买，D1将保存假名化（并非匿名）的账户绑定、加密购买令牌及其哈希、订单ID、商品、状态及验证和检查时间。后端不保存邮箱或个人资料。签名权益与账户绑定将在验证成功后于本地缓存最多30天；这不是服务器记录的保留期限。清除应用数据或退出登录不会删除服务器记录。删除端点、操作流程和保留政策尚缺，属于发布阻断项；不承诺删除服务已运营。隐私咨询：korea@toris.kr；请勿发送令牌或密码。不增加游戏云同步、社交功能或位置、相机、麦克风、联系人、照片、日历、健康、消息访问。';
 
   @override
   String get privacyHostingTitle => '公开政策托管';
@@ -260,7 +284,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyChildrenBody =>
-      'Tokenfront 面向 13 岁及以上玩家，并非为 13 岁以下儿童设计。此版本不收集个人信息。';
+      'Tokenfront面向13岁及以上玩家，并非为13岁以下儿童设计。广告处理如上所述；拟议的账户与购买处理已禁用并单独披露。';
 
   @override
   String get privacyChangesTitle => '变更';
@@ -1074,4 +1098,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String doctrineSummary(String doctrine) {
     return '信号纲领  //  $doctrine';
   }
+
+  @override
+  String get billingTitle => '移除强制广告';
+
+  @override
+  String get billingDetail => '一次性购买。移除横幅和插屏广告，保留自选激励广告。';
+
+  @override
+  String get billingUnavailable => '暂时无法购买';
+
+  @override
+  String get billingLogin => '使用 Google 登录';
+
+  @override
+  String get billingLogout => '退出登录';
+
+  @override
+  String get billingSwitch => '切换 Google 账号';
+
+  @override
+  String get billingRestore => '恢复购买';
+
+  @override
+  String billingBuy(String price) {
+    return '购买 · $price';
+  }
+
+  @override
+  String get billingActive => '已移除强制广告';
+
+  @override
+  String get billingPending => '处理中…';
+
+  @override
+  String get billingCanceled => '已取消，可以重试。';
+
+  @override
+  String get billingError => '无法验证，请登录或恢复购买后重试。';
+
+  @override
+  String get billingReady => '可以购买';
+
+  @override
+  String get billingSignInRequired => '请登录以购买或恢复购买。';
+
+  @override
+  String get billingFreshness => '登录后及使用期间需要定期在线验证。验证过期后可能会重新显示广告。';
 }

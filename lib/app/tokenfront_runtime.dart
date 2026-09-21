@@ -7,6 +7,7 @@ import 'package:tokenfront/game/simulation.dart';
 import '../economy/cosmetic_catalog.dart';
 import '../economy/war_token_wallet.dart';
 import '../services/ads/ad_service.dart';
+import '../services/billing/billing_controller.dart';
 import '../services/audio/game_audio_service.dart';
 import '../services/analytics/analytics_event.dart';
 import '../services/analytics/analytics_service.dart';
@@ -38,6 +39,7 @@ final class RewardedClaim {
 final class TokenfrontRuntime extends ChangeNotifier {
   TokenfrontRuntime({
     ClientPlatform? platform,
+    BillingController? billing,
     AdService? adAdapter,
     AnalyticsAdapter? analyticsAdapter,
     GamePreferences? preferences,
@@ -47,6 +49,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
   }) : this._internal(
          platform: platform ?? _currentPlatform(),
          adAdapter: adAdapter,
+         billing: billing,
          analyticsAdapter: analyticsAdapter,
          preferences: preferences ?? GamePreferences(),
          wallet: wallet ?? WarTokenWallet(),
@@ -57,6 +60,7 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   TokenfrontRuntime._internal({
     required this.platform,
+    BillingController? billing,
     AdService? adAdapter,
     AnalyticsAdapter? analyticsAdapter,
     required this.preferences,
@@ -64,7 +68,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
     GameAudioService? audio,
     required _RuntimePersistence persistence,
     required this.isOnline,
-  }) : audio = audio ?? GameAudioService(muted: !preferences.audioEnabled),
+  }) : billing = billing ?? BillingController.unavailable(),
+       audio = audio ?? GameAudioService(muted: !preferences.audioEnabled),
        _stateStore = persistence.stateStore,
        _analyticsSharingAllowed = persistence.analyticsSharingAllowed,
        _adRequestsAllowed = persistence.adRequestsAllowed,
@@ -75,10 +80,12 @@ final class TokenfrontRuntime extends ChangeNotifier {
        ) {
     ads = PolicyAdService(
       delegate: adAdapter ?? NoOpAdService(platform: platform),
+      removeAds: () => this.billing.removeAds,
     );
     if (platform == ClientPlatform.ios) {
       _trackingAuthorization = TrackingAuthorization.notDetermined;
     }
+    this.billing.addListener(_billingChanged);
     CosmeticCatalog.installDefaults(wallet);
     preferences.addListener(_preferencesChanged);
     unawaited(this.audio.setMuted(!preferences.audioEnabled));
@@ -86,18 +93,21 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   static Future<TokenfrontRuntime> restore({
     ClientPlatform? platform,
+    BillingController? billing,
     AdService? adAdapter,
     AnalyticsAdapter? analyticsAdapter,
     TokenfrontStateStore? stateStore,
     GameAudioService? audio,
     bool isOnline = true,
   }) async {
+    await billing?.initialize();
     final resolvedStore = stateStore ?? createTokenfrontStateStore();
     final load = await _TokenfrontLocalState.load(resolvedStore);
     final saved = load.state;
     return TokenfrontRuntime._internal(
       platform: platform ?? _currentPlatform(),
       adAdapter: adAdapter,
+      billing: billing,
       analyticsAdapter: analyticsAdapter,
       preferences: saved.createPreferences(),
       wallet: saved.createWallet(),
@@ -111,6 +121,12 @@ final class TokenfrontRuntime extends ChangeNotifier {
       ),
       isOnline: isOnline,
     );
+  }
+
+  final BillingController billing;
+  void _billingChanged() {
+    if (billing.removeAds) ads.clearBanner();
+    notifyListeners();
   }
 
   final ClientPlatform platform;
@@ -462,6 +478,8 @@ final class TokenfrontRuntime extends ChangeNotifier {
 
   @override
   void dispose() {
+    billing.removeListener(_billingChanged);
+    billing.dispose();
     unawaited(audio.dispose());
     ads.dispose();
     preferences.removeListener(_preferencesChanged);

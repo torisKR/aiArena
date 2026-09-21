@@ -67,4 +67,8 @@ sips -s format jpeg -s formatOptions best "$FEATURE_PNG" \
   --out "$OUTPUT_DIR/feature-graphic-1024x500.jpg" >/dev/null
 rm "$FEATURE_PNG"
 
+# The current Android icon derives from the user-supplied logo, not the
+# historical SVG rendered above. Always restore the approved icon last.
+python3 "$ROOT/tooling/generate_android_icons.py"
+
 file "$OUTPUT_DIR/icon-512.png" "$OUTPUT_DIR/feature-graphic-1024x500.jpg"

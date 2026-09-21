@@ -98,13 +98,16 @@ final class AdMobAdService implements AdService {
   @override
   Future<AdResult> loadBanner(AdRequestContext request) async {
     final consentGeneration = _consentGeneration;
+    final generation = _bannerGeneration;
     if (_disposed ||
         !await _ensureInitialized() ||
         consentGeneration != _consentGeneration) {
       return const AdResult(AdStatus.skippedConsent);
     }
+    if (_disposed || generation != _bannerGeneration) {
+      return const AdResult(AdStatus.unavailable);
+    }
     if (_banner != null) return const AdResult(AdStatus.shown);
-    final generation = _bannerGeneration;
     final result = Completer<AdResult>();
     var terminal = false;
     AdMobBannerHandle? loadedHandle;
@@ -192,7 +195,9 @@ final class AdMobAdService implements AdService {
       debugPrint('Interstitial preload skipped: ${error.runtimeType}');
       return const AdResult(AdStatus.failed);
     } finally {
-      _interstitialLoad = null;
+      if (consentGeneration == _consentGeneration) {
+        _interstitialLoad = null;
+      }
     }
   }
 
@@ -357,17 +362,13 @@ final class AdMobAdService implements AdService {
         onTimeout: () => false,
       );
       final allowed = optionsAccepted && await _gateway.canRequestAds();
-      if (!allowed) {
-        _initialization = null;
-        _consentGeneration += 1;
-        clearBanner();
-        _interstitialGeneration += 1;
-        _interstitial?.dispose();
-        _interstitial = null;
-        _interstitialLoad = null;
-      }
       return allowed;
     } on Object catch (error) {
+      debugPrint('AdMob privacy options skipped: ${error.runtimeType}');
+      return false;
+    } finally {
+      // Permission may stay true while the user's consent choices change.
+      // Never reuse inventory requested under the previous choices.
       _initialization = null;
       _consentGeneration += 1;
       clearBanner();
@@ -375,8 +376,6 @@ final class AdMobAdService implements AdService {
       _interstitial?.dispose();
       _interstitial = null;
       _interstitialLoad = null;
-      debugPrint('AdMob privacy options skipped: ${error.runtimeType}');
-      return false;
     }
   }
 
