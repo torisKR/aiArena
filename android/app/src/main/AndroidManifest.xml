@@ -1,5 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- play-services-ads injects AD_ID during manifest merge. This app serves
+         non-personalized ads only and its Play Console advertising-ID
+         declaration says the ID is not used, so the injected permission is
+         removed to keep the shipped manifest matching that declaration.
+         Google Mobile Ads works without it; ads become non-personalized. -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

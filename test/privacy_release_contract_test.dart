@@ -38,8 +38,22 @@ void main() {
       ]) {
         expect(pubspec, isNot(contains(dependency)), reason: dependency);
       }
+      // AD_ID is injected by play-services-ads during manifest merge, so the
+      // source manifest must name it to strip it. Assert the removal directive
+      // rather than the absence of the string, and assert it is never granted.
+      expect(
+        manifest.replaceAll(RegExp(r'\s+'), ' '),
+        contains(
+          '<uses-permission '
+          'android:name="com.google.android.gms.permission.AD_ID" '
+          'tools:node="remove" />',
+        ),
+      );
+      expect(
+        manifest,
+        contains('xmlns:tools="http://schemas.android.com/tools"'),
+      );
       for (final permission in <String>[
-        'com.google.android.gms.permission.AD_ID',
         'android.permission.ACCESS_COARSE_LOCATION',
         'android.permission.ACCESS_FINE_LOCATION',
         'android.permission.CAMERA',
