@@ -69,7 +69,10 @@ jobs:
         run: |
           set -euo pipefail
           command -v python3
-          sdkmanager "build-tools;36.0.0"
+          # Hosted runners expose the SDK root, not necessarily sdkmanager on PATH.
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdkmanager"
+          "$sdkmanager" "build-tools;36.0.0"
           test -x "$ANDROID_HOME/build-tools/36.0.0/dexdump"
           python3 tooling/test_release_room_constructor.py build/app/outputs/bundle/release/app-release.aab --dexdump "$ANDROID_HOME/build-tools/36.0.0/dexdump"
       - name: Upload AAB only
