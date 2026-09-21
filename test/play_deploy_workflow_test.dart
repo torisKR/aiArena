@@ -22,12 +22,16 @@ void main() {
       'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd',
       'actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a',
       'subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2',
-      'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093',
       'r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5',
       'com.toris.tokenfront.tokenfront',
-      'access_token_scopes: https://www.googleapis.com/auth/androidpublisher',
-      'create_credentials_file: false',
-      'export_environment_variables: false',
+      // The androidpublisher token is minted from the service-account key with a
+      // self-signed JWT grant. google-github-actions/auth is deliberately absent
+      // because its access_token path needs iamcredentials.googleapis.com, which
+      // is not enabled for the service account's project.
+      '"scope": "https://www.googleapis.com/auth/androidpublisher"',
+      'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      r'echo "::add-mask::$(cat "$token_file")"',
+      'rm -f',
       r'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$PACKAGE_NAME/edits',
       r'$api/$edit_id/bundles',
       r"jq -er '[.bundles[]?.versionCode | tonumber] | max // 0'",
