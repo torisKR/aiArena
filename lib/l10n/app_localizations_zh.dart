@@ -1145,4 +1145,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get billingFreshness => '登录后及使用期间需要定期在线验证。验证过期后可能会重新显示广告。';
+
+  @override
+  String get idleMode => '挂机前线 // 可选模式';
+
+  @override
+  String get idleBack => '返回故事指挥台';
+
+  @override
+  String get idleCredits => '积分';
+
+  @override
+  String get idleBattle => '正在进行的自动战斗';
+
+  @override
+  String idleBattleSemantics(int stage) {
+    return '第$stage阶段自动战斗';
+  }
+
+  @override
+  String idleStage(int stage) {
+    return '阶段 $stage';
+  }
+
+  @override
+  String get idleAutoCombat => '自动战斗';
+
+  @override
+  String idleProgress(int progress, int goal) {
+    return '阶段进度 $progress/$goal';
+  }
+
+  @override
+  String idleClaimed(int credits) {
+    return '已结算 $credits 积分';
+  }
+
+  @override
+  String get idleNextGoal => '下一个目标';
+
+  @override
+  String get idleGoalBody => '到达下一阶段。成长会改变下一场自动战斗的结果。';
+
+  @override
+  String idleCoreLevel(int level) {
+    return 'AI核心等级 $level';
+  }
+
+  @override
+  String get idleUpgradeDetail => '使用积分升级并提高战斗进度。不会改变WT、故事、付费或广告。';
+
+  @override
+  String idleUpgrade(int cost) {
+    return '升级核心 · $cost 积分';
+  }
 }

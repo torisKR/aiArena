@@ -31,6 +31,7 @@ import 'ui/operation_briefing_screen.dart';
 import 'ui/result_screen.dart';
 import 'ui/settings_sheet.dart';
 import 'ui/launch_splash.dart';
+import 'ui/idle_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +114,7 @@ class _TokenfrontAppState extends State<TokenfrontApp> {
 
 typedef StoryOperationsProvider = Iterable<StoryOperation> Function();
 
-enum _Screen { lobby, briefing, battle, result }
+enum _Screen { lobby, briefing, battle, result, idle }
 
 final class _ActiveBattle {
   const _ActiveBattle({
@@ -329,6 +330,10 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
             }
           : null,
     );
+  }
+
+  void _openIdle() {
+    setState(() => screen = _Screen.idle);
   }
 
   void _openLocker() {
@@ -748,6 +753,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
       onDeployChronicle: _openChronicleBriefing,
       onDeploySkirmish: _deploySkirmish,
       onOpenArchive: _openArchive,
+      onOpenIdle: _openIdle,
       chronicleAvailable: chronicleAvailable,
       warTokenBalance: runtime.wallet.balance,
       onOpenSettings: _openSettings,
@@ -775,6 +781,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
               onDeployChronicle: _openChronicleBriefing,
               onDeploySkirmish: _deploySkirmish,
               onOpenArchive: _openArchive,
+      onOpenIdle: _openIdle,
               chronicleAvailable: chronicleAvailable,
               warTokenBalance: runtime.wallet.balance,
               onOpenSettings: _openSettings,
@@ -829,6 +836,7 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
           ),
       ],
     ),
+    _Screen.idle => IdleScreen(onBack: () => setState(() => screen = _Screen.lobby)),
     _Screen.result => ResultScreen(
       result: result!,
       recoveryOutcome: recoveryOutcome,
@@ -874,20 +882,33 @@ class _TokenfrontRootState extends State<TokenfrontRoot>
     ),
   };
 
+  void _handleSystemBack(bool didPop) {
+    if (didPop || screen != _Screen.battle) return;
+    _battleScreenKey.currentState?.pauseForBack();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Platform ad views cannot be mounted on outgoing and incoming screens.
-    return AnimatedSwitcher(
-      duration:
-          runtime.preferences.reducedMotionFor(
-            systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(context),
-          )
-          ? Duration.zero
-          : TokenfrontMotion.screenTransition,
-      layoutBuilder: (current, previous) => current ?? const SizedBox.shrink(),
-      child: KeyedSubtree(
-        key: ValueKey<_Screen>(screen),
-        child: _buildScreen(context),
+    // An active match is not a route: Android Back pauses it in place instead
+    // of popping the Flutter activity and losing the visible battle state.
+    return PopScope<Object?>(
+      canPop: screen != _Screen.battle,
+      onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
+      child: AnimatedSwitcher(
+        duration:
+            runtime.preferences.reducedMotionFor(
+              systemPrefersReducedMotion: MediaQuery.disableAnimationsOf(
+                context,
+              ),
+            )
+            ? Duration.zero
+            : TokenfrontMotion.screenTransition,
+        layoutBuilder: (current, previous) => current ?? const SizedBox.shrink(),
+        child: KeyedSubtree(
+          key: ValueKey<_Screen>(screen),
+          child: _buildScreen(context),
+        ),
       ),
     );
   }

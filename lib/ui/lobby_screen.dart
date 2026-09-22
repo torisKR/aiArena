@@ -24,6 +24,7 @@ class LobbyScreen extends StatefulWidget {
     required this.onDeployChronicle,
     required this.onDeploySkirmish,
     required this.onOpenArchive,
+    this.onOpenIdle,
     required this.warTokenBalance,
     required this.onOpenSettings,
     required this.onOpenLocker,
@@ -45,6 +46,7 @@ class LobbyScreen extends StatefulWidget {
   final VoidCallback onDeployChronicle;
   final VoidCallback onDeploySkirmish;
   final VoidCallback onOpenArchive;
+  final VoidCallback? onOpenIdle;
   final int warTokenBalance;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenLocker;
@@ -240,6 +242,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                     size: 17,
                                   ),
                                   label: Text(copy.archive),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('idle-mode-action'),
+                                  onPressed: widget.onOpenIdle,
+                                  icon: const Icon(Icons.auto_awesome_outlined, size: 17),
+                                  label: Text(context.l10n.idleMode),
                                 ),
                                 if (mode == GameMode.skirmish)
                                   const _RulesStrip(),

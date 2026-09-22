@@ -1237,4 +1237,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get billingFreshness =>
       'Online verification is required after sign-in and periodically. Ads may return when verification expires.';
+
+  @override
+  String get idleMode => 'IDLE FRONT // OPTIONAL MODE';
+
+  @override
+  String get idleBack => 'Return to story command deck';
+
+  @override
+  String get idleCredits => 'CREDITS';
+
+  @override
+  String get idleBattle => 'ONGOING AUTO BATTLE';
+
+  @override
+  String idleBattleSemantics(int stage) {
+    return 'Automatic battle at stage $stage';
+  }
+
+  @override
+  String idleStage(int stage) {
+    return 'STAGE $stage';
+  }
+
+  @override
+  String get idleAutoCombat => 'AUTO COMBAT';
+
+  @override
+  String idleProgress(int progress, int goal) {
+    return 'Stage progress $progress/$goal';
+  }
+
+  @override
+  String idleClaimed(int credits) {
+    return '+$credits credits settled';
+  }
+
+  @override
+  String get idleNextGoal => 'NEXT GOAL';
+
+  @override
+  String get idleGoalBody =>
+      'Reach the next stage. Growth changes the outcome of the next automatic battle.';
+
+  @override
+  String idleCoreLevel(int level) {
+    return 'AI CORE LEVEL $level';
+  }
+
+  @override
+  String get idleUpgradeDetail =>
+      'Upgrade costs credits and increases combat progress. No WT, story, billing, or ads are changed.';
+
+  @override
+  String idleUpgrade(int cost) {
+    return 'UPGRADE CORE · $cost CREDITS';
+  }
 }

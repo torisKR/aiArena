@@ -139,6 +139,19 @@ class BattleScreenState extends State<BattleScreen>
     }
   }
 
+  /// Pauses rather than pops when Android Back is pressed during a match.
+  /// The active game remains mounted so its simulation state is preserved.
+  void pauseForBack() {
+    if (!mounted || _lifecyclePaused || _userPaused) return;
+    unawaited(game.audio?.suspend(AudioSuspensionReason.manualPause));
+    game.clearInputs();
+    game.endMouseCameraPan();
+    game.endMinimapCameraPan();
+    _mousePanPointer = null;
+    game.pauseEngine();
+    setState(() => _userPaused = true);
+  }
+
   void _syncLifecycleAudio(bool paused) {
     if (paused) {
       unawaited(game.audio?.suspend(AudioSuspensionReason.lifecycle));

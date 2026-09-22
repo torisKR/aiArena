@@ -1167,4 +1167,59 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get billingFreshness =>
       '로그인 후 및 주기적으로 온라인 확인이 필요합니다. 확인 유효기간이 지나면 광고가 다시 표시될 수 있습니다.';
+
+  @override
+  String get idleMode => '방치 전선 // 선택 모드';
+
+  @override
+  String get idleBack => '스토리 지휘갑판으로 돌아가기';
+
+  @override
+  String get idleCredits => '크레딧';
+
+  @override
+  String get idleBattle => '진행 중인 자동 전투';
+
+  @override
+  String idleBattleSemantics(int stage) {
+    return '스테이지 $stage 자동 전투';
+  }
+
+  @override
+  String idleStage(int stage) {
+    return '스테이지 $stage';
+  }
+
+  @override
+  String get idleAutoCombat => '자동 전투';
+
+  @override
+  String idleProgress(int progress, int goal) {
+    return '스테이지 진행 $progress/$goal';
+  }
+
+  @override
+  String idleClaimed(int credits) {
+    return '크레딧 $credits 정산';
+  }
+
+  @override
+  String get idleNextGoal => '다음 목표';
+
+  @override
+  String get idleGoalBody => '다음 스테이지에 도달하세요. 성장이 다음 자동 전투의 결과를 바꿉니다.';
+
+  @override
+  String idleCoreLevel(int level) {
+    return 'AI 코어 레벨 $level';
+  }
+
+  @override
+  String get idleUpgradeDetail =>
+      '강화에는 크레딧이 들고 전투 진행 속도가 오릅니다. WT, 스토리, 결제, 광고는 바뀌지 않습니다.';
+
+  @override
+  String idleUpgrade(int cost) {
+    return '코어 강화 · 크레딧 $cost';
+  }
 }

@@ -1159,4 +1159,58 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get billingFreshness =>
       'ログイン後および定期的なオンライン確認が必要です。有効期限が切れると広告が再表示される場合があります。';
+
+  @override
+  String get idleMode => '放置戦線 // オプションモード';
+
+  @override
+  String get idleBack => 'ストーリー指揮デッキへ戻る';
+
+  @override
+  String get idleCredits => 'クレジット';
+
+  @override
+  String get idleBattle => '進行中の自動戦闘';
+
+  @override
+  String idleBattleSemantics(int stage) {
+    return 'ステージ$stageの自動戦闘';
+  }
+
+  @override
+  String idleStage(int stage) {
+    return 'ステージ $stage';
+  }
+
+  @override
+  String get idleAutoCombat => '自動戦闘';
+
+  @override
+  String idleProgress(int progress, int goal) {
+    return 'ステージ進行 $progress/$goal';
+  }
+
+  @override
+  String idleClaimed(int credits) {
+    return 'クレジット $credits を精算';
+  }
+
+  @override
+  String get idleNextGoal => '次の目標';
+
+  @override
+  String get idleGoalBody => '次のステージへ。成長が次の自動戦闘の結果を変えます。';
+
+  @override
+  String idleCoreLevel(int level) {
+    return 'AIコア レベル $level';
+  }
+
+  @override
+  String get idleUpgradeDetail => 'クレジットで強化し、戦闘進行を速めます。WT、ストーリー、課金、広告は変更しません。';
+
+  @override
+  String idleUpgrade(int cost) {
+    return 'コア強化 · $cost クレジット';
+  }
 }

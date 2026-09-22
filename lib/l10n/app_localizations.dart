@@ -2154,6 +2154,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Online verification is required after sign-in and periodically. Ads may return when verification expires.'**
   String get billingFreshness;
+
+  /// No description provided for @idleMode.
+  ///
+  /// In en, this message translates to:
+  /// **'IDLE FRONT // OPTIONAL MODE'**
+  String get idleMode;
+
+  /// No description provided for @idleBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to story command deck'**
+  String get idleBack;
+
+  /// No description provided for @idleCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'CREDITS'**
+  String get idleCredits;
+
+  /// No description provided for @idleBattle.
+  ///
+  /// In en, this message translates to:
+  /// **'ONGOING AUTO BATTLE'**
+  String get idleBattle;
+
+  /// No description provided for @idleBattleSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic battle at stage {stage}'**
+  String idleBattleSemantics(int stage);
+
+  /// No description provided for @idleStage.
+  ///
+  /// In en, this message translates to:
+  /// **'STAGE {stage}'**
+  String idleStage(int stage);
+
+  /// No description provided for @idleAutoCombat.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTO COMBAT'**
+  String get idleAutoCombat;
+
+  /// No description provided for @idleProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage progress {progress}/{goal}'**
+  String idleProgress(int progress, int goal);
+
+  /// No description provided for @idleClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'+{credits} credits settled'**
+  String idleClaimed(int credits);
+
+  /// No description provided for @idleNextGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT GOAL'**
+  String get idleNextGoal;
+
+  /// No description provided for @idleGoalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach the next stage. Growth changes the outcome of the next automatic battle.'**
+  String get idleGoalBody;
+
+  /// No description provided for @idleCoreLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI CORE LEVEL {level}'**
+  String idleCoreLevel(int level);
+
+  /// No description provided for @idleUpgradeDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade costs credits and increases combat progress. No WT, story, billing, or ads are changed.'**
+  String get idleUpgradeDetail;
+
+  /// No description provided for @idleUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'UPGRADE CORE · {cost} CREDITS'**
+  String idleUpgrade(int cost);
 }
 
 class _AppLocalizationsDelegate

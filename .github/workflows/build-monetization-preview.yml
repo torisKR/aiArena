@@ -58,13 +58,13 @@ jobs:
           trap 'rm -f "$TOKENFRONT_UPLOAD_STORE_FILE"' EXIT
           printf '%s' "$TOKENFRONT_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$TOKENFRONT_UPLOAD_STORE_FILE"
           version_code="$(date -u +%s)"
-          test "$version_code" -gt 1789993688
+          test "$version_code" -gt 1790002024
           test "$version_code" -lt 2100000000
           # No dart-defines: account and billing remain fail-closed/unavailable.
-          flutter build appbundle --release --build-name 1.3.2 --build-number "$version_code"
+          flutter build appbundle --release --build-name 1.4.0 --build-number "$version_code"
           jarsigner -verify build/app/outputs/bundle/release/app-release.aab
           sha256sum build/app/outputs/bundle/release/app-release.aab
-          printf 'Preview version: 1.3.2 (%s)\n' "$version_code" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Preview version: 1.4.0 (%s)\n' "$version_code" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify shipped Room constructor
         run: |
           set -euo pipefail

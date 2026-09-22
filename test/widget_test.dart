@@ -185,6 +185,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Android Back pauses an active battle without leaving the app', (
+    tester,
+  ) async {
+    final runtime = TokenfrontRuntime(
+      preferences: GamePreferences(audioEnabled: false, hapticsEnabled: false),
+    );
+    addTearDown(runtime.dispose);
+    await tester.pumpWidget(TokenfrontApp(runtime: runtime));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('skirmish-mode')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('skirmish-deploy')));
+    await tester.tap(find.byKey(const Key('skirmish-deploy')));
+    await tester.pump();
+    expect(find.byType(BattleScreen), findsOneWidget);
+    final battle = tester.widget<BattleScreen>(find.byType(BattleScreen));
+    expect(battle.game.paused, isFalse);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(find.byType(BattleScreen), findsOneWidget);
+    expect(battle.game.paused, isTrue);
+    expect(find.text('SIGNAL HELD  /  BATTLE PAUSED'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('fresh Command Deck shows prologue before core selection', (
     tester,
   ) async {
